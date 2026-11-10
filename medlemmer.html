@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brødrene · TAFSE</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main class="side">
+  <p class="overline">Medlemsregister</p>
+  <h1 class="side-tittel">Brødrene</h1>
+  <p class="ingress" id="ingress">Akademiets medlemmer og deres verv.</p>
+  <div class="brodre" id="brodre"></div>
+  <div id="skriv"></div>
+</main>
+<script src="assets/app.js"></script>
+<script>
+(async () => {
+  const { medlemmer, moter } = await hentData();
+  const verv = {};
+  moter.forEach((m) => m.tafsemestere.forEach((n) => (verv[n] = m)));
+
+  let profiler = {};
+  let innlogget = false;
+  try { innlogget = (await api("meg")).innlogget; } catch (_) {}
+
+  async function tegn() {
+    if (innlogget) {
+      try { (await api("profiler")).forEach((p) => (profiler[p.navn] = p.tekst)); } catch (_) {}
+    }
+    document.getElementById("brodre").innerHTML = medlemmer.map((n) => {
+      const m = verv[n];
+      const vervTekst = m
+        ? `Tafsemester · ${esc(m.navn)}${status(m) === "forbi" ? " (avholdt)" : ""}`
+        : "Tafsemester · trekkes ved neste runde";
+      const tekst = !innlogget
+        ? `<p class="tom">Logg inn nederst for å lese presentasjonen.</p>`
+        : profiler[n]
+          ? `<p>${esc(profiler[n])}</p>`
+          : `<p class="tom">${esc(n)} har ennå ikke skrevet noe om seg selv.</p>`;
+      return `<article class="bror">
+        <div class="medaljong" aria-hidden="true">${esc(n[0])}</div>
+        <h3>${esc(n)}</h3>
+        <span class="verv">${vervTekst}</span>
+        ${tekst}
+      </article>`;
+    }).join("");
+  }
+
+  await tegn();
+
+  const skriv = document.getElementById("skriv");
+  skriv.className = "seksjon";
+  kreverInnlogging(skriv, async () => {
+    innlogget = true;
+    await tegn();
+    skriv.innerHTML = `<h2>Skriv om deg selv</h2>
+      <form class="skjema" id="profil">
+        <div class="felt"><label for="navn">Hvem er du?</label><select id="navn" required>${await navnValg()}</select></div>
+        <div class="felt"><label for="tekst">Din presentasjon</label><textarea id="tekst" maxlength="3000" placeholder="Yrke, livsmotto, livrett, fremste meritt innen etegilder. Bare det du selv vil dele."></textarea></div>
+        <div><button class="knapp" type="submit">Lagre</button></div>
+        <div id="melding" role="status"></div>
+      </form>`;
+    const navn = document.getElementById("navn");
+    const felt = document.getElementById("tekst");
+    const fyll = () => { felt.value = profiler[navn.value] || ""; };
+    navn.addEventListener("change", () => { lagreNavn(navn.value); fyll(); });
+    fyll();
+    document.getElementById("profil").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const melding = document.getElementById("melding");
+      if (!navn.value) { melding.innerHTML = `<p class="melding feil">Velg navnet ditt.</p>`; return; }
+      try {
+        await api(`profiler/${encodeURIComponent(navn.value)}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tekst: felt.value }),
+        });
+        profiler[navn.value] = felt.value.trim();
+        if (!profiler[navn.value]) delete profiler[navn.value];
+        melding.innerHTML = `<p class="melding">Lagret.</p>`;
+        tegn();
+      } catch (err) {
+        melding.innerHTML = `<p class="melding feil">${esc(err.message)}</p>`;
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>

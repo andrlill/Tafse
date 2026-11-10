@@ -39,6 +39,11 @@ async function sikreSkjema(db) {
       data BLOB NOT NULL,
       opprettet TEXT NOT NULL
     )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS profiler (
+      navn TEXT PRIMARY KEY,
+      tekst TEXT NOT NULL,
+      oppdatert TEXT NOT NULL
+    )`),
     db.prepare(`CREATE INDEX IF NOT EXISTS kommentarer_mote ON kommentarer (mote)`),
     db.prepare(`CREATE INDEX IF NOT EXISTS bilder_mote ON bilder (mote)`),
   ]);
@@ -206,6 +211,29 @@ export async function onRequest({ request, env, params }) {
     }
     if (id && metode === "DELETE") {
       await db.prepare("DELETE FROM bilder WHERE id = ?").bind(Number(id)).run();
+      return json({ ok: true });
+    }
+  }
+
+  // --- Presentasjoner av brødrene ---
+  if (ressurs === "profiler") {
+    if (!id && metode === "GET") {
+      const { results } = await db.prepare("SELECT navn, tekst, oppdatert FROM profiler").all();
+      return json(results);
+    }
+    if (id && metode === "PUT") {
+      const navn = tekst(decodeURIComponent(id), 60);
+      const { tekst: innhold } = await lesJson(request);
+      const t = tekst(innhold, 3000);
+      if (!navn) return feil(400, "Mangler navn.");
+      if (!t) {
+        await db.prepare("DELETE FROM profiler WHERE navn = ?").bind(navn).run();
+        return json({ ok: true });
+      }
+      await db
+        .prepare("INSERT INTO profiler (navn, tekst, oppdatert) VALUES (?, ?, ?) ON CONFLICT(navn) DO UPDATE SET tekst = excluded.tekst, oppdatert = excluded.oppdatert")
+        .bind(navn, t, naa())
+        .run();
       return json({ ok: true });
     }
   }

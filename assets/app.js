@@ -23,6 +23,7 @@ const SIDER = [
   ["vedtekter.html", "Vedtekter"],
   ["forslag.html", "Forslag"],
   ["moter.html", "Møtene"],
+  ["medlemmer.html", "Brødrene"],
   ["fortellingen.html", "Fortellingen"],
 ];
 
