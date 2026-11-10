@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Møtene · TAFSE</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main class="side">
+  <p class="overline">Annaler</p>
+  <h1 class="side-tittel">Møtene</h1>
+  <p class="ingress">Bilder, minner og kommentarer fra hvert Tafsemøte. Velg et møte for å se hva som skjedde, eller hva som er planlagt.</p>
+  <div class="mote-kort" id="kort"></div>
+</main>
+<script src="assets/app.js"></script>
+<script>
+(async () => {
+  const { moter } = await hentData();
+  let antall = {};
+  try {
+    if ((await api("meg")).innlogget) {
+      (await api("bilder")).forEach((r) => (antall[r.mote] = r.antall));
+    }
+  } catch (_) {}
+  const sortert = [...moter].reverse();
+  document.getElementById("kort").innerHTML = sortert.map((m) => {
+    const forbi = status(m) === "forbi";
+    const n = antall[m.id];
+    return `<a href="mote.html?id=${encodeURIComponent(m.id)}">
+      <span class="overline" style="margin:0">${forbi ? "Avholdt" : "Kommende"}</span>
+      <h3>${esc(m.navn)}</h3>
+      <span class="dempet">${esc(datoTekst(m))}</span>
+      <span class="dempet">Tafsemestere: ${esc(mesterTekst(m))}</span>
+      ${n ? `<span style="color:var(--gull)">${n} bilde${n === 1 ? "" : "r"}</span>` : ""}
+    </a>`;
+  }).join("");
+})();
+</script>
+</body>
+</html>

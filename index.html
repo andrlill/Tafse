@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TAFSE · Taffelakademiet for Samvær og Etegilder</title>
+<meta name="description" content="Taffelakademiet for Samvær og Etegilder. Fire møter i året.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main>
+  <section class="hero" id="hero">
+    <p class="overline">Anno MMXXVI</p>
+    <h1>Taffelakademiet for<br>Samvær og Etegilder</h1>
+    <p class="ingress" style="margin:0">Fire møter i året. To Tafsemestere om gangen.</p>
+  </section>
+
+  <div class="side" style="padding-top:8px">
+    <section class="kort" id="neste" aria-live="polite">
+      <div>
+        <p class="overline" style="margin:0">Neste møte</p>
+        <p class="kort-tittel">Laster …</p>
+      </div>
+    </section>
+
+    <div class="tre">
+      <section>
+        <h2>Kalender</h2>
+        <div id="kommende"></div>
+        <p style="margin-top:14px"><a href="kalender.html">Hele kalenderen</a></p>
+      </section>
+      <section>
+        <h2>Vedtekter</h2>
+        <div class="rad"><span>§ 1 Formål</span></div>
+        <div class="rad"><span>§ 2 Tafsemøtet</span></div>
+        <div class="rad"><span>§ 3 Møteplikt</span></div>
+        <div class="rad"><span>§ 4 Bekledning</span></div>
+        <p style="margin-top:14px"><a href="vedtekter.html">Les alle tolv paragrafer</a> · <a href="forslag.html">Foreslå en endring</a></p>
+      </section>
+      <section>
+        <h2>Møtene</h2>
+        <p style="margin:0 0 12px">Bilder og minner fra hvert Tafsemøte, med kommentarer fra brødrene om hva som faktisk skjedde.</p>
+        <div id="forrige"></div>
+        <p style="margin-top:14px"><a href="moter.html">Alle møter</a></p>
+      </section>
+    </div>
+  </div>
+</main>
+<script src="assets/app.js"></script>
+<script>
+document.getElementById("hero").insertAdjacentHTML("afterbegin", LOGO_STOR);
+
+hentData().then(({ moter }) => {
+  const neste = nesteMote(moter);
+  const kort = document.getElementById("neste");
+  if (neste) {
+    const n = dagerTil(neste);
+    const nedtelling = n === null ? "" : n === 0 ? " · I dag!" : n === 1 ? " · I morgen" : ` · Om ${n} dager`;
+    kort.innerHTML = `<div>
+        <p class="overline" style="margin:0">Neste møte</p>
+        <p class="kort-tittel">${esc(neste.navn)}</p>
+        <p class="kort-meta" style="margin:0">${esc(datoTekst(neste))}${nedtelling}<br>Tafsemestere: ${esc(mesterTekst(neste))}</p>
+      </div>
+      <a class="knapp" href="mote.html?id=${encodeURIComponent(neste.id)}">Til møtesiden</a>`;
+  } else {
+    kort.innerHTML = `<div><p class="overline" style="margin:0">Neste møte</p><p class="kort-tittel">Ikke fastsatt ennå</p></div>`;
+  }
+
+  const kommende = moter.filter((m) => status(m) === "kommende").slice(0, 4);
+  document.getElementById("kommende").innerHTML = kommende.map((m) =>
+    `<div class="rad"><span>${esc(m.navn)}</span><span class="dempet">${esc(m.dato ? `${tilDato(m.dato).getDate()}. ${MANEDER_KORT[tilDato(m.dato).getMonth()]}` : m.periode)}</span></div>`
+  ).join("") || `<p class="dempet">Ingen kommende møter lagt inn.</p>`;
+
+  const forbi = moter.filter((m) => status(m) === "forbi");
+  const sist = forbi[forbi.length - 1];
+  document.getElementById("forrige").innerHTML = sist
+    ? `<a class="knapp sekundar" href="mote.html?id=${encodeURIComponent(sist.id)}">${esc(sist.navn)}</a>`
+    : "";
+});
+</script>
+</body>
+</html>

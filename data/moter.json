@@ -1,0 +1,46 @@
+{
+  "medlemmer": [
+    "Anders", "Andreas", "Elias", "Fredrik", "Jakob", "Kristoffer",
+    "Lars", "Lasse", "Magnus", "Mathias", "Nils", "Tobias"
+  ],
+  "moter": [
+    {
+      "id": "2026-sommer",
+      "navn": "Sommermøtet 2026",
+      "dato": "2026-08-21",
+      "tafsemestere": ["Elias", "Fredrik"]
+    },
+    {
+      "id": "2026-host",
+      "navn": "Høstmøtet 2026",
+      "dato": "2026-11-06",
+      "tafsemestere": ["Anders", "Andreas"]
+    },
+    {
+      "id": "2027-vinter",
+      "navn": "Vintermøtet 2027",
+      "dato": "2027-02-27",
+      "tafsemestere": ["Mathias", "Nils"]
+    },
+    {
+      "id": "2027-var",
+      "navn": "Vårmøtet 2027",
+      "dato": "2027-04-30",
+      "tafsemestere": ["Lasse", "Magnus"]
+    },
+    {
+      "id": "2027-sommer",
+      "navn": "Sommermøtet 2027",
+      "dato": null,
+      "periode": "Sommer 2027",
+      "tafsemestere": ["Jakob", "Lars"]
+    },
+    {
+      "id": "2027-host",
+      "navn": "Høstmøtet 2027",
+      "dato": null,
+      "periode": "Høst 2027",
+      "tafsemestere": ["Kristoffer", "Tobias"]
+    }
+  ]
+}
