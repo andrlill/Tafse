@@ -17,37 +17,10 @@
   <p class="ingress" id="meta"></p>
   <div id="innhold"></div>
 </main>
-
-<div class="lysboks" id="lysboks" role="dialog" aria-modal="true" aria-label="Bilde">
-  <button class="knapp sekundar lukk" type="button" id="lukk">Lukk</button>
-  <img id="lysboks-bilde" alt="">
-  <p class="dempet" id="lysboks-tekst" style="margin:0"></p>
-</div>
-
 <script src="assets/app.js"></script>
 <script>
 const moteId = new URLSearchParams(location.search).get("id");
 const boks = document.getElementById("innhold");
-
-// Skalerer ned bilder i nettleseren før opplasting, så de blir raske og små.
-async function krympBilde(fil) {
-  let bilde;
-  try {
-    bilde = await createImageBitmap(fil, { imageOrientation: "from-image" });
-  } catch (_) {
-    throw new Error(`Klarte ikke å lese «${fil.name}». Prøv JPG eller PNG.`);
-  }
-  for (const [maks, kvalitet] of [[1800, 0.82], [1600, 0.72], [1280, 0.68]]) {
-    const skala = Math.min(1, maks / Math.max(bilde.width, bilde.height));
-    const lerret = document.createElement("canvas");
-    lerret.width = Math.round(bilde.width * skala);
-    lerret.height = Math.round(bilde.height * skala);
-    lerret.getContext("2d").drawImage(bilde, 0, 0, lerret.width, lerret.height);
-    const blob = await new Promise((ok) => lerret.toBlob(ok, "image/jpeg", kvalitet));
-    if (blob && blob.size < 1_800_000) return blob;
-  }
-  throw new Error(`«${fil.name}» er for stort selv etter nedskalering.`);
-}
 
 hentData().then(async ({ moter }) => {
   const mote = moter.find((m) => m.id === moteId);
@@ -59,37 +32,27 @@ hentData().then(async ({ moter }) => {
   document.title = `${mote.navn} · TAFSE`;
   document.getElementById("tittel").textContent = mote.navn;
   document.getElementById("meta").textContent = `${datoTekst(mote)} · Tafsemestere: ${mesterTekst(mote)}`;
+  const forbi = status(mote) === "forbi";
 
   kreverInnlogging(boks, async () => {
-    const valg = await navnValg();
     boks.innerHTML = `
       <section>
+        <h2 class="skjult">Bilder</h2>
         <form class="skjema" id="last-opp">
           <div class="to-kol">
-            <div class="felt"><label for="navn">Hvem er du?</label><select id="navn" required>${valg}</select></div>
-            <div class="felt"><label for="filer">Bilder</label><input id="filer" type="file" accept="image/*" multiple required></div>
+            <div class="felt"><label for="filer">Last opp bilder fra møtet</label><input id="filer" type="file" accept="image/*" multiple required></div>
+            <div class="felt"><label for="bildetekst">Bildetekst (valgfritt)</label><input id="bildetekst" maxlength="300"></div>
           </div>
-          <div class="felt"><label for="bildetekst">Bildetekst (valgfritt, gjelder alle valgte bilder)</label><input id="bildetekst" maxlength="300"></div>
           <div><button class="knapp" type="submit">Last opp</button></div>
           <div id="opp-melding" role="status"></div>
         </form>
         <div class="galleri" id="galleri"></div>
       </section>
-
       <section class="seksjon">
-        <h2>Hva gjorde vi?</h2>
-        <div class="innlegg-liste" id="kommentarer" style="margin-top:0"></div>
-        <form class="skjema" id="kommenter" style="margin-top:20px">
-          <div class="felt"><label for="kommentar">Din beretning</label><textarea id="kommentar" maxlength="5000" required placeholder="Hvor spiste dere, hvem bestilte for mye, og ble § 4 nr. 5 brukt?"></textarea></div>
-          <div><button class="knapp" type="submit">Legg til kommentar</button></div>
-          <div id="k-melding" role="status"></div>
-        </form>
+        <h2>${forbi ? "Hva gjorde vi?" : "Planer og spørsmål"}</h2>
+        <div id="strom"></div>
       </section>`;
 
-    const navnFelt = document.getElementById("navn");
-    navnFelt.addEventListener("change", () => lagreNavn(navnFelt.value));
-
-    // --- Bilder ---
     let bilder = [];
     async function lastBilder() {
       const galleri = document.getElementById("galleri");
@@ -98,7 +61,7 @@ hentData().then(async ({ moter }) => {
         galleri.innerHTML = bilder.length
           ? bilder.map((b, i) => `<figure>
               <button class="bilde" type="button" data-i="${i}" aria-label="Vis bildet større"><img src="/api/bilder/${b.id}" alt="${esc(b.tekst || "Bilde fra " + mote.navn)}" loading="lazy"></button>
-              <figcaption><span>${esc(b.tekst || b.navn)}</span><button class="liten-knapp" type="button" data-slett="${b.id}" aria-label="Slett bilde">Slett</button></figcaption>
+              <figcaption><span>${esc(b.tekst || b.navn)}</span>${b.navn === MEG ? `<button class="liten-knapp" type="button" data-slett="${b.id}" aria-label="Slett bilde">Slett</button>` : `<span>${esc(b.navn)}</span>`}</figcaption>
             </figure>`).join("")
           : `<p class="tomt" style="grid-column:1/-1">Ingen bilder ennå. Vær den første!</p>`;
       } catch (err) {
@@ -111,19 +74,15 @@ hentData().then(async ({ moter }) => {
       const knapp = e.target.querySelector("button");
       const melding = document.getElementById("opp-melding");
       const filer = [...document.getElementById("filer").files];
-      if (!navnFelt.value) { melding.innerHTML = `<p class="melding feil">Velg navnet ditt først.</p>`; return; }
       if (!filer.length) return;
-      lagreNavn(navnFelt.value);
       knapp.disabled = true;
       const feil = [];
       for (let i = 0; i < filer.length; i++) {
         melding.innerHTML = `<p class="melding">Laster opp ${i + 1} av ${filer.length} …</p>`;
         try {
-          const blob = await krympBilde(filer[i]);
           const fd = new FormData();
-          fd.append("fil", blob, "bilde.jpg");
+          fd.append("fil", await krympBilde(filer[i]), "bilde.jpg");
           fd.append("mote", moteId);
-          fd.append("navn", navnFelt.value);
           fd.append("tekst", document.getElementById("bildetekst").value);
           await api("bilder", { method: "POST", body: fd });
         } catch (err) {
@@ -132,14 +91,12 @@ hentData().then(async ({ moter }) => {
       }
       knapp.disabled = false;
       e.target.reset();
-      navnFelt.value = lagretNavn();
       melding.innerHTML = feil.length
         ? `<p class="melding feil">${feil.map(esc).join("<br>")}</p>`
         : `<p class="melding">Ferdig! ${filer.length} bilde${filer.length === 1 ? "" : "r"} lagt til i annalene.</p>`;
       lastBilder();
     });
 
-    const lysboks = document.getElementById("lysboks");
     document.getElementById("galleri").addEventListener("click", async (e) => {
       const slett = e.target.closest("[data-slett]");
       if (slett) {
@@ -150,66 +107,15 @@ hentData().then(async ({ moter }) => {
       const vis = e.target.closest("[data-i]");
       if (vis) {
         const b = bilder[Number(vis.dataset.i)];
-        document.getElementById("lysboks-bilde").src = `/api/bilder/${b.id}`;
-        document.getElementById("lysboks-bilde").alt = b.tekst || "";
-        document.getElementById("lysboks-tekst").textContent = `${b.tekst ? b.tekst + " · " : ""}Lastet opp av ${b.navn}`;
-        lysboks.classList.add("apen");
-        document.getElementById("lukk").focus();
+        visBilde(`/api/bilder/${b.id}`, `${b.tekst ? b.tekst + " · " : ""}Lastet opp av ${b.navn}`);
       }
-    });
-    const lukk = () => lysboks.classList.remove("apen");
-    document.getElementById("lukk").addEventListener("click", lukk);
-    lysboks.addEventListener("click", (e) => { if (e.target === lysboks) lukk(); });
-    lysboks.addEventListener("keydown", (e) => { if (e.key === "Escape") lukk(); });
-
-    // --- Kommentarer ---
-    async function lastKommentarer() {
-      const liste = document.getElementById("kommentarer");
-      try {
-        const k = await api(`kommentarer?mote=${encodeURIComponent(moteId)}`);
-        liste.innerHTML = k.length
-          ? k.map((c) => `<article class="innlegg">
-              <div class="innlegg-topp"><h3>${esc(c.navn)}</h3><span class="dempet" style="font-size:16px">${esc(tidTekst(c.opprettet))}</span></div>
-              <p>${esc(c.tekst)}</p>
-              <div class="handlinger"><button class="liten-knapp" type="button" data-slett="${c.id}">Slett</button></div>
-            </article>`).join("")
-          : `<p class="tomt">Ingen har skrevet noe ennå. Historien skrives av dem som møter opp, og av dem som husker.</p>`;
-      } catch (err) {
-        liste.innerHTML = `<p class="melding feil">${esc(err.message)}</p>`;
-      }
-    }
-
-    document.getElementById("kommenter").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const melding = document.getElementById("k-melding");
-      if (!navnFelt.value) { melding.innerHTML = `<p class="melding feil">Velg navnet ditt øverst på siden først.</p>`; return; }
-      const knapp = e.target.querySelector("button");
-      knapp.disabled = true;
-      try {
-        await api("kommentarer", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mote: moteId, navn: navnFelt.value, tekst: document.getElementById("kommentar").value }),
-        });
-        lagreNavn(navnFelt.value);
-        document.getElementById("kommentar").value = "";
-        melding.innerHTML = "";
-        lastKommentarer();
-      } catch (err) {
-        melding.innerHTML = `<p class="melding feil">${esc(err.message)}</p>`;
-      } finally {
-        knapp.disabled = false;
-      }
-    });
-
-    document.getElementById("kommentarer").addEventListener("click", async (e) => {
-      const b = e.target.closest("[data-slett]");
-      if (!b || !confirm("Slette kommentaren?")) return;
-      try { await api(`kommentarer/${b.dataset.slett}`, { method: "DELETE" }); lastKommentarer(); } catch (err) { alert(err.message); }
     });
 
     lastBilder();
-    lastKommentarer();
+    byggStrom(document.getElementById("strom"), {
+      mote: moteId,
+      plassholder: forbi ? "Hvor spiste dere, hvem bestilte for mye, og ble § 4 nr. 5 brukt?" : "Forslag til program, spørsmål til Tafsemesterne, forfall?",
+    });
   });
 });
 </script>

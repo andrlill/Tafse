@@ -26,10 +26,8 @@ kreverInnlogging(boks, async () => {
   const paragrafer = ["Generelt", "Ny paragraf", ...Array.from({ length: 12 }, (_, i) => `§ ${i + 1}`)];
   boks.innerHTML = `
     <form class="skjema" id="skjema">
-      <div class="to-kol">
-        <div class="felt"><label for="navn">Foreslått av</label><select id="navn" required>${await navnValg()}</select></div>
-        <div class="felt"><label for="paragraf">Gjelder</label><select id="paragraf">${paragrafer.map((p) => `<option>${p}</option>`).join("")}</select></div>
-      </div>
+      <p class="dempet" style="margin:0">Foreslått av <strong style="color:var(--tekst)">${esc(MEG)}</strong></p>
+      <div class="felt"><label for="paragraf">Gjelder</label><select id="paragraf">${paragrafer.map((p) => `<option>${p}</option>`).join("")}</select></div>
       <div class="felt"><label for="tittel">Kort tittel</label><input id="tittel" maxlength="160" required placeholder="For eksempel: Innføring av slips som minstekrav"></div>
       <div class="felt"><label for="tekst">Forslag til ny tekst</label><textarea id="tekst" maxlength="5000" required placeholder="Skriv hvordan paragrafen skal lyde"></textarea></div>
       <div class="felt"><label for="begrunnelse">Begrunnelse (valgfritt)</label><textarea id="begrunnelse" maxlength="5000" style="min-height:90px"></textarea></div>
@@ -46,16 +44,12 @@ kreverInnlogging(boks, async () => {
     e.preventDefault();
     const knapp = skjema.querySelector("button");
     const melding = document.getElementById("melding");
-    const navn = document.getElementById("navn").value;
-    if (!navn) { melding.innerHTML = `<p class="melding feil">Velg hvem forslaget kommer fra.</p>`; return; }
-    lagreNavn(navn);
     knapp.disabled = true;
     try {
       await api("forslag", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          navn,
           paragraf: document.getElementById("paragraf").value,
           tittel: document.getElementById("tittel").value,
           tekst: document.getElementById("tekst").value,
@@ -88,7 +82,7 @@ kreverInnlogging(boks, async () => {
           ${f.begrunnelse ? `<p class="dempet"><em>Begrunnelse:</em> ${esc(f.begrunnelse)}</p>` : ""}
           <div class="handlinger">
             ${Object.keys(STATUS_NAVN).filter((s) => s !== f.status).map((s) => `<button class="liten-knapp" data-id="${f.id}" data-status="${s}">Merk som ${STATUS_NAVN[s].toLowerCase()}</button>`).join("")}
-            <button class="liten-knapp" data-slett="${f.id}">Slett</button>
+            ${f.navn === MEG ? `<button class="liten-knapp" data-slett="${f.id}">Slett</button>` : ""}
           </div>
         </article>`).join("");
     } catch (err) {

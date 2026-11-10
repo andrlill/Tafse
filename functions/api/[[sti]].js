@@ -1,17 +1,25 @@
-// TAFSE – API for forslag, kommentarer og bilder.
+// TAFSE – API for brukere, forslag, poster og bilder.
 // Kjører som Cloudflare Pages Function. Krever:
 //   - en D1-database koblet til med variabelnavnet DB
-//   - en hemmelighet (secret) TAFSE_PASSORD med akademiets passord
+//   - en hemmelighet (secret) TAFSE_PASSORD: akademipassordet, som trengs
+//     første gang en bror lager sin egen bruker
 
 const MAKS_BILDE = 1_900_000; // byte, D1 tåler rundt 2 MB per rad
 const BILDETYPER = ["image/jpeg", "image/png", "image/webp"];
 const STATUSER = ["innmeldt", "vedtatt", "forkastet"];
+const OKT_DAGER = 365;
 
 let skjemaKlart = false;
 
 async function sikreSkjema(db) {
   if (skjemaKlart) return;
   await db.batch([
+    db.prepare(`CREATE TABLE IF NOT EXISTS brukere (
+      navn TEXT PRIMARY KEY,
+      salt TEXT NOT NULL,
+      hash TEXT NOT NULL,
+      opprettet TEXT NOT NULL
+    )`),
     db.prepare(`CREATE TABLE IF NOT EXISTS forslag (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       navn TEXT NOT NULL,
@@ -20,13 +28,6 @@ async function sikreSkjema(db) {
       tekst TEXT NOT NULL,
       begrunnelse TEXT,
       status TEXT NOT NULL DEFAULT 'innmeldt',
-      opprettet TEXT NOT NULL
-    )`),
-    db.prepare(`CREATE TABLE IF NOT EXISTS kommentarer (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      mote TEXT NOT NULL,
-      navn TEXT NOT NULL,
-      tekst TEXT NOT NULL,
       opprettet TEXT NOT NULL
     )`),
     db.prepare(`CREATE TABLE IF NOT EXISTS bilder (
@@ -39,16 +40,39 @@ async function sikreSkjema(db) {
       data BLOB NOT NULL,
       opprettet TEXT NOT NULL
     )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS poster (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      navn TEXT NOT NULL,
+      mote TEXT,
+      tekst TEXT NOT NULL,
+      bilde_id INTEGER,
+      opprettet TEXT NOT NULL
+    )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS svar (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      post_id INTEGER NOT NULL,
+      navn TEXT NOT NULL,
+      tekst TEXT NOT NULL,
+      opprettet TEXT NOT NULL
+    )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS skal (
+      post_id INTEGER NOT NULL,
+      navn TEXT NOT NULL,
+      PRIMARY KEY (post_id, navn)
+    )`),
     db.prepare(`CREATE TABLE IF NOT EXISTS profiler (
       navn TEXT PRIMARY KEY,
       tekst TEXT NOT NULL,
       oppdatert TEXT NOT NULL
     )`),
-    db.prepare(`CREATE INDEX IF NOT EXISTS kommentarer_mote ON kommentarer (mote)`),
     db.prepare(`CREATE INDEX IF NOT EXISTS bilder_mote ON bilder (mote)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS poster_mote ON poster (mote)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS svar_post ON svar (post_id)`),
   ]);
   skjemaKlart = true;
 }
+
+// ---------- Hjelpere ----------
 
 function json(data, status = 200, ekstra = {}) {
   return new Response(JSON.stringify(data), {
@@ -57,12 +81,12 @@ function json(data, status = 200, ekstra = {}) {
   });
 }
 const feil = (status, tekst) => json({ feil: tekst }, status);
-
-async function token(passord) {
-  const nokkel = await crypto.subtle.importKey("raw", new TextEncoder().encode(passord), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  const sig = await crypto.subtle.sign("HMAC", nokkel, new TextEncoder().encode("tafse-v1"));
-  return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, "0")).join("");
-}
+const tekst = (v, maks) => (typeof v === "string" ? v.trim().slice(0, maks) : "");
+const gyldigMote = (m) => typeof m === "string" && /^[a-z0-9-]{1,40}$/.test(m);
+const naa = () => new Date().toISOString();
+const enc = new TextEncoder();
+const hex = (buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+const vent = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function likt(a, b) {
   if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length) return false;
@@ -71,58 +95,135 @@ function likt(a, b) {
   return r === 0;
 }
 
-function cookie(request, navn) {
-  const c = request.headers.get("Cookie") || "";
-  const m = c.match(new RegExp(`(?:^|;\\s*)${navn}=([^;]+)`));
-  return m ? m[1] : null;
-}
-
-async function erInnlogget(request, env) {
-  return likt(cookie(request, "tafse"), await token(env.TAFSE_PASSORD));
-}
-
-const tekst = (v, maks) => (typeof v === "string" ? v.trim().slice(0, maks) : "");
-const gyldigMote = (m) => typeof m === "string" && /^[a-z0-9-]{1,40}$/.test(m);
-const naa = () => new Date().toISOString();
-
 async function lesJson(request) {
   try { return await request.json(); } catch (_) { return {}; }
 }
 
+async function hmac(nokkel, melding) {
+  const k = await crypto.subtle.importKey("raw", enc.encode(nokkel), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  return hex(await crypto.subtle.sign("HMAC", k, enc.encode(melding)));
+}
+
+async function hashPassord(passord, saltHex) {
+  const salt = new Uint8Array(saltHex.match(/../g).map((h) => parseInt(h, 16)));
+  const k = await crypto.subtle.importKey("raw", enc.encode(passord), "PBKDF2", false, ["deriveBits"]);
+  return hex(await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: 100000 }, k, 256));
+}
+
+const b64 = (s) => btoa(String.fromCharCode(...enc.encode(s))).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
+const unb64 = (s) => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0)));
+
+function lesCookie(request) {
+  const c = request.headers.get("Cookie") || "";
+  const m = c.match(/(?:^|;\s*)tafse=([^;]+)/);
+  return m ? m[1] : null;
+}
+
+async function lagOkt(env, bruker, url) {
+  const utloper = Date.now() + OKT_DAGER * 86400000;
+  const sig = await hmac(env.TAFSE_PASSORD, `${bruker.navn}|${utloper}|${bruker.hash.slice(0, 16)}`);
+  const verdi = `${b64(bruker.navn)}.${utloper}.${sig}`;
+  const sikker = url.protocol === "https:" ? "; Secure" : "";
+  return `tafse=${verdi}; Path=/; Max-Age=${OKT_DAGER * 86400}; HttpOnly; SameSite=Lax${sikker}`;
+}
+
+// Returnerer navnet til den innloggede, eller null.
+async function hvemErInnlogget(request, env, db) {
+  const c = lesCookie(request);
+  if (!c) return null;
+  const [n64, utloper, sig] = c.split(".");
+  if (!n64 || !utloper || !sig || Number(utloper) < Date.now()) return null;
+  let navn;
+  try { navn = unb64(n64); } catch (_) { return null; }
+  const bruker = await db.prepare("SELECT navn, hash FROM brukere WHERE navn = ?").bind(navn).first();
+  if (!bruker) return null;
+  const forventet = await hmac(env.TAFSE_PASSORD, `${navn}|${utloper}|${bruker.hash.slice(0, 16)}`);
+  return likt(sig, forventet) ? navn : null;
+}
+
+async function medlemsliste(env, url) {
+  try {
+    const r = await env.ASSETS.fetch(new URL("/data/moter.json", url));
+    return (await r.json()).medlemmer || [];
+  } catch (_) {
+    return [];
+  }
+}
+
+async function lagreBilde(db, fil, mote, navn, bildetekst) {
+  if (!fil || typeof fil === "string") return { feil: "Fant ikke bildet." };
+  if (!BILDETYPER.includes(fil.type)) return { feil: "Bare JPG, PNG og WebP støttes." };
+  if (fil.size > MAKS_BILDE) return { feil: "Bildet er for stort." };
+  const data = await fil.arrayBuffer();
+  const r = await db
+    .prepare("INSERT INTO bilder (mote, navn, tekst, type, storrelse, data, opprettet) VALUES (?, ?, ?, ?, ?, ?, ?)")
+    .bind(mote, navn, bildetekst, fil.type, data.byteLength, data, naa())
+    .run();
+  return { id: r.meta.last_row_id };
+}
+
+// ---------- Ruter ----------
+
 export async function onRequest({ request, env, params }) {
-  if (!env.TAFSE_PASSORD) return feil(500, "Passordet er ikke satt opp. Legg til hemmeligheten TAFSE_PASSORD i Cloudflare.");
+  if (!env.TAFSE_PASSORD) return feil(500, "Akademipassordet er ikke satt opp. Legg til hemmeligheten TAFSE_PASSORD i Cloudflare.");
   if (!env.DB) return feil(500, "Databasen er ikke koblet til. Koble en D1-database til med navnet DB i Cloudflare.");
 
+  const db = env.DB;
+  await sikreSkjema(db);
+
   const deler = Array.isArray(params.sti) ? params.sti : [params.sti].filter(Boolean);
-  const [ressurs, id] = deler;
+  const [ressurs, id, under] = deler;
   const metode = request.method;
   const url = new URL(request.url);
 
-  // --- Innlogging ---
+  // --- Innlogging og brukere ---
+  if (ressurs === "brukere" && metode === "GET") {
+    const { results } = await db.prepare("SELECT navn FROM brukere").all();
+    return json(results.map((r) => r.navn));
+  }
   if (ressurs === "meg" && metode === "GET") {
-    return json({ innlogget: await erInnlogget(request, env) });
+    const navn = await hvemErInnlogget(request, env, db);
+    return json({ innlogget: !!navn, navn });
+  }
+  if (ressurs === "registrer" && metode === "POST") {
+    const b = await lesJson(request);
+    const navn = tekst(b.navn, 60);
+    if (!(await medlemsliste(env, url)).includes(navn)) return feil(400, "Velg navnet ditt fra listen.");
+    if (!likt(String(b.akademipassord || ""), env.TAFSE_PASSORD)) { await vent(600); return feil(401, "Feil akademipassord."); }
+    if (typeof b.passord !== "string" || b.passord.length < 6) return feil(400, "Passordet må ha minst seks tegn.");
+    if (await db.prepare("SELECT 1 FROM brukere WHERE navn = ?").bind(navn).first()) return feil(409, "Denne brukeren finnes allerede. Logg inn i stedet.");
+    const salt = hex(crypto.getRandomValues(new Uint8Array(16)));
+    const hash = await hashPassord(b.passord, salt);
+    await db.prepare("INSERT INTO brukere (navn, salt, hash, opprettet) VALUES (?, ?, ?, ?)").bind(navn, salt, hash, naa()).run();
+    return json({ innlogget: true, navn }, 201, { "Set-Cookie": await lagOkt(env, { navn, hash }, url) });
   }
   if (ressurs === "logginn" && metode === "POST") {
-    const { passord } = await lesJson(request);
-    if (!likt(String(passord || ""), env.TAFSE_PASSORD)) {
-      await new Promise((r) => setTimeout(r, 600));
-      return feil(401, "Feil passord");
+    const b = await lesJson(request);
+    const bruker = await db.prepare("SELECT navn, salt, hash FROM brukere WHERE navn = ?").bind(tekst(b.navn, 60)).first();
+    if (!bruker || !likt(await hashPassord(String(b.passord || ""), bruker.salt), bruker.hash)) {
+      await vent(600);
+      return feil(401, "Feil navn eller passord.");
     }
-    const t = await token(env.TAFSE_PASSORD);
-    const sikker = url.protocol === "https:" ? "; Secure" : "";
-    return json({ innlogget: true }, 200, {
-      "Set-Cookie": `tafse=${t}; Path=/; Max-Age=31536000; HttpOnly; SameSite=Lax${sikker}`,
-    });
+    return json({ innlogget: true, navn: bruker.navn }, 200, { "Set-Cookie": await lagOkt(env, bruker, url) });
   }
   if (ressurs === "loggut" && metode === "POST") {
     return json({ innlogget: false }, 200, { "Set-Cookie": "tafse=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax" });
   }
 
   // Alt under krever innlogging
-  if (!(await erInnlogget(request, env))) return feil(401, "Ikke innlogget");
+  const meg = await hvemErInnlogget(request, env, db);
+  if (!meg) return feil(401, "Ikke innlogget");
 
-  const db = env.DB;
-  await sikreSkjema(db);
+  if (ressurs === "byttpassord" && metode === "POST") {
+    const b = await lesJson(request);
+    const bruker = await db.prepare("SELECT salt, hash FROM brukere WHERE navn = ?").bind(meg).first();
+    if (!likt(await hashPassord(String(b.gammelt || ""), bruker.salt), bruker.hash)) { await vent(600); return feil(401, "Feil nåværende passord."); }
+    if (typeof b.nytt !== "string" || b.nytt.length < 6) return feil(400, "Det nye passordet må ha minst seks tegn.");
+    const salt = hex(crypto.getRandomValues(new Uint8Array(16)));
+    const hash = await hashPassord(b.nytt, salt);
+    await db.prepare("UPDATE brukere SET salt = ?, hash = ? WHERE navn = ?").bind(salt, hash, meg).run();
+    return json({ ok: true }, 200, { "Set-Cookie": await lagOkt(env, { navn: meg, hash }, url) });
+  }
 
   // --- Vedtektsforslag ---
   if (ressurs === "forslag") {
@@ -132,11 +233,11 @@ export async function onRequest({ request, env, params }) {
     }
     if (!id && metode === "POST") {
       const b = await lesJson(request);
-      const navn = tekst(b.navn, 60), tittel = tekst(b.tittel, 160), innhold = tekst(b.tekst, 5000);
-      if (!navn || !tittel || !innhold) return feil(400, "Navn, tittel og forslag må fylles ut.");
+      const tittel = tekst(b.tittel, 160), innhold = tekst(b.tekst, 5000);
+      if (!tittel || !innhold) return feil(400, "Tittel og forslag må fylles ut.");
       const r = await db
         .prepare("INSERT INTO forslag (navn, paragraf, tittel, tekst, begrunnelse, opprettet) VALUES (?, ?, ?, ?, ?, ?)")
-        .bind(navn, tekst(b.paragraf, 40), tittel, innhold, tekst(b.begrunnelse, 5000), naa())
+        .bind(meg, tekst(b.paragraf, 40), tittel, innhold, tekst(b.begrunnelse, 5000), naa())
         .run();
       return json({ id: r.meta.last_row_id }, 201);
     }
@@ -147,30 +248,80 @@ export async function onRequest({ request, env, params }) {
       return json({ ok: true });
     }
     if (id && metode === "DELETE") {
-      await db.prepare("DELETE FROM forslag WHERE id = ?").bind(Number(id)).run();
-      return json({ ok: true });
+      const r = await db.prepare("DELETE FROM forslag WHERE id = ? AND navn = ?").bind(Number(id), meg).run();
+      return r.meta.changes ? json({ ok: true }) : feil(403, "Du kan bare slette dine egne forslag.");
     }
   }
 
-  // --- Kommentarer til møter ---
-  if (ressurs === "kommentarer") {
+  // --- Salongen: poster, svar og skåler ---
+  if (ressurs === "poster") {
     if (!id && metode === "GET") {
       const mote = url.searchParams.get("mote");
-      if (!gyldigMote(mote)) return feil(400, "Ugyldig møte.");
-      const { results } = await db.prepare("SELECT id, navn, tekst, opprettet FROM kommentarer WHERE mote = ? ORDER BY id ASC").bind(mote).all();
-      return json(results);
+      if (mote && !gyldigMote(mote)) return feil(400, "Ugyldig møte.");
+      const for_ = Number(url.searchParams.get("for")) || 2 ** 31;
+      const { results: poster } = mote
+        ? await db.prepare("SELECT * FROM poster WHERE mote = ? AND id < ? ORDER BY id DESC LIMIT 30").bind(mote, for_).all()
+        : await db.prepare("SELECT * FROM poster WHERE id < ? ORDER BY id DESC LIMIT 30").bind(for_).all();
+      if (!poster.length) return json([]);
+      const ider = poster.map((p) => p.id);
+      const plass = ider.map(() => "?").join(",");
+      const [{ results: svar }, { results: skal }] = await db.batch([
+        db.prepare(`SELECT id, post_id, navn, tekst, opprettet FROM svar WHERE post_id IN (${plass}) ORDER BY id ASC`).bind(...ider),
+        db.prepare(`SELECT post_id, navn FROM skal WHERE post_id IN (${plass})`).bind(...ider),
+      ]);
+      return json(poster.map((p) => ({
+        ...p,
+        svar: svar.filter((s) => s.post_id === p.id),
+        skal: skal.filter((s) => s.post_id === p.id).map((s) => s.navn),
+      })));
     }
     if (!id && metode === "POST") {
-      const b = await lesJson(request);
-      const navn = tekst(b.navn, 60), innhold = tekst(b.tekst, 5000);
-      if (!gyldigMote(b.mote) || !navn || !innhold) return feil(400, "Navn og kommentar må fylles ut.");
-      const r = await db.prepare("INSERT INTO kommentarer (mote, navn, tekst, opprettet) VALUES (?, ?, ?, ?)").bind(b.mote, navn, innhold, naa()).run();
+      let skjema;
+      try { skjema = await request.formData(); } catch (_) { return feil(400, "Kunne ikke lese posten."); }
+      const innhold = tekst(skjema.get("tekst"), 5000);
+      const mote = tekst(skjema.get("mote"), 40) || null;
+      if (mote && !gyldigMote(mote)) return feil(400, "Ugyldig møte.");
+      const fil = skjema.get("fil");
+      if (!innhold && !(fil && typeof fil !== "string")) return feil(400, "Skriv noe eller legg ved et bilde.");
+      let bildeId = null;
+      if (fil && typeof fil !== "string") {
+        const b = await lagreBilde(db, fil, mote || "salongen", meg, innhold.slice(0, 300));
+        if (b.feil) return feil(400, b.feil);
+        bildeId = b.id;
+      }
+      const r = await db.prepare("INSERT INTO poster (navn, mote, tekst, bilde_id, opprettet) VALUES (?, ?, ?, ?, ?)").bind(meg, mote, innhold, bildeId, naa()).run();
       return json({ id: r.meta.last_row_id }, 201);
     }
-    if (id && metode === "DELETE") {
-      await db.prepare("DELETE FROM kommentarer WHERE id = ?").bind(Number(id)).run();
+    if (id && !under && metode === "DELETE") {
+      const post = await db.prepare("SELECT navn, bilde_id FROM poster WHERE id = ?").bind(Number(id)).first();
+      if (!post) return feil(404, "Fant ikke posten.");
+      if (post.navn !== meg) return feil(403, "Du kan bare slette dine egne poster.");
+      const steg = [
+        db.prepare("DELETE FROM poster WHERE id = ?").bind(Number(id)),
+        db.prepare("DELETE FROM svar WHERE post_id = ?").bind(Number(id)),
+        db.prepare("DELETE FROM skal WHERE post_id = ?").bind(Number(id)),
+      ];
+      if (post.bilde_id) steg.push(db.prepare("DELETE FROM bilder WHERE id = ?").bind(post.bilde_id));
+      await db.batch(steg);
       return json({ ok: true });
     }
+    if (id && under === "svar" && metode === "POST") {
+      const { tekst: t } = await lesJson(request);
+      const innhold = tekst(t, 3000);
+      if (!innhold) return feil(400, "Svaret er tomt.");
+      if (!(await db.prepare("SELECT 1 FROM poster WHERE id = ?").bind(Number(id)).first())) return feil(404, "Fant ikke posten.");
+      await db.prepare("INSERT INTO svar (post_id, navn, tekst, opprettet) VALUES (?, ?, ?, ?)").bind(Number(id), meg, innhold, naa()).run();
+      return json({ ok: true }, 201);
+    }
+    if (id && under === "skal" && metode === "POST") {
+      const finnes = await db.prepare("SELECT 1 FROM skal WHERE post_id = ? AND navn = ?").bind(Number(id), meg).first();
+      await db.prepare(finnes ? "DELETE FROM skal WHERE post_id = ? AND navn = ?" : "INSERT INTO skal (post_id, navn) VALUES (?, ?)").bind(Number(id), meg).run();
+      return json({ skalt: !finnes });
+    }
+  }
+  if (ressurs === "svar" && id && metode === "DELETE") {
+    const r = await db.prepare("DELETE FROM svar WHERE id = ? AND navn = ?").bind(Number(id), meg).run();
+    return r.meta.changes ? json({ ok: true }) : feil(403, "Du kan bare slette dine egne svar.");
   }
 
   // --- Bilder fra møter ---
@@ -187,19 +338,10 @@ export async function onRequest({ request, env, params }) {
     if (!id && metode === "POST") {
       let skjema;
       try { skjema = await request.formData(); } catch (_) { return feil(400, "Fant ikke bildet."); }
-      const fil = skjema.get("fil");
       const mote = skjema.get("mote");
-      const navn = tekst(skjema.get("navn"), 60);
-      if (!gyldigMote(mote) || !navn) return feil(400, "Velg navn før du laster opp.");
-      if (!fil || typeof fil === "string") return feil(400, "Fant ikke bildet.");
-      if (!BILDETYPER.includes(fil.type)) return feil(400, "Bare JPG, PNG og WebP støttes.");
-      if (fil.size > MAKS_BILDE) return feil(413, "Bildet er for stort.");
-      const data = await fil.arrayBuffer();
-      const r = await db
-        .prepare("INSERT INTO bilder (mote, navn, tekst, type, storrelse, data, opprettet) VALUES (?, ?, ?, ?, ?, ?, ?)")
-        .bind(mote, navn, tekst(skjema.get("tekst"), 300), fil.type, data.byteLength, data, naa())
-        .run();
-      return json({ id: r.meta.last_row_id }, 201);
+      if (!gyldigMote(mote)) return feil(400, "Ugyldig møte.");
+      const b = await lagreBilde(db, skjema.get("fil"), mote, meg, tekst(skjema.get("tekst"), 300));
+      return b.feil ? feil(400, b.feil) : json({ id: b.id }, 201);
     }
     if (id && metode === "GET") {
       const rad = await db.prepare("SELECT type, data FROM bilder WHERE id = ?").bind(Number(id)).first();
@@ -210,7 +352,9 @@ export async function onRequest({ request, env, params }) {
       });
     }
     if (id && metode === "DELETE") {
-      await db.prepare("DELETE FROM bilder WHERE id = ?").bind(Number(id)).run();
+      const r = await db.prepare("DELETE FROM bilder WHERE id = ? AND navn = ?").bind(Number(id), meg).run();
+      if (!r.meta.changes) return feil(403, "Du kan bare slette dine egne bilder.");
+      await db.prepare("UPDATE poster SET bilde_id = NULL WHERE bilde_id = ?").bind(Number(id)).run();
       return json({ ok: true });
     }
   }
@@ -222,17 +366,14 @@ export async function onRequest({ request, env, params }) {
       return json(results);
     }
     if (id && metode === "PUT") {
-      const navn = tekst(decodeURIComponent(id), 60);
-      const { tekst: innhold } = await lesJson(request);
-      const t = tekst(innhold, 3000);
-      if (!navn) return feil(400, "Mangler navn.");
+      const t = tekst((await lesJson(request)).tekst, 3000);
       if (!t) {
-        await db.prepare("DELETE FROM profiler WHERE navn = ?").bind(navn).run();
+        await db.prepare("DELETE FROM profiler WHERE navn = ?").bind(meg).run();
         return json({ ok: true });
       }
       await db
         .prepare("INSERT INTO profiler (navn, tekst, oppdatert) VALUES (?, ?, ?) ON CONFLICT(navn) DO UPDATE SET tekst = excluded.tekst, oppdatert = excluded.oppdatert")
-        .bind(navn, t, naa())
+        .bind(meg, t, naa())
         .run();
       return json({ ok: true });
     }

@@ -305,3 +305,27 @@ input:focus, select:focus, textarea:focus, .knapp:focus-visible, a:focus-visible
 .bror .verv { font-family: var(--display); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--gull); }
 .bror p { margin: 0; white-space: pre-line; }
 .bror .tom { color: var(--dempet); font-style: italic; }
+
+/* Salongen */
+.skjult { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.strom { display: flex; flex-direction: column; gap: 16px; margin-top: 24px; }
+.post { border: 1px solid var(--linje); background: var(--flate); padding: 20px 22px; display: flex; flex-direction: column; gap: 12px; }
+.post-hode { display: flex; align-items: center; gap: 12px; }
+.medaljong.liten { width: 42px; height: 42px; font-size: 18px; flex: none; box-shadow: inset 0 0 0 3px var(--bunn), inset 0 0 0 4px var(--gull); }
+.post-tid { font-size: 15px; }
+.post-mote { font-size: 15px; text-decoration: none; }
+.post-tekst { margin: 0; white-space: pre-line; }
+.post-bilde { padding: 0; border: 0; background: none; cursor: zoom-in; display: block; }
+.post-bilde img { max-height: 560px; width: auto; max-width: 100%; border: 1px solid var(--linje); }
+.post-handlinger { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.liten-knapp.skalt { color: var(--bunn); background: var(--gull); border-color: var(--gull); }
+.svar-liste { border-top: 1px solid var(--linje); padding-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+.svar { font-size: 17px; }
+.svar .post-tekst { white-space: pre-line; }
+.svar-skjema { display: flex; gap: 8px; }
+.svar-skjema input { min-height: 40px; padding: 8px 12px; font-size: 17px; }
+.lenkeknapp { background: none; border: 0; color: var(--dempet); font: inherit; text-decoration: underline; cursor: pointer; padding: 0; }
+.skriv-post textarea { min-height: 90px; }
+[hidden] { display: none !important; }
+#port-felt { display: flex; flex-direction: column; gap: 18px; }
+#port-felt:empty { display: none; }

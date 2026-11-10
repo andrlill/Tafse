@@ -26,11 +26,12 @@
   moter.forEach((m) => m.tafsemestere.forEach((n) => (verv[n] = m)));
 
   let profiler = {};
-  let innlogget = false;
-  try { innlogget = (await api("meg")).innlogget; } catch (_) {}
+  const harBruker = new Set(await api("brukere").catch(() => []));
+  const innlogget = !!(await hvemErJeg());
 
   async function tegn() {
-    if (innlogget) {
+    if (MEG) {
+      profiler = {};
       try { (await api("profiler")).forEach((p) => (profiler[p.navn] = p.tekst)); } catch (_) {}
     }
     document.getElementById("brodre").innerHTML = medlemmer.map((n) => {
@@ -38,14 +39,14 @@
       const vervTekst = m
         ? `Tafsemester · ${esc(m.navn)}${status(m) === "forbi" ? " (avholdt)" : ""}`
         : "Tafsemester · trekkes ved neste runde";
-      const tekst = !innlogget
-        ? `<p class="tom">Logg inn nederst for å lese presentasjonen.</p>`
+      const tekst = !MEG
+        ? `<p class="tom">Logg inn for å lese presentasjonen.</p>`
         : profiler[n]
           ? `<p>${esc(profiler[n])}</p>`
-          : `<p class="tom">${esc(n)} har ennå ikke skrevet noe om seg selv.</p>`;
+          : `<p class="tom">${esc(n)} har ennå ikke skrevet noe om seg selv${harBruker.has(n) ? "" : ", og har ikke laget bruker"}.</p>`;
       return `<article class="bror">
         <div class="medaljong" aria-hidden="true">${esc(n[0])}</div>
-        <h3>${esc(n)}</h3>
+        <h3>${esc(n)}${n === MEG ? ' <span class="merkelapp">Deg</span>' : ""}</h3>
         <span class="verv">${vervTekst}</span>
         ${tekst}
       </article>`;
@@ -57,34 +58,50 @@
   const skriv = document.getElementById("skriv");
   skriv.className = "seksjon";
   kreverInnlogging(skriv, async () => {
-    innlogget = true;
     await tegn();
     skriv.innerHTML = `<h2>Skriv om deg selv</h2>
       <form class="skjema" id="profil">
-        <div class="felt"><label for="navn">Hvem er du?</label><select id="navn" required>${await navnValg()}</select></div>
-        <div class="felt"><label for="tekst">Din presentasjon</label><textarea id="tekst" maxlength="3000" placeholder="Yrke, livsmotto, livrett, fremste meritt innen etegilder. Bare det du selv vil dele."></textarea></div>
+        <div class="felt"><label for="tekst">Presentasjonen din, ${esc(MEG)}</label><textarea id="tekst" maxlength="3000" placeholder="Yrke, livsmotto, livrett, fremste meritt innen etegilder. Bare det du selv vil dele."></textarea></div>
         <div><button class="knapp" type="submit">Lagre</button></div>
         <div id="melding" role="status"></div>
+      </form>
+      <h2 style="margin-top:40px">Bytt passord</h2>
+      <form class="skjema" id="passord">
+        <div class="to-kol">
+          <div class="felt"><label for="gammelt">Nåværende passord</label><input id="gammelt" type="password" autocomplete="current-password" required></div>
+          <div class="felt"><label for="nytt">Nytt passord</label><input id="nytt" type="password" minlength="6" autocomplete="new-password" required></div>
+        </div>
+        <div><button class="knapp sekundar" type="submit">Bytt passord</button></div>
+        <div id="p-melding" role="status"></div>
       </form>`;
-    const navn = document.getElementById("navn");
     const felt = document.getElementById("tekst");
-    const fyll = () => { felt.value = profiler[navn.value] || ""; };
-    navn.addEventListener("change", () => { lagreNavn(navn.value); fyll(); });
-    fyll();
+    felt.value = profiler[MEG] || "";
     document.getElementById("profil").addEventListener("submit", async (e) => {
       e.preventDefault();
       const melding = document.getElementById("melding");
-      if (!navn.value) { melding.innerHTML = `<p class="melding feil">Velg navnet ditt.</p>`; return; }
       try {
-        await api(`profiler/${encodeURIComponent(navn.value)}`, {
+        await api(`profiler/${encodeURIComponent(MEG)}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ tekst: felt.value }),
         });
-        profiler[navn.value] = felt.value.trim();
-        if (!profiler[navn.value]) delete profiler[navn.value];
         melding.innerHTML = `<p class="melding">Lagret.</p>`;
         tegn();
+      } catch (err) {
+        melding.innerHTML = `<p class="melding feil">${esc(err.message)}</p>`;
+      }
+    });
+    document.getElementById("passord").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const melding = document.getElementById("p-melding");
+      try {
+        await api("byttpassord", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ gammelt: document.getElementById("gammelt").value, nytt: document.getElementById("nytt").value }),
+        });
+        e.target.reset();
+        melding.innerHTML = `<p class="melding">Passordet er byttet.</p>`;
       } catch (err) {
         melding.innerHTML = `<p class="melding feil">${esc(err.message)}</p>`;
       }
