@@ -10,7 +10,7 @@ Nettsiden til Taffelakademiet for Samvær og Etegilder.
 | `kalender.html` | Alle møtedatoer |
 | `vedtekter.html` | Vedtektene (§ 1–12) |
 | `salongen.html` | Salongen: poster, bilder, svar og skåler (krever innlogging) |
-| `forslag.html` | Innsending av vedtektsforslag (krever innlogging) |
+| `saker.html` | Saker til behandling: innmelding, veiledende avstemning og kommentarer (krever innlogging) |
 | `medlemmer.html` | Brødrene, med profilbilde, presentasjon og bytte av passord |
 | `velkommen.html` | Registrering fra den personlige invitasjonslenken |
 | `invitasjoner.html` | Oversikt over invitasjonslenker (kun administratorer) |
@@ -62,7 +62,14 @@ Profil og innhold blir liggende.
 
 **Bytter dere akademipassordet**, blir alle logget ut og alle gamle invitasjonslenker slutter å virke.
 
+## Saker til behandling
+
+Alle kan melde inn saker. En ny sak knyttes automatisk til det første møtet som er minst én uke frem i
+tid (§ 6 nr. 2). Brødrene kan stemme for, mot eller avstå og kommentere. Stemmene er veiledende;
+saken avgjøres på Tafsemøtet. Tafsemesterne for neste møte og administratorer registrerer utfallet
+(vedtatt eller forkastet). Den som meldte inn saken, kan trekke den.
+
 ## Personvern
 
 Forside, kalender, vedtekter, fortellingen og navnelisten over brødrene er åpne for alle.
-Salongen, bilder, profilbilder, forslag og presentasjoner krever innlogging.
+Salongen, bilder, profilbilder, saker og presentasjoner krever innlogging.

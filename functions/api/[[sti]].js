@@ -6,7 +6,9 @@
 
 const MAKS_BILDE = 1_900_000; // byte, D1 tåler rundt 2 MB per rad
 const BILDETYPER = ["image/jpeg", "image/png", "image/webp"];
-const STATUSER = ["innmeldt", "vedtatt", "forkastet"];
+const STATUSER = ["innmeldt", "vedtatt", "forkastet", "trukket"];
+const SAKSTYPER = ["Vedtektsendring", "Medlemsopptak", "Møtested", "Annen sak"];
+const STEMMER = ["for", "mot", "avstar"];
 const OKT_DAGER = 365;
 
 let skjemaKlart = false;
@@ -60,6 +62,19 @@ async function sikreSkjema(db) {
       navn TEXT NOT NULL,
       PRIMARY KEY (post_id, navn)
     )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS stemmer (
+      sak_id INTEGER NOT NULL,
+      navn TEXT NOT NULL,
+      stemme TEXT NOT NULL,
+      PRIMARY KEY (sak_id, navn)
+    )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS sakskommentarer (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      sak_id INTEGER NOT NULL,
+      navn TEXT NOT NULL,
+      tekst TEXT NOT NULL,
+      opprettet TEXT NOT NULL
+    )`),
     db.prepare(`CREATE TABLE IF NOT EXISTS profiler (
       navn TEXT PRIMARY KEY,
       tekst TEXT NOT NULL,
@@ -74,6 +89,8 @@ async function sikreSkjema(db) {
   // Eldre databaser mangler kolonnen tafse
   try { await db.prepare("ALTER TABLE profiler ADD COLUMN tafse TEXT").run(); } catch (_) {}
   try { await db.prepare("ALTER TABLE profiler ADD COLUMN bilde_id INTEGER").run(); } catch (_) {}
+  try { await db.prepare("ALTER TABLE forslag ADD COLUMN type TEXT").run(); } catch (_) {}
+  try { await db.prepare("ALTER TABLE forslag ADD COLUMN mote TEXT").run(); } catch (_) {}
   skjemaKlart = true;
 }
 
@@ -156,6 +173,19 @@ async function lesData(env, url) {
 }
 const medlemsliste = async (env, url) => (await lesData(env, url)).medlemmer || [];
 const erAdmin = async (env, url, navn) => ((await lesData(env, url)).administratorer || []).includes(navn);
+
+// Møtet en ny sak skal behandles på: det første møtet med dato minst sju dager frem
+// i tid (§ 6 nr. 2), ellers det første møtet uten fastsatt dato.
+function behandlesPa(moter) {
+  const frist = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+  return (moter || []).find((m) => m.dato && m.dato >= frist) || (moter || []).find((m) => !m.dato) || null;
+}
+
+// Neste møte som ikke er avholdt
+function nesteMote(moter) {
+  const idag = new Date().toISOString().slice(0, 10);
+  return (moter || []).find((m) => !m.dato || m.dato >= idag) || null;
+}
 
 // Personlig invitasjonskode, avledet av navnet og akademipassordet
 const invitasjonskode = async (env, navn) => (await hmac(env.TAFSE_PASSORD, `invitasjon|${navn}`)).slice(0, 20);
@@ -267,32 +297,84 @@ export async function onRequest({ request, env, params }) {
     return json({ ok: true }, 200, { "Set-Cookie": await lagOkt(env, { navn: meg, hash }, url) });
   }
 
-  // --- Vedtektsforslag ---
+  // --- Saker til behandling ---
   if (ressurs === "forslag") {
     if (!id && metode === "GET") {
-      const { results } = await db.prepare("SELECT id, navn, paragraf, tittel, tekst, begrunnelse, status, opprettet FROM forslag ORDER BY id DESC").all();
-      return json(results);
+      const [{ results: saker }, { results: stemmer }, { results: kommentarer }] = await db.batch([
+        db.prepare("SELECT id, navn, type, paragraf, tittel, tekst, begrunnelse, status, mote, opprettet FROM forslag ORDER BY id DESC"),
+        db.prepare("SELECT sak_id, navn, stemme FROM stemmer"),
+        db.prepare("SELECT id, sak_id, navn, tekst, opprettet FROM sakskommentarer ORDER BY id ASC"),
+      ]);
+      const data = await lesData(env, url);
+      const neste = nesteMote(data.moter);
+      const kanBehandle = (await erAdmin(env, url, meg)) || (neste && neste.tafsemestere.includes(meg));
+      return json({
+        kanBehandle: !!kanBehandle,
+        nesteFrist: behandlesPa(data.moter),
+        saker: saker.map((s) => ({
+          ...s,
+          type: s.type || "Vedtektsendring",
+          stemmer: stemmer.filter((v) => v.sak_id === s.id).map(({ navn, stemme }) => ({ navn, stemme })),
+          kommentarer: kommentarer.filter((k) => k.sak_id === s.id),
+        })),
+      });
     }
     if (!id && metode === "POST") {
       const b = await lesJson(request);
       const tittel = tekst(b.tittel, 160), innhold = tekst(b.tekst, 5000);
-      if (!tittel || !innhold) return feil(400, "Tittel og forslag må fylles ut.");
+      const type = SAKSTYPER.includes(b.type) ? b.type : "Annen sak";
+      if (!tittel || !innhold) return feil(400, "Tittel og beskrivelse må fylles ut.");
+      const mote = behandlesPa((await lesData(env, url)).moter);
       const r = await db
-        .prepare("INSERT INTO forslag (navn, paragraf, tittel, tekst, begrunnelse, opprettet) VALUES (?, ?, ?, ?, ?, ?)")
-        .bind(meg, tekst(b.paragraf, 40), tittel, innhold, tekst(b.begrunnelse, 5000), naa())
+        .prepare("INSERT INTO forslag (navn, type, paragraf, tittel, tekst, begrunnelse, mote, opprettet) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+        .bind(meg, type, type === "Vedtektsendring" ? tekst(b.paragraf, 40) : "", tittel, innhold, tekst(b.begrunnelse, 5000), mote ? mote.id : null, naa())
         .run();
       return json({ id: r.meta.last_row_id }, 201);
     }
-    if (id && metode === "PATCH") {
-      const { status } = await lesJson(request);
-      if (!STATUSER.includes(status)) return feil(400, "Ugyldig status.");
-      await db.prepare("UPDATE forslag SET status = ? WHERE id = ?").bind(status, Number(id)).run();
+    if (id && !under && metode === "PATCH") {
+      const b = await lesJson(request);
+      const sak = await db.prepare("SELECT navn FROM forslag WHERE id = ?").bind(Number(id)).first();
+      if (!sak) return feil(404, "Fant ikke saken.");
+      if (!STATUSER.includes(b.status)) return feil(400, "Ugyldig status.");
+      const data = await lesData(env, url);
+      const neste = nesteMote(data.moter);
+      const kan = (await erAdmin(env, url, meg)) || (neste && neste.tafsemestere.includes(meg)) || (b.status === "trukket" && sak.navn === meg);
+      if (!kan) return feil(403, "Bare Tafsemesterne kan registrere utfallet av en sak.");
+      await db.prepare("UPDATE forslag SET status = ? WHERE id = ?").bind(b.status, Number(id)).run();
       return json({ ok: true });
     }
-    if (id && metode === "DELETE") {
+    if (id && !under && metode === "DELETE") {
       const r = await db.prepare("DELETE FROM forslag WHERE id = ? AND navn = ?").bind(Number(id), meg).run();
-      return r.meta.changes ? json({ ok: true }) : feil(403, "Du kan bare slette dine egne forslag.");
+      if (!r.meta.changes) return feil(403, "Du kan bare slette dine egne saker.");
+      await db.batch([
+        db.prepare("DELETE FROM stemmer WHERE sak_id = ?").bind(Number(id)),
+        db.prepare("DELETE FROM sakskommentarer WHERE sak_id = ?").bind(Number(id)),
+      ]);
+      return json({ ok: true });
     }
+    if (id && under === "stem" && metode === "POST") {
+      const { stemme } = await lesJson(request);
+      const sak = await db.prepare("SELECT status FROM forslag WHERE id = ?").bind(Number(id)).first();
+      if (!sak) return feil(404, "Fant ikke saken.");
+      if (sak.status !== "innmeldt") return feil(400, "Saken er ferdigbehandlet.");
+      if (stemme === null || stemme === "") {
+        await db.prepare("DELETE FROM stemmer WHERE sak_id = ? AND navn = ?").bind(Number(id), meg).run();
+        return json({ ok: true });
+      }
+      if (!STEMMER.includes(stemme)) return feil(400, "Ugyldig stemme.");
+      await db.prepare("INSERT INTO stemmer (sak_id, navn, stemme) VALUES (?, ?, ?) ON CONFLICT(sak_id, navn) DO UPDATE SET stemme = excluded.stemme").bind(Number(id), meg, stemme).run();
+      return json({ ok: true });
+    }
+    if (id && under === "kommentar" && metode === "POST") {
+      const t = tekst((await lesJson(request)).tekst, 3000);
+      if (!t) return feil(400, "Kommentaren er tom.");
+      await db.prepare("INSERT INTO sakskommentarer (sak_id, navn, tekst, opprettet) VALUES (?, ?, ?, ?)").bind(Number(id), meg, t, naa()).run();
+      return json({ ok: true }, 201);
+    }
+  }
+  if (ressurs === "sakskommentar" && id && metode === "DELETE") {
+    const r = await db.prepare("DELETE FROM sakskommentarer WHERE id = ? AND navn = ?").bind(Number(id), meg).run();
+    return r.meta.changes ? json({ ok: true }) : feil(403, "Du kan bare slette dine egne kommentarer.");
   }
 
   // --- Salongen: poster, svar og skåler ---

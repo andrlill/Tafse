@@ -22,7 +22,7 @@ const SIDER = [
   ["salongen.html", "Salongen"],
   ["moter.html", "Møtene"],
   ["vedtekter.html", "Vedtekter"],
-  ["forslag.html", "Forslag"],
+  ["saker.html", "Saker"],
   ["medlemmer.html", "Brødrene"],
   ["fortellingen.html", "Fortellingen"],
 ];
@@ -188,7 +188,7 @@ async function kreverInnlogging(boks, vedInnlogget) {
       const svar = await api("logginn", { method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ navn: navn.value, passord: boks.querySelector("#passord").value }) });
       MEG = svar.navn;
-      visInnloggetLinje();
+      await hvemErJeg();
       boks.innerHTML = "";
       vedInnlogget(MEG);
     } catch (err) {

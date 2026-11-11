@@ -351,3 +351,35 @@ input:focus, select:focus, textarea:focus, .knapp:focus-visible, a:focus-visible
 .bror h4 { margin: 8px 0 0; font-family: var(--display); font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--gull); font-weight: 600; }
 .bilde-velger { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
 .bilde-velger .medaljong { width: 96px; height: 96px; font-size: 36px; flex: none; }
+
+/* Saker til behandling */
+#ny-sak-boks > summary { display: inline-flex; margin: 0; }
+#ny-sak-boks > summary::-webkit-details-marker { display: none; }
+#ny-sak-boks:not([open]) { background: none; border: 0; }
+#ny-sak-boks[open] > summary { margin: 24px 24px 0; }
+.faner { display: flex; gap: 0; border-bottom: 1px solid var(--linje); }
+.faner button {
+  background: none; border: 0; border-bottom: 2px solid transparent; color: var(--dempet);
+  font-family: var(--display); font-size: 14px; letter-spacing: .14em; text-transform: uppercase;
+  padding: 12px 18px; min-height: 48px; cursor: pointer; margin-bottom: -1px;
+}
+.faner button[aria-selected="true"] { color: var(--gull); border-bottom-color: var(--gull); }
+.sitat { margin: 14px 0 0; padding: 14px 18px; border-left: 2px solid var(--gull); background: var(--bunn); white-space: pre-line; }
+.stemmer { margin-top: 18px; display: flex; flex-direction: column; gap: 8px; }
+.stemme-rad { display: grid; grid-template-columns: 92px minmax(60px, 1fr) 24px minmax(0, 2fr); gap: 12px; align-items: center; }
+.stemme-knapp {
+  font-family: var(--display); font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+  background: transparent; color: var(--tekst); border: 1px solid var(--linje); min-height: 40px; cursor: pointer;
+}
+.stemme-knapp:hover:not(:disabled) { border-color: var(--gull); color: var(--gull); }
+.stemme-knapp.valgt { background: var(--gull); color: var(--bunn); border-color: var(--gull); }
+.stemme-knapp:disabled { cursor: default; opacity: .7; }
+.stemme-stolpe { height: 8px; background: var(--bunn); border: 1px solid var(--linje); }
+.stemme-stolpe span { display: block; height: 100%; background: var(--gull); }
+.stemme-antall { font-family: var(--display); color: var(--gull); text-align: right; }
+.stemme-navn { font-size: 15px; }
+.status-trukket { color: var(--dempet); border-color: var(--linje); }
+@media (max-width: 640px) {
+  .stemme-rad { grid-template-columns: 80px minmax(0, 1fr) 24px; }
+  .stemme-navn { grid-column: 1 / -1; margin-top: -4px; }
+}

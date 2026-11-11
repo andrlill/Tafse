@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Saker til behandling · TAFSE</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main class="side smal">
+  <p class="overline">§ 6 Agenda og innmelding av saker</p>
+  <h1 class="side-tittel">Saker til behandling</h1>
+  <div id="innhold"></div>
+</main>
+<script src="assets/app.js"></script>
+<script>
+const boks = document.getElementById("innhold");
+const STATUS_NAVN = { innmeldt: "Til behandling", vedtatt: "Vedtatt", forkastet: "Forkastet", trukket: "Trukket" };
+const STEMME_NAVN = { for: "For", mot: "Mot", avstar: "Avstår" };
+const TYPER = ["Vedtektsendring", "Medlemsopptak", "Møtested", "Annen sak"];
+
+kreverInnlogging(boks, async () => {
+  const { moter } = await hentData();
+  const moteNavn = Object.fromEntries(moter.map((m) => [m.id, m]));
+  const paragrafer = ["Ny paragraf", ...Array.from({ length: 12 }, (_, i) => `§ ${i + 1}`)];
+  let visning = "apne";
+  let data = { saker: [] };
+
+  boks.innerHTML = `
+    <div class="melding" id="frist"></div>
+    <p class="dempet" style="font-size:16px; margin:12px 0 28px">Stemmene her er veiledende og viser hvor brødrene står. Saken avgjøres formelt på Tafsemøtet, blant de fremmøtte (§ 9).</p>
+
+    <details class="skjema" id="ny-sak-boks" style="padding:0">
+      <summary class="knapp" style="list-style:none">Meld inn en sak</summary>
+      <form id="ny-sak" style="display:flex; flex-direction:column; gap:18px; padding:24px">
+        <div class="to-kol">
+          <div class="felt"><label for="type">Type sak</label><select id="type">${TYPER.map((t) => `<option>${t}</option>`).join("")}</select></div>
+          <div class="felt" id="paragraf-felt"><label for="paragraf">Gjelder</label><select id="paragraf">${paragrafer.map((p) => `<option>${p}</option>`).join("")}</select></div>
+        </div>
+        <div class="felt"><label for="tittel">Kort tittel</label><input id="tittel" maxlength="160" required></div>
+        <div class="felt"><label for="tekst" id="tekst-etikett">Forslag til ny tekst</label><textarea id="tekst" maxlength="5000" required style="min-height:150px"></textarea></div>
+        <div class="felt"><label for="begrunnelse">Begrunnelse</label><textarea id="begrunnelse" maxlength="5000"></textarea></div>
+        <div><button class="knapp" type="submit">Send inn</button></div>
+        <div id="melding" role="status"></div>
+      </form>
+    </details>
+
+    <div class="faner" role="tablist" style="margin-top:40px">
+      <button type="button" role="tab" data-visning="apne" aria-selected="true">Til behandling</button>
+      <button type="button" role="tab" data-visning="ferdige" aria-selected="false">Ferdigbehandlet</button>
+    </div>
+    <div class="innlegg-liste" id="liste" style="margin-top:20px"><p class="dempet">Laster …</p></div>`;
+
+  const type = document.getElementById("type");
+  type.addEventListener("change", () => {
+    const vedtekt = type.value === "Vedtektsendring";
+    document.getElementById("paragraf-felt").hidden = !vedtekt;
+    document.getElementById("tekst-etikett").textContent = vedtekt ? "Forslag til ny tekst" : "Beskrivelse av saken";
+  });
+
+  document.getElementById("ny-sak").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const knapp = e.target.querySelector("button");
+    const melding = document.getElementById("melding");
+    knapp.disabled = true;
+    try {
+      await api("forslag", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: type.value,
+          paragraf: document.getElementById("paragraf").value,
+          tittel: document.getElementById("tittel").value,
+          tekst: document.getElementById("tekst").value,
+          begrunnelse: document.getElementById("begrunnelse").value,
+        }),
+      });
+      e.target.reset();
+      type.dispatchEvent(new Event("change"));
+      document.getElementById("ny-sak-boks").open = false;
+      melding.innerHTML = "";
+      visning = "apne";
+      await last();
+    } catch (err) {
+      melding.innerHTML = `<p class="melding feil">${esc(err.message)}</p>`;
+    } finally {
+      knapp.disabled = false;
+    }
+  });
+
+  function stemmeHtml(s) {
+    const min = (s.stemmer.find((v) => v.navn === MEG) || {}).stemme;
+    const totalt = s.stemmer.length || 1;
+    const apen = s.status === "innmeldt";
+    return `<div class="stemmer">
+      ${Object.entries(STEMME_NAVN).map(([k, navn]) => {
+        const hvem = s.stemmer.filter((v) => v.stemme === k).map((v) => v.navn);
+        return `<div class="stemme-rad">
+          <button class="stemme-knapp${min === k ? " valgt" : ""}" type="button" data-stem="${s.id}" data-valg="${k}" aria-pressed="${min === k}" ${apen ? "" : "disabled"}>${navn}</button>
+          <div class="stemme-stolpe"><span style="width:${(hvem.length / totalt) * 100}%"></span></div>
+          <span class="stemme-antall">${hvem.length}</span>
+          <span class="dempet stemme-navn">${esc(hvem.join(", "))}</span>
+        </div>`;
+      }).join("")}
+      ${apen && min ? `<button class="lenkeknapp" type="button" data-stem="${s.id}" data-valg="">Trekk stemmen min</button>` : ""}
+    </div>`;
+  }
+
+  function sakHtml(s) {
+    const mote = moteNavn[s.mote];
+    const vedtekt = s.type === "Vedtektsendring";
+    const handlinger = [];
+    if (s.status === "innmeldt" && data.kanBehandle) {
+      handlinger.push(`<button class="liten-knapp" data-status="vedtatt" data-id="${s.id}">Registrer som vedtatt</button>`);
+      handlinger.push(`<button class="liten-knapp" data-status="forkastet" data-id="${s.id}">Registrer som forkastet</button>`);
+    }
+    if (s.status !== "innmeldt" && data.kanBehandle) handlinger.push(`<button class="liten-knapp" data-status="innmeldt" data-id="${s.id}">Gjenåpne</button>`);
+    if (s.navn === MEG && s.status === "innmeldt") handlinger.push(`<button class="liten-knapp" data-status="trukket" data-id="${s.id}">Trekk saken</button>`);
+    if (s.navn === MEG) handlinger.push(`<button class="liten-knapp" data-slett="${s.id}">Slett</button>`);
+
+    return `<article class="innlegg sak">
+      <div class="innlegg-topp">
+        <span class="overline" style="margin:0">${esc(s.type)}${vedtekt && s.paragraf ? ` · ${esc(s.paragraf)}` : ""}</span>
+        <span class="merkelapp status-${esc(s.status)}">${esc(STATUS_NAVN[s.status] || s.status)}</span>
+      </div>
+      <h3 style="margin:4px 0 6px">${esc(s.tittel)}</h3>
+      <div class="dempet" style="font-size:16px">Meldt inn av ${esc(s.navn)} · ${esc(tidTekst(s.opprettet))}${mote ? ` · Behandles på ${esc(mote.navn)}` : ""}</div>
+      ${vedtekt ? `<blockquote class="sitat">${esc(s.tekst)}</blockquote>` : `<p>${esc(s.tekst)}</p>`}
+      ${s.begrunnelse ? `<p class="dempet"><em>Begrunnelse:</em> ${esc(s.begrunnelse)}</p>` : ""}
+      ${stemmeHtml(s)}
+      <div class="svar-liste" style="margin-top:16px">
+        ${s.kommentarer.map((k) => `<div class="svar"><strong>${esc(k.navn)}</strong> <span class="post-tekst">${esc(k.tekst)}</span>
+          <span class="dempet post-tid">${esc(tidTekst(k.opprettet))}${k.navn === MEG ? ` · <button class="lenkeknapp" data-slett-kommentar="${k.id}">slett</button>` : ""}</span></div>`).join("")}
+        <form class="svar-skjema" data-kommenter="${s.id}">
+          <label class="skjult" for="k-${s.id}">Kommentar</label>
+          <input id="k-${s.id}" maxlength="3000" placeholder="Kommenter saken …">
+          <button class="liten-knapp" type="submit">Send</button>
+        </form>
+      </div>
+      ${handlinger.length ? `<div class="handlinger">${handlinger.join("")}</div>` : ""}
+    </article>`;
+  }
+
+  function tegn() {
+    const frist = data.nesteFrist;
+    const fristEl = document.getElementById("frist");
+    if (frist && frist.dato) {
+      const d = tilDato(frist.dato);
+      const f = new Date(d.getTime() - 7 * 86400000);
+      fristEl.innerHTML = `Nye saker behandles på <strong>${esc(frist.navn)}</strong> (${esc(datoTekst(frist))}). Fristen for å melde inn er <strong>${f.getDate()}. ${MANEDER[f.getMonth()]}</strong>, én uke før møtet (§ 6 nr. 2).`;
+    } else if (frist) {
+      fristEl.innerHTML = `Nye saker behandles på <strong>${esc(frist.navn)}</strong>. Datoen er ikke fastsatt ennå.`;
+    } else {
+      fristEl.hidden = true;
+    }
+    document.querySelectorAll(".faner button").forEach((b) => b.setAttribute("aria-selected", b.dataset.visning === visning));
+    const utvalg = data.saker.filter((s) => (visning === "apne") === (s.status === "innmeldt"));
+    document.getElementById("liste").innerHTML = utvalg.length
+      ? utvalg.map(sakHtml).join("")
+      : `<p class="tomt">${visning === "apne" ? "Ingen saker til behandling." : "Ingen ferdigbehandlede saker ennå."}</p>`;
+  }
+
+  async function last() {
+    try {
+      data = await api("forslag");
+      tegn();
+    } catch (err) {
+      document.getElementById("liste").innerHTML = `<p class="melding feil">${esc(err.message)}</p>`;
+    }
+  }
+
+  document.querySelector(".faner").addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (b) { visning = b.dataset.visning; tegn(); }
+  });
+
+  const liste = document.getElementById("liste");
+  liste.addEventListener("click", async (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    try {
+      if (b.dataset.stem !== undefined) {
+        await api(`forslag/${b.dataset.stem}/stem`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ stemme: b.dataset.valg || null }) });
+      } else if (b.dataset.status) {
+        const tekst = { vedtatt: "Registrere saken som vedtatt?", forkastet: "Registrere saken som forkastet?", trukket: "Trekke saken?", innmeldt: "Gjenåpne saken?" }[b.dataset.status];
+        if (!confirm(tekst)) return;
+        await api(`forslag/${b.dataset.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: b.dataset.status }) });
+      } else if (b.dataset.slett) {
+        if (!confirm("Slette saken for godt, med stemmer og kommentarer?")) return;
+        await api(`forslag/${b.dataset.slett}`, { method: "DELETE" });
+      } else if (b.dataset.slettKommentar) {
+        if (!confirm("Slette kommentaren?")) return;
+        await api(`sakskommentar/${b.dataset.slettKommentar}`, { method: "DELETE" });
+      } else return;
+      await last();
+    } catch (err) { alert(err.message); }
+  });
+  liste.addEventListener("submit", async (e) => {
+    const f = e.target.closest("[data-kommenter]");
+    if (!f) return;
+    e.preventDefault();
+    const inn = f.querySelector("input");
+    if (!inn.value.trim()) return;
+    try {
+      await api(`forslag/${f.dataset.kommenter}/kommentar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tekst: inn.value }) });
+      await last();
+    } catch (err) { alert(err.message); }
+  });
+
+  await last();
+});
+</script>
+</body>
+</html>

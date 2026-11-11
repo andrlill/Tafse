@@ -2,109 +2,11 @@
 <html lang="no">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vedtektsforslag · TAFSE</title>
-<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css">
+<title>Flyttet · TAFSE</title>
+<meta http-equiv="refresh" content="0; url=saker.html">
+<link rel="canonical" href="saker.html">
 </head>
-<body>
-<main class="side smal">
-  <p class="overline">§ 6 Agenda og innmelding av saker</p>
-  <h1 class="side-tittel">Vedtektsforslag</h1>
-  <div id="innhold"></div>
-</main>
-<script src="assets/app.js"></script>
-<script>
-const boks = document.getElementById("innhold");
-const STATUS_NAVN = { innmeldt: "Til behandling", vedtatt: "Vedtatt", forkastet: "Forkastet" };
-
-kreverInnlogging(boks, async () => {
-  const paragrafer = ["Generelt", "Ny paragraf", ...Array.from({ length: 12 }, (_, i) => `§ ${i + 1}`)];
-  boks.innerHTML = `
-    <form class="skjema" id="skjema">
-      <p class="dempet" style="margin:0">Foreslått av <strong style="color:var(--tekst)">${esc(MEG)}</strong></p>
-      <div class="felt"><label for="paragraf">Gjelder</label><select id="paragraf">${paragrafer.map((p) => `<option>${p}</option>`).join("")}</select></div>
-      <div class="felt"><label for="tittel">Kort tittel</label><input id="tittel" maxlength="160" required placeholder="For eksempel: Innføring av slips som minstekrav"></div>
-      <div class="felt"><label for="tekst">Forslag til ny tekst</label><textarea id="tekst" maxlength="5000" required placeholder="Skriv hvordan paragrafen skal lyde"></textarea></div>
-      <div class="felt"><label for="begrunnelse">Begrunnelse (valgfritt)</label><textarea id="begrunnelse" maxlength="5000" style="min-height:90px"></textarea></div>
-      <div><button class="knapp" type="submit">Send inn forslag</button></div>
-      <div id="melding" role="status"></div>
-    </form>
-    <section class="seksjon">
-      <h2>Innmeldte forslag</h2>
-      <div class="innlegg-liste" id="liste"><p class="dempet">Laster …</p></div>
-    </section>`;
-
-  const skjema = document.getElementById("skjema");
-  skjema.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const knapp = skjema.querySelector("button");
-    const melding = document.getElementById("melding");
-    knapp.disabled = true;
-    try {
-      await api("forslag", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          paragraf: document.getElementById("paragraf").value,
-          tittel: document.getElementById("tittel").value,
-          tekst: document.getElementById("tekst").value,
-          begrunnelse: document.getElementById("begrunnelse").value,
-        }),
-      });
-      ["tittel", "tekst", "begrunnelse"].forEach((f) => (document.getElementById(f).value = ""));
-      melding.innerHTML = `<p class="melding">Forslaget er sendt inn.</p>`;
-      lastListe();
-    } catch (err) {
-      melding.innerHTML = `<p class="melding feil">${esc(err.message)}</p>`;
-    } finally {
-      knapp.disabled = false;
-    }
-  });
-
-  async function lastListe() {
-    const liste = document.getElementById("liste");
-    try {
-      const forslag = await api("forslag");
-      if (!forslag.length) { liste.innerHTML = `<p class="tomt">Ingen forslag ennå.</p>`; return; }
-      liste.innerHTML = forslag.map((f) => `
-        <article class="innlegg">
-          <div class="innlegg-topp">
-            <h3>${esc(f.paragraf ? f.paragraf + ": " : "")}${esc(f.tittel)}</h3>
-            <span class="merkelapp status-${esc(f.status)}">${esc(STATUS_NAVN[f.status] || f.status)}</span>
-          </div>
-          <div class="dempet" style="font-size:16px">${esc(f.navn)} · ${esc(tidTekst(f.opprettet))}</div>
-          <p>${esc(f.tekst)}</p>
-          ${f.begrunnelse ? `<p class="dempet"><em>Begrunnelse:</em> ${esc(f.begrunnelse)}</p>` : ""}
-          <div class="handlinger">
-            ${Object.keys(STATUS_NAVN).filter((s) => s !== f.status).map((s) => `<button class="liten-knapp" data-id="${f.id}" data-status="${s}">Merk som ${STATUS_NAVN[s].toLowerCase()}</button>`).join("")}
-            ${f.navn === MEG ? `<button class="liten-knapp" data-slett="${f.id}">Slett</button>` : ""}
-          </div>
-        </article>`).join("");
-    } catch (err) {
-      liste.innerHTML = `<p class="melding feil">${esc(err.message)}</p>`;
-    }
-  }
-
-  document.getElementById("liste").addEventListener("click", async (e) => {
-    const b = e.target.closest("button");
-    if (!b) return;
-    try {
-      if (b.dataset.status) {
-        await api(`forslag/${b.dataset.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: b.dataset.status }) });
-      } else if (b.dataset.slett) {
-        if (!confirm("Slette forslaget for godt?")) return;
-        await api(`forslag/${b.dataset.slett}`, { method: "DELETE" });
-      }
-      lastListe();
-    } catch (err) { alert(err.message); }
-  });
-
-  lastListe();
-});
-</script>
+<body style="background:#0b0b0a;color:#ece4d2;font-family:Georgia,serif">
+<p>Siden har flyttet til <a href="saker.html" style="color:#e2c174">Saker til behandling</a>.</p>
 </body>
 </html>
