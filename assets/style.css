@@ -383,3 +383,5 @@ input:focus, select:focus, textarea:focus, .knapp:focus-visible, a:focus-visible
   .stemme-rad { grid-template-columns: 80px minmax(0, 1fr) 24px; }
   .stemme-navn { grid-column: 1 / -1; margin-top: -4px; }
 }
+
+.status-oppfolging { color: #e9b872; border-color: #e9b872; }

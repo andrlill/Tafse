@@ -19,7 +19,8 @@
 <script src="assets/app.js"></script>
 <script>
 const boks = document.getElementById("innhold");
-const STATUS_NAVN = { innmeldt: "Til behandling", vedtatt: "Vedtatt", forkastet: "Forkastet", trukket: "Trukket" };
+const STATUS_NAVN = { innmeldt: "Til behandling", oppfolging: "Vedtatt · til oppfølging", vedtatt: "Vedtatt", forkastet: "Forkastet", trukket: "Trukket" };
+const APEN = (s) => s.status === "innmeldt" || s.status === "oppfolging";
 const STEMME_NAVN = { for: "For", mot: "Mot", avstar: "Avstår" };
 const TYPER = ["Vedtektsendring", "Medlemsopptak", "Møtested", "Annen sak"];
 
@@ -50,7 +51,7 @@ kreverInnlogging(boks, async () => {
     </details>
 
     <div class="faner" role="tablist" style="margin-top:40px">
-      <button type="button" role="tab" data-visning="apne" aria-selected="true">Til behandling</button>
+      <button type="button" role="tab" data-visning="apne" aria-selected="true">Til behandling og oppfølging</button>
       <button type="button" role="tab" data-visning="ferdige" aria-selected="false">Ferdigbehandlet</button>
     </div>
     <div class="innlegg-liste" id="liste" style="margin-top:20px"><p class="dempet">Laster …</p></div>`;
@@ -116,8 +117,10 @@ kreverInnlogging(boks, async () => {
     const handlinger = [];
     if (s.status === "innmeldt" && data.kanBehandle) {
       handlinger.push(`<button class="liten-knapp" data-status="vedtatt" data-id="${s.id}">Registrer som vedtatt</button>`);
+      handlinger.push(`<button class="liten-knapp" data-status="oppfolging" data-id="${s.id}">Vedtatt, til oppfølging</button>`);
       handlinger.push(`<button class="liten-knapp" data-status="forkastet" data-id="${s.id}">Registrer som forkastet</button>`);
     }
+    if (s.status === "oppfolging" && data.kanBehandle) handlinger.push(`<button class="liten-knapp" data-status="vedtatt" data-id="${s.id}">Merk som fulgt opp</button>`);
     if (s.status !== "innmeldt" && data.kanBehandle) handlinger.push(`<button class="liten-knapp" data-status="innmeldt" data-id="${s.id}">Gjenåpne</button>`);
     if (s.navn === MEG && s.status === "innmeldt") handlinger.push(`<button class="liten-knapp" data-status="trukket" data-id="${s.id}">Trekk saken</button>`);
     if (s.navn === MEG) handlinger.push(`<button class="liten-knapp" data-slett="${s.id}">Slett</button>`);
@@ -131,7 +134,7 @@ kreverInnlogging(boks, async () => {
       <div class="dempet" style="font-size:16px">Meldt inn av ${esc(s.navn)} · ${esc(tidTekst(s.opprettet))}${mote ? ` · Behandles på ${esc(mote.navn)}` : ""}</div>
       ${vedtekt ? `<blockquote class="sitat">${esc(s.tekst)}</blockquote>` : `<p>${esc(s.tekst)}</p>`}
       ${s.begrunnelse ? `<p class="dempet"><em>Begrunnelse:</em> ${esc(s.begrunnelse)}</p>` : ""}
-      ${stemmeHtml(s)}
+      ${s.status === "innmeldt" || s.stemmer.length ? stemmeHtml(s) : ""}
       <div class="svar-liste" style="margin-top:16px">
         ${s.kommentarer.map((k) => `<div class="svar"><strong>${esc(k.navn)}</strong> <span class="post-tekst">${esc(k.tekst)}</span>
           <span class="dempet post-tid">${esc(tidTekst(k.opprettet))}${k.navn === MEG ? ` · <button class="lenkeknapp" data-slett-kommentar="${k.id}">slett</button>` : ""}</span></div>`).join("")}
@@ -158,7 +161,7 @@ kreverInnlogging(boks, async () => {
       fristEl.hidden = true;
     }
     document.querySelectorAll(".faner button").forEach((b) => b.setAttribute("aria-selected", b.dataset.visning === visning));
-    const utvalg = data.saker.filter((s) => (visning === "apne") === (s.status === "innmeldt"));
+    const utvalg = data.saker.filter((s) => (visning === "apne") === APEN(s));
     document.getElementById("liste").innerHTML = utvalg.length
       ? utvalg.map(sakHtml).join("")
       : `<p class="tomt">${visning === "apne" ? "Ingen saker til behandling." : "Ingen ferdigbehandlede saker ennå."}</p>`;
@@ -186,7 +189,7 @@ kreverInnlogging(boks, async () => {
       if (b.dataset.stem !== undefined) {
         await api(`forslag/${b.dataset.stem}/stem`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ stemme: b.dataset.valg || null }) });
       } else if (b.dataset.status) {
-        const tekst = { vedtatt: "Registrere saken som vedtatt?", forkastet: "Registrere saken som forkastet?", trukket: "Trekke saken?", innmeldt: "Gjenåpne saken?" }[b.dataset.status];
+        const tekst = { vedtatt: "Registrere saken som vedtatt og ferdig?", oppfolging: "Registrere saken som vedtatt, men til oppfølging?", forkastet: "Registrere saken som forkastet?", trukket: "Trekke saken?", innmeldt: "Gjenåpne saken?" }[b.dataset.status];
         if (!confirm(tekst)) return;
         await api(`forslag/${b.dataset.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: b.dataset.status }) });
       } else if (b.dataset.slett) {
@@ -210,6 +213,17 @@ kreverInnlogging(boks, async () => {
       await last();
     } catch (err) { alert(err.message); }
   });
+
+  // Ferdig utfylt skjema fra lenke, f.eks. saker.html?type=Vedtektsendring&paragraf=§ 3&tittel=…
+  const q = new URLSearchParams(location.search);
+  if (q.get("tittel")) {
+    if (TYPER.includes(q.get("type"))) type.value = q.get("type");
+    type.dispatchEvent(new Event("change"));
+    if (q.get("paragraf")) document.getElementById("paragraf").value = q.get("paragraf");
+    for (const f of ["tittel", "tekst", "begrunnelse"]) document.getElementById(f).value = q.get(f) || "";
+    document.getElementById("ny-sak-boks").open = true;
+    history.replaceState(null, "", location.pathname);
+  }
 
   await last();
 });

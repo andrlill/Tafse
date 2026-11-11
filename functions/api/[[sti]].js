@@ -6,7 +6,7 @@
 
 const MAKS_BILDE = 1_900_000; // byte, D1 tåler rundt 2 MB per rad
 const BILDETYPER = ["image/jpeg", "image/png", "image/webp"];
-const STATUSER = ["innmeldt", "vedtatt", "forkastet", "trukket"];
+const STATUSER = ["innmeldt", "oppfolging", "vedtatt", "forkastet", "trukket"];
 const SAKSTYPER = ["Vedtektsendring", "Medlemsopptak", "Møtested", "Annen sak"];
 const STEMMER = ["for", "mot", "avstar"];
 const OKT_DAGER = 365;
