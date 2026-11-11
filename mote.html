@@ -63,7 +63,7 @@ hentData().then(async ({ moter }) => {
               <button class="bilde" type="button" data-i="${i}" aria-label="Vis bildet større"><img src="/api/bilder/${b.id}" alt="${esc(b.tekst || "Bilde fra " + mote.navn)}" loading="lazy"></button>
               <figcaption><span>${esc(b.tekst || b.navn)}</span>${b.navn === MEG ? `<button class="liten-knapp" type="button" data-slett="${b.id}" aria-label="Slett bilde">Slett</button>` : `<span>${esc(b.navn)}</span>`}</figcaption>
             </figure>`).join("")
-          : `<p class="tomt" style="grid-column:1/-1">Ingen bilder ennå. Vær den første!</p>`;
+          : `<p class="tomt" style="grid-column:1/-1">Ingen bilder ennå.</p>`;
       } catch (err) {
         galleri.innerHTML = `<p class="melding feil">${esc(err.message)}</p>`;
       }
@@ -93,7 +93,7 @@ hentData().then(async ({ moter }) => {
       e.target.reset();
       melding.innerHTML = feil.length
         ? `<p class="melding feil">${feil.map(esc).join("<br>")}</p>`
-        : `<p class="melding">Ferdig! ${filer.length} bilde${filer.length === 1 ? "" : "r"} lagt til i annalene.</p>`;
+        : `<p class="melding">Ferdig! ${filer.length} bilde${filer.length === 1 ? "" : "r"} lastet opp.</p>`;
       lastBilder();
     });
 

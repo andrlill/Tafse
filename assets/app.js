@@ -61,7 +61,7 @@ function byggRamme() {
   const bunn = document.createElement("footer");
   bunn.className = "bunn";
   bunn.innerHTML = `<div class="meander" aria-hidden="true"></div>
-  <p class="bunn-tekst">Taffelakademiet for Samvær og Etegilder · Gyldig forfall krever noe minst like viktig som en konfirmasjon.</p>
+  <p class="bunn-tekst">Taffelakademiet for Samvær og Etegilder</p>
   <p class="bunn-tekst bunn-status" style="padding-top:0; font-style:normal"></p>`;
   document.body.append(bunn);
 }
@@ -314,7 +314,7 @@ async function byggStrom(boks, { mote = null, plassholder } = {}) {
   function tegn() {
     strom.innerHTML = poster.length
       ? poster.map(postHtml).join("")
-      : `<p class="tomt">Ingen poster ennå. Salongen venter på sin første taler.</p>`;
+      : `<p class="tomt">Ingen poster ennå.</p>`;
   }
 
   async function last(eldre = false) {
