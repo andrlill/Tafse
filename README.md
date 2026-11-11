@@ -16,6 +16,7 @@ Nettsiden til Taffelakademiet for Samvær og Etegilder.
 | `invitasjoner.html` | Oversikt over invitasjonslenker (kun administratorer) |
 | `moter.html`, `mote.html` | Møtene, med bilder og kommentarer (krever innlogging) |
 | `fortellingen.html` | Nettversjonen av lanseringspresentasjonen |
+| `spill.html`, `assets/spill.js` | Spillet Idus Martiae, med tavle for brødrene |
 | `data/moter.json` | **Møtedatoer, Tafsemestere og medlemsliste. Endre her.** |
 | `assets/style.css` | Farger og utseende |
 | `functions/api/` | Serverkoden som lagrer forslag, kommentarer og bilder |

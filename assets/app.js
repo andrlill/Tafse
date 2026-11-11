@@ -25,6 +25,7 @@ const SIDER = [
   ["saker.html", "Saker"],
   ["medlemmer.html", "Brødrene"],
   ["fortellingen.html", "Fortellingen"],
+  ["spill.html", "Spill"],
 ];
 
 const MANEDER = ["januar", "februar", "mars", "april", "mai", "juni", "juli", "august", "september", "oktober", "november", "desember"];

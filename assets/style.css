@@ -385,3 +385,28 @@ input:focus, select:focus, textarea:focus, .knapp:focus-visible, a:focus-visible
 }
 
 .status-oppfolging { color: #e9b872; border-color: #e9b872; }
+
+/* Spillet */
+.spill-ramme { position: relative; border: 1px solid var(--linje); background: var(--bunn); touch-action: none; user-select: none; -webkit-user-select: none; }
+.spill-ramme canvas { display: block; }
+.spill-skjerm {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; gap: 12px; padding: 24px; background: rgba(11, 11, 10, .88); overflow-y: auto;
+}
+.spill-skjerm[hidden] { display: none; }
+.spill-skjerm h2 { margin: 0; font-size: clamp(26px, 4.4vw, 40px); }
+.spill-skjerm p { margin: 0; max-width: 560px; }
+.spill-regler { list-style: none; padding: 0; margin: 4px 0 8px; max-width: 560px; font-size: 17px; color: var(--dempet); display: flex; flex-direction: column; gap: 4px; }
+.spill-regler strong { color: var(--tekst); font-weight: 500; }
+.spill-kontroller { display: none; justify-content: flex-end; margin-top: 12px; }
+@media (pointer: coarse) { .spill-kontroller { display: flex; } }
+.tabell-boks { overflow-x: auto; }
+.tavle { width: 100%; border-collapse: collapse; font-size: 18px; }
+.tavle th { font-family: var(--display); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--gull); font-weight: 600; text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--gull); }
+.tavle td { padding: 10px 12px; border-bottom: 1px solid var(--linje); white-space: nowrap; }
+.tavle tr.meg td { color: var(--gull-lys); }
+@media (max-width: 640px) {
+  .spill-skjerm { gap: 8px; padding: 18px 16px; }
+  .spill-skjerm p { font-size: 16px; line-height: 1.45; }
+  .spill-regler { font-size: 14px; line-height: 1.4; }
+}

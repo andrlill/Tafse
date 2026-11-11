@@ -75,6 +75,15 @@ async function sikreSkjema(db) {
       tekst TEXT NOT NULL,
       opprettet TEXT NOT NULL
     )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS spillresultater (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      navn TEXT NOT NULL,
+      sekunder REAL NOT NULL,
+      sar INTEGER NOT NULL,
+      kolleger INTEGER NOT NULL,
+      seier INTEGER NOT NULL,
+      opprettet TEXT NOT NULL
+    )`),
     db.prepare(`CREATE TABLE IF NOT EXISTS profiler (
       navn TEXT PRIMARY KEY,
       tekst TEXT NOT NULL,
@@ -496,6 +505,26 @@ export async function onRequest({ request, env, params }) {
     if (gammel && gammel.bilde_id) steg.push(db.prepare("DELETE FROM bilder WHERE id = ?").bind(gammel.bilde_id));
     await db.batch(steg);
     return json({ bilde_id: nytt.id });
+  }
+
+  // --- Spillet: Idus Martiae ---
+  if (ressurs === "spill") {
+    if (metode === "GET") {
+      const { results } = await db.prepare("SELECT navn, sekunder, sar, kolleger, seier, opprettet FROM spillresultater ORDER BY seier DESC, sekunder DESC, sar ASC, kolleger DESC").all();
+      const beste = [];
+      const sett = new Set();
+      for (const r of results) if (!sett.has(r.navn)) { sett.add(r.navn); beste.push(r); }
+      return json({ toppliste: beste, antallSpill: results.length });
+    }
+    if (metode === "POST") {
+      const b = await lesJson(request);
+      const sek = Math.max(0, Math.min(60, Number(b.sekunder) || 0));
+      const sar = Math.max(0, Math.min(23, Math.round(Number(b.sar) || 0)));
+      const kol = Math.max(0, Math.min(60, Math.round(Number(b.kolleger) || 0)));
+      const seier = b.seier && sek >= 60 && sar < 23 ? 1 : 0;
+      await db.prepare("INSERT INTO spillresultater (navn, sekunder, sar, kolleger, seier, opprettet) VALUES (?, ?, ?, ?, ?, ?)").bind(meg, sek, sar, kol, seier, naa()).run();
+      return json({ ok: true }, 201);
+    }
   }
 
   // --- Presentasjoner av brødrene ---
