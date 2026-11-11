@@ -42,7 +42,8 @@
       let tekst;
       if (!MEG) tekst = `<p class="tom">Logg inn for å lese presentasjonen.</p>`;
       else if (!p.tekst && !p.tafse) tekst = `<p class="tom">${harBruker.has(n) ? `${esc(n)} har ikke skrevet noe ennå.` : `${esc(n)} har ikke laget bruker ennå.`}</p>`;
-      else tekst = `${p.tekst ? `<h4>Om meg</h4><p>${esc(p.tekst)}</p>` : ""}${p.tafse ? `<h4>Hva TAFSE betyr for meg</h4><p>${esc(p.tafse)}</p>` : ""}`;
+      else tekst = `<div class="bror-tekst" id="tekst-${esc(n)}">${p.tekst ? `<h4>Om meg</h4><p>${esc(p.tekst)}</p>` : ""}${p.tafse ? `<h4>Hva TAFSE betyr for meg</h4><p>${esc(p.tafse)}</p>` : ""}</div>
+        <button class="se-mer" type="button" aria-expanded="false" aria-controls="tekst-${esc(n)}" hidden>Se mer</button>`;
       return `<article class="bror">
         ${avatar(n, MEG ? p.bilde_id : null)}
         <h3>${esc(n)}${n === MEG ? ' <span class="merkelapp">Deg</span>' : ""}</h3>
@@ -50,7 +51,32 @@
         ${tekst}
       </article>`;
     }).join("");
+    visSeMer();
   }
+
+  // Viser «Se mer» bare på kort der teksten faktisk er avkortet
+  function visSeMer() {
+    document.querySelectorAll(".bror-tekst").forEach((t) => {
+      const knapp = t.nextElementSibling;
+      if (t.classList.contains("apen")) return;
+      knapp.hidden = t.scrollHeight <= t.clientHeight + 2;
+      t.classList.toggle("avkortet", !knapp.hidden);
+    });
+  }
+  let venter;
+  window.addEventListener("resize", () => { clearTimeout(venter); venter = setTimeout(visSeMer, 150); });
+  document.fonts && document.fonts.ready.then(visSeMer);
+
+  document.getElementById("brodre").addEventListener("click", (e) => {
+    const knapp = e.target.closest(".se-mer");
+    if (!knapp) return;
+    const t = knapp.previousElementSibling;
+    const apen = t.classList.toggle("apen");
+    t.classList.toggle("avkortet", !apen);
+    knapp.textContent = apen ? "Se mindre" : "Se mer";
+    knapp.setAttribute("aria-expanded", apen);
+    if (!apen) knapp.closest(".bror").scrollIntoView({ block: "nearest", behavior: "smooth" });
+  });
 
   await tegn();
 

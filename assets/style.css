@@ -292,7 +292,7 @@ input:focus, select:focus, textarea:focus, .knapp:focus-visible, a:focus-visible
 .bunn-tekst { text-align: center; padding: 18px 24px 28px; color: var(--dempet); font-style: italic; font-size: 17px; }
 
 /* Brødrene */
-.brodre { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.brodre { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; align-items: start; }
 .bror { border: 1px solid var(--linje); background: var(--flate); padding: 26px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
 .medaljong {
   width: 64px; height: 64px; border-radius: 50%;
@@ -437,3 +437,14 @@ input:focus, select:focus, textarea:focus, .knapp:focus-visible, a:focus-visible
 .arkiv a:hover, .arkiv a[aria-current] { border-color: var(--gull); }
 .arkiv strong { font-family: var(--display); font-size: 18px; color: var(--gull-lys); font-weight: 600; }
 .arkiv span { font-size: 15px; }
+
+/* «Se mer» på Brødrene */
+.bror-tekst { display: flex; flex-direction: column; gap: 10px; max-height: 12.5em; overflow: hidden; position: relative; width: 100%; }
+.bror-tekst.apen { max-height: none; }
+.bror-tekst.avkortet::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3.5em; background: linear-gradient(to bottom, rgba(20, 19, 16, 0), var(--flate)); pointer-events: none; }
+.se-mer {
+  background: none; border: 0; padding: 6px 0; min-height: 40px; cursor: pointer;
+  font-family: var(--display); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--gull);
+}
+.se-mer:hover { color: var(--gull-lys); text-decoration: underline; }
+.se-mer[hidden] { display: none; }
