@@ -11,7 +11,9 @@ Nettsiden til Taffelakademiet for Samvær og Etegilder.
 | `vedtekter.html` | Vedtektene (§ 1–12) |
 | `salongen.html` | Salongen: poster, bilder, svar og skåler (krever innlogging) |
 | `forslag.html` | Innsending av vedtektsforslag (krever innlogging) |
-| `medlemmer.html` | Brødrene, med egne presentasjoner og bytte av passord |
+| `medlemmer.html` | Brødrene, med profilbilde, presentasjon og bytte av passord |
+| `velkommen.html` | Registrering fra den personlige invitasjonslenken |
+| `invitasjoner.html` | Oversikt over invitasjonslenker (kun administratorer) |
 | `moter.html`, `mote.html` | Møtene, med bilder og kommentarer (krever innlogging) |
 | `fortellingen.html` | Nettversjonen av lanseringspresentasjonen |
 | `data/moter.json` | **Møtedatoer, Tafsemestere og medlemsliste. Endre her.** |
@@ -39,20 +41,28 @@ Nettsiden til Taffelakademiet for Samvær og Etegilder.
 
 Tabellene i databasen lages automatisk første gang noen logger inn.
 
-## Brukere og innlogging
+## Brukere, invitasjoner og innlogging
 
-Hver bror velger navnet sitt og lager sitt eget passord første gang, med akademipassordet som
-nøkkel. Etter det logger man inn med navn og eget passord. Navnet settes automatisk på poster,
-bilder og forslag, og man kan bare slette sitt eget.
+Administratorer (listet under `administratorer` i `data/moter.json`) finner lenken **Invitasjoner**
+nederst på siden når de er logget inn. Der ligger en personlig lenke til hver bror, med knapper for å
+kopiere meldingen eller sende den som SMS.
+
+Når en bror åpner lenken sin, må han velge profilbilde, skrive om seg selv og hva TAFSE betyr for
+ham, og lage et passord. Det han skriver vises på siden Brødrene. Etter det logger han inn med navn
+og eget passord. Navnet settes automatisk på poster, bilder og forslag, og man kan bare slette sitt eget.
+
+Den første administratoren registrerer seg med akademipassordet (`TAFSE_PASSORD`): velg navnet ditt
+på innloggingen og trykk «registrer deg med akademipassordet».
 
 **Glemt passord?** Gå til D1-databasen `tafse` i Cloudflare › Console og kjør
-`DELETE FROM brukere WHERE navn = 'Navnet';`. Da kan vedkommende lage bruker på nytt.
-Innhold de har skrevet blir liggende.
+`DELETE FROM brukere WHERE navn = 'Navnet';`. Da virker invitasjonslenken igjen.
+Profil og innhold blir liggende.
 
-**Nytt medlem?** Legg navnet til i `medlemmer` i `data/moter.json`.
+**Nytt medlem?** Legg navnet til i `medlemmer` i `data/moter.json`. Lenken dukker opp under Invitasjoner.
+
+**Bytter dere akademipassordet**, blir alle logget ut og alle gamle invitasjonslenker slutter å virke.
 
 ## Personvern
 
 Forside, kalender, vedtekter, fortellingen og navnelisten over brødrene er åpne for alle.
-Salongen, bilder, forslag og presentasjoner krever innlogging.
-Bytter dere akademipassordet, blir alle logget ut og må logge inn på nytt med sitt eget passord.
+Salongen, bilder, profilbilder, forslag og presentasjoner krever innlogging.

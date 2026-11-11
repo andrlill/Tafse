@@ -26,25 +26,25 @@
 
   let profiler = {};
   const harBruker = new Set(await api("brukere").catch(() => []));
-  const innlogget = !!(await hvemErJeg());
+  await hvemErJeg();
 
   async function tegn() {
     if (MEG) {
       profiler = {};
-      try { (await api("profiler")).forEach((p) => (profiler[p.navn] = p.tekst)); } catch (_) {}
+      try { (await api("profiler")).forEach((p) => (profiler[p.navn] = p)); } catch (_) {}
     }
     document.getElementById("brodre").innerHTML = medlemmer.map((n) => {
       const m = verv[n];
+      const p = profiler[n] || {};
       const vervTekst = m
         ? `Tafsemester · ${esc(m.navn)}${status(m) === "forbi" ? " (avholdt)" : ""}`
         : "Tafsemester · trekkes ved neste runde";
-      const tekst = !MEG
-        ? `<p class="tom">Logg inn for å lese presentasjonen.</p>`
-        : profiler[n]
-          ? `<p>${esc(profiler[n])}</p>`
-          : `<p class="tom">${esc(n)} har ennå ikke skrevet noe om seg selv${harBruker.has(n) ? "" : ", og har ikke laget bruker"}.</p>`;
+      let tekst;
+      if (!MEG) tekst = `<p class="tom">Logg inn for å lese presentasjonen.</p>`;
+      else if (!p.tekst && !p.tafse) tekst = `<p class="tom">${harBruker.has(n) ? `${esc(n)} har ikke skrevet noe ennå.` : `${esc(n)} har ikke laget bruker ennå.`}</p>`;
+      else tekst = `${p.tekst ? `<h4>Om meg</h4><p>${esc(p.tekst)}</p>` : ""}${p.tafse ? `<h4>Hva TAFSE betyr for meg</h4><p>${esc(p.tafse)}</p>` : ""}`;
       return `<article class="bror">
-        <div class="medaljong" aria-hidden="true">${esc(n[0])}</div>
+        ${avatar(n, MEG ? p.bilde_id : null)}
         <h3>${esc(n)}${n === MEG ? ' <span class="merkelapp">Deg</span>' : ""}</h3>
         <span class="verv">${vervTekst}</span>
         ${tekst}
@@ -58,9 +58,15 @@
   skriv.className = "seksjon";
   kreverInnlogging(skriv, async () => {
     await tegn();
-    skriv.innerHTML = `<h2>Skriv om deg selv</h2>
+    const p = profiler[MEG] || {};
+    skriv.innerHTML = `<h2>Din profil</h2>
       <form class="skjema" id="profil">
-        <div class="felt"><label for="tekst">Presentasjonen din, ${esc(MEG)}</label><textarea id="tekst" maxlength="3000" placeholder="Yrke, livsmotto, livrett, fremste meritt innen etegilder. Bare det du selv vil dele."></textarea></div>
+        <div class="felt">
+          <label for="fil">Profilbilde</label>
+          <div class="bilde-velger"><div id="forhånd">${avatar(MEG, p.bilde_id)}</div><input id="fil" type="file" accept="image/*" style="flex:1 1 220px"></div>
+        </div>
+        <div class="felt"><label for="tekst">Om deg selv</label><textarea id="tekst" maxlength="3000"></textarea></div>
+        <div class="felt"><label for="tafse">Hva betyr TAFSE for deg?</label><textarea id="tafse" maxlength="3000"></textarea></div>
         <div><button class="knapp" type="submit">Lagre</button></div>
         <div id="melding" role="status"></div>
       </form>
@@ -73,23 +79,49 @@
         <div><button class="knapp sekundar" type="submit">Bytt passord</button></div>
         <div id="p-melding" role="status"></div>
       </form>`;
-    const felt = document.getElementById("tekst");
-    felt.value = profiler[MEG] || "";
+    document.getElementById("tekst").value = p.tekst || "";
+    document.getElementById("tafse").value = p.tafse || "";
+
+    let nyttBilde = null;
+    const filFelt = document.getElementById("fil");
+    filFelt.addEventListener("change", async () => {
+      nyttBilde = null;
+      if (!filFelt.files[0]) return;
+      try {
+        nyttBilde = await krympProfilbilde(filFelt.files[0]);
+        document.getElementById("forhånd").innerHTML = `<div class="medaljong med-bilde"><img src="${URL.createObjectURL(nyttBilde)}" alt="Forhåndsvisning"></div>`;
+      } catch (err) {
+        document.getElementById("melding").innerHTML = `<p class="melding feil">${esc(err.message)}</p>`;
+      }
+    });
+
     document.getElementById("profil").addEventListener("submit", async (e) => {
       e.preventDefault();
       const melding = document.getElementById("melding");
+      const knapp = e.target.querySelector("button[type=submit]");
+      knapp.disabled = true;
       try {
+        if (nyttBilde) {
+          const fd = new FormData();
+          fd.append("fil", nyttBilde, "profil.jpg");
+          await api("profilbilde", { method: "POST", body: fd });
+          nyttBilde = null;
+          filFelt.value = "";
+        }
         await api(`profiler/${encodeURIComponent(MEG)}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tekst: felt.value }),
+          body: JSON.stringify({ tekst: document.getElementById("tekst").value, tafse: document.getElementById("tafse").value }),
         });
         melding.innerHTML = `<p class="melding">Lagret.</p>`;
         tegn();
       } catch (err) {
         melding.innerHTML = `<p class="melding feil">${esc(err.message)}</p>`;
+      } finally {
+        knapp.disabled = false;
       }
     });
+
     document.getElementById("passord").addEventListener("submit", async (e) => {
       e.preventDefault();
       const melding = document.getElementById("p-melding");

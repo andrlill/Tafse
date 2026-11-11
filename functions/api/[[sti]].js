@@ -1,8 +1,8 @@
 // TAFSE – API for brukere, forslag, poster og bilder.
 // Kjører som Cloudflare Pages Function. Krever:
 //   - en D1-database koblet til med variabelnavnet DB
-//   - en hemmelighet (secret) TAFSE_PASSORD: akademipassordet, som trengs
-//     første gang en bror lager sin egen bruker
+//   - en hemmelighet (secret) TAFSE_PASSORD. Den brukes til å signere innlogginger
+//     og invitasjonslenker, og fungerer som reservepassord ved registrering.
 
 const MAKS_BILDE = 1_900_000; // byte, D1 tåler rundt 2 MB per rad
 const BILDETYPER = ["image/jpeg", "image/png", "image/webp"];
@@ -63,12 +63,17 @@ async function sikreSkjema(db) {
     db.prepare(`CREATE TABLE IF NOT EXISTS profiler (
       navn TEXT PRIMARY KEY,
       tekst TEXT NOT NULL,
+      tafse TEXT,
+      bilde_id INTEGER,
       oppdatert TEXT NOT NULL
     )`),
     db.prepare(`CREATE INDEX IF NOT EXISTS bilder_mote ON bilder (mote)`),
     db.prepare(`CREATE INDEX IF NOT EXISTS poster_mote ON poster (mote)`),
     db.prepare(`CREATE INDEX IF NOT EXISTS svar_post ON svar (post_id)`),
   ]);
+  // Eldre databaser mangler kolonnen tafse
+  try { await db.prepare("ALTER TABLE profiler ADD COLUMN tafse TEXT").run(); } catch (_) {}
+  try { await db.prepare("ALTER TABLE profiler ADD COLUMN bilde_id INTEGER").run(); } catch (_) {}
   skjemaKlart = true;
 }
 
@@ -141,14 +146,19 @@ async function hvemErInnlogget(request, env, db) {
   return likt(sig, forventet) ? navn : null;
 }
 
-async function medlemsliste(env, url) {
+async function lesData(env, url) {
   try {
     const r = await env.ASSETS.fetch(new URL("/data/moter.json", url));
-    return (await r.json()).medlemmer || [];
+    return await r.json();
   } catch (_) {
-    return [];
+    return {};
   }
 }
+const medlemsliste = async (env, url) => (await lesData(env, url)).medlemmer || [];
+const erAdmin = async (env, url, navn) => ((await lesData(env, url)).administratorer || []).includes(navn);
+
+// Personlig invitasjonskode, avledet av navnet og akademipassordet
+const invitasjonskode = async (env, navn) => (await hmac(env.TAFSE_PASSORD, `invitasjon|${navn}`)).slice(0, 20);
 
 async function lagreBilde(db, fil, mote, navn, bildetekst) {
   if (!fil || typeof fil === "string") return { feil: "Fant ikke bildet." };
@@ -183,18 +193,39 @@ export async function onRequest({ request, env, params }) {
   }
   if (ressurs === "meg" && metode === "GET") {
     const navn = await hvemErInnlogget(request, env, db);
-    return json({ innlogget: !!navn, navn });
+    return json({ innlogget: !!navn, navn, admin: !!navn && (await erAdmin(env, url, navn)) });
+  }
+  if (ressurs === "invitasjon" && metode === "GET") {
+    const navn = tekst(url.searchParams.get("navn"), 60);
+    const kode = String(url.searchParams.get("kode") || "");
+    const gyldig = (await medlemsliste(env, url)).includes(navn) && likt(kode, await invitasjonskode(env, navn));
+    if (!gyldig) { await vent(400); return json({ gyldig: false }); }
+    const registrert = !!(await db.prepare("SELECT 1 FROM brukere WHERE navn = ?").bind(navn).first());
+    return json({ gyldig: true, registrert });
   }
   if (ressurs === "registrer" && metode === "POST") {
-    const b = await lesJson(request);
+    let skjema;
+    try { skjema = await request.formData(); } catch (_) { return feil(400, "Kunne ikke lese skjemaet."); }
+    const b = Object.fromEntries([...skjema.entries()].filter(([, v]) => typeof v === "string"));
+    const fil = skjema.get("fil");
     const navn = tekst(b.navn, 60);
-    if (!(await medlemsliste(env, url)).includes(navn)) return feil(400, "Velg navnet ditt fra listen.");
-    if (!likt(String(b.akademipassord || ""), env.TAFSE_PASSORD)) { await vent(600); return feil(401, "Feil akademipassord."); }
+    if (!(await medlemsliste(env, url)).includes(navn)) return feil(400, "Navnet står ikke i medlemslisten.");
+    const medKode = b.kode && likt(String(b.kode), await invitasjonskode(env, navn));
+    const medPassord = b.akademipassord && likt(String(b.akademipassord), env.TAFSE_PASSORD);
+    if (!medKode && !medPassord) { await vent(600); return feil(401, b.kode ? "Invitasjonslenken er ugyldig. Be om en ny." : "Feil akademipassord."); }
+    const om = tekst(b.om, 3000), betyr = tekst(b.tafse, 3000);
+    if (!om || !betyr) return feil(400, "Skriv litt om deg selv og hva TAFSE betyr for deg.");
     if (typeof b.passord !== "string" || b.passord.length < 6) return feil(400, "Passordet må ha minst seks tegn.");
-    if (await db.prepare("SELECT 1 FROM brukere WHERE navn = ?").bind(navn).first()) return feil(409, "Denne brukeren finnes allerede. Logg inn i stedet.");
+    if (!fil || typeof fil === "string") return feil(400, "Velg et profilbilde.");
+    if (await db.prepare("SELECT 1 FROM brukere WHERE navn = ?").bind(navn).first()) return feil(409, "Du har allerede en bruker. Logg inn i stedet.");
+    const bilde = await lagreBilde(db, fil, "profil", navn, "Profilbilde");
+    if (bilde.feil) return feil(400, bilde.feil);
     const salt = hex(crypto.getRandomValues(new Uint8Array(16)));
     const hash = await hashPassord(b.passord, salt);
-    await db.prepare("INSERT INTO brukere (navn, salt, hash, opprettet) VALUES (?, ?, ?, ?)").bind(navn, salt, hash, naa()).run();
+    await db.batch([
+      db.prepare("INSERT INTO brukere (navn, salt, hash, opprettet) VALUES (?, ?, ?, ?)").bind(navn, salt, hash, naa()),
+      db.prepare("INSERT INTO profiler (navn, tekst, tafse, bilde_id, oppdatert) VALUES (?, ?, ?, ?, ?) ON CONFLICT(navn) DO UPDATE SET tekst = excluded.tekst, tafse = excluded.tafse, bilde_id = excluded.bilde_id, oppdatert = excluded.oppdatert").bind(navn, om, betyr, bilde.id, naa()),
+    ]);
     return json({ innlogget: true, navn }, 201, { "Set-Cookie": await lagOkt(env, { navn, hash }, url) });
   }
   if (ressurs === "logginn" && metode === "POST") {
@@ -213,6 +244,17 @@ export async function onRequest({ request, env, params }) {
   // Alt under krever innlogging
   const meg = await hvemErInnlogget(request, env, db);
   if (!meg) return feil(401, "Ikke innlogget");
+
+  if (ressurs === "invitasjoner" && metode === "GET") {
+    if (!(await erAdmin(env, url, meg))) return feil(403, "Bare administratorer kan se invitasjonene.");
+    const { results } = await db.prepare("SELECT navn FROM brukere").all();
+    const registrerte = new Set(results.map((r) => r.navn));
+    const liste = [];
+    for (const navn of await medlemsliste(env, url)) {
+      liste.push({ navn, registrert: registrerte.has(navn), kode: await invitasjonskode(env, navn) });
+    }
+    return json(liste);
+  }
 
   if (ressurs === "byttpassord" && metode === "POST") {
     const b = await lesJson(request);
@@ -359,21 +401,33 @@ export async function onRequest({ request, env, params }) {
     }
   }
 
+  // --- Profilbilde ---
+  if (ressurs === "profilbilde" && metode === "POST") {
+    let skjema;
+    try { skjema = await request.formData(); } catch (_) { return feil(400, "Fant ikke bildet."); }
+    const nytt = await lagreBilde(db, skjema.get("fil"), "profil", meg, "Profilbilde");
+    if (nytt.feil) return feil(400, nytt.feil);
+    const gammel = await db.prepare("SELECT bilde_id FROM profiler WHERE navn = ?").bind(meg).first();
+    const steg = [
+      db.prepare("INSERT INTO profiler (navn, tekst, bilde_id, oppdatert) VALUES (?, '', ?, ?) ON CONFLICT(navn) DO UPDATE SET bilde_id = excluded.bilde_id, oppdatert = excluded.oppdatert").bind(meg, nytt.id, naa()),
+    ];
+    if (gammel && gammel.bilde_id) steg.push(db.prepare("DELETE FROM bilder WHERE id = ?").bind(gammel.bilde_id));
+    await db.batch(steg);
+    return json({ bilde_id: nytt.id });
+  }
+
   // --- Presentasjoner av brødrene ---
   if (ressurs === "profiler") {
     if (!id && metode === "GET") {
-      const { results } = await db.prepare("SELECT navn, tekst, oppdatert FROM profiler").all();
+      const { results } = await db.prepare("SELECT navn, tekst, tafse, bilde_id, oppdatert FROM profiler").all();
       return json(results);
     }
     if (id && metode === "PUT") {
-      const t = tekst((await lesJson(request)).tekst, 3000);
-      if (!t) {
-        await db.prepare("DELETE FROM profiler WHERE navn = ?").bind(meg).run();
-        return json({ ok: true });
-      }
+      const b = await lesJson(request);
+      const t = tekst(b.tekst, 3000), betyr = tekst(b.tafse, 3000);
       await db
-        .prepare("INSERT INTO profiler (navn, tekst, oppdatert) VALUES (?, ?, ?) ON CONFLICT(navn) DO UPDATE SET tekst = excluded.tekst, oppdatert = excluded.oppdatert")
-        .bind(meg, t, naa())
+        .prepare("INSERT INTO profiler (navn, tekst, tafse, oppdatert) VALUES (?, ?, ?, ?) ON CONFLICT(navn) DO UPDATE SET tekst = excluded.tekst, tafse = excluded.tafse, oppdatert = excluded.oppdatert")
+        .bind(meg, t, betyr, naa())
         .run();
       return json({ ok: true });
     }

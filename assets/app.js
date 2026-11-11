@@ -117,6 +117,7 @@ function mesterTekst(m) {
 // ---------- Innlogging og API ----------
 
 let MEG = null; // navnet til den som er logget inn
+let ADMIN = false;
 
 async function api(sti, valg = {}) {
   const r = await fetch(`/api/${sti}`, { credentials: "same-origin", ...valg });
@@ -134,7 +135,8 @@ async function hvemErJeg() {
   try {
     const m = await api("meg");
     MEG = m.innlogget ? m.navn : null;
-  } catch (_) { MEG = null; }
+    ADMIN = !!m.admin;
+  } catch (_) { MEG = null; ADMIN = false; }
   visInnloggetLinje();
   return MEG;
 }
@@ -143,7 +145,7 @@ function visInnloggetLinje() {
   const p = document.querySelector(".bunn-status");
   if (!p) return;
   p.innerHTML = MEG
-    ? `Innlogget som <strong>${esc(MEG)}</strong> · <a href="#" id="loggut">Logg ut</a>`
+    ? `Innlogget som <strong>${esc(MEG)}</strong>${ADMIN ? ` · <a href="invitasjoner.html">Invitasjoner</a>` : ""} · <a href="#" id="loggut">Logg ut</a>`
     : "";
   const l = document.getElementById("loggut");
   if (l) l.addEventListener("click", async (e) => {
@@ -172,11 +174,9 @@ async function kreverInnlogging(boks, vedInnlogget) {
   function oppdater() {
     forsteGang = navn.value && !registrerte.includes(navn.value);
     felt.innerHTML = !navn.value ? "" : forsteGang
-      ? `<p style="text-align:left">Velkommen, ${esc(navn.value)}! Første gang lager du ditt eget passord. Akademipassordet får du av en Tafsemester.</p>
-         <div class="felt"><label for="akademi">Akademipassord</label><input id="akademi" type="password" required></div>
-         <div class="felt"><label for="nytt">Velg ditt eget passord (minst seks tegn)</label><input id="nytt" type="password" minlength="6" autocomplete="new-password" required></div>`
+      ? `<p style="text-align:left">${esc(navn.value)} har ikke laget bruker ennå. Åpne den personlige invitasjonslenken du har fått, eller <a href="velkommen.html?navn=${encodeURIComponent(navn.value)}">registrer deg med akademipassordet</a>.</p>`
       : `<div class="felt"><label for="passord">Ditt passord</label><input id="passord" type="password" autocomplete="current-password" required></div>`;
-    knapp.textContent = forsteGang ? "Lag bruker" : "Gå inn";
+    knapp.hidden = !!forsteGang;
   }
   navn.addEventListener("change", oppdater);
   boks.querySelector("#port").addEventListener("submit", async (e) => {
@@ -185,10 +185,7 @@ async function kreverInnlogging(boks, vedInnlogget) {
     melding.innerHTML = "";
     knapp.disabled = true;
     try {
-      const svar = forsteGang
-        ? await api("registrer", { method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ navn: navn.value, akademipassord: boks.querySelector("#akademi").value, passord: boks.querySelector("#nytt").value }) })
-        : await api("logginn", { method: "POST", headers: { "Content-Type": "application/json" },
+      const svar = await api("logginn", { method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ navn: navn.value, passord: boks.querySelector("#passord").value }) });
       MEG = svar.navn;
       visInnloggetLinje();
@@ -209,6 +206,38 @@ function tidTekst(iso) {
   if (sek < 3600) return `${Math.floor(sek / 60)} min siden`;
   if (sek < 86400) return `${Math.floor(sek / 3600)} t siden`;
   return `${d.getDate()}. ${MANEDER_KORT[d.getMonth()]} ${d.getFullYear()}, ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+// Beskjærer et profilbilde til et kvadrat og skalerer det ned.
+async function krympProfilbilde(fil, str = 640) {
+  let bilde;
+  try {
+    bilde = await createImageBitmap(fil, { imageOrientation: "from-image" });
+  } catch (_) {
+    throw new Error(`Klarte ikke å lese «${fil.name}». Prøv JPG eller PNG.`);
+  }
+  const side = Math.min(bilde.width, bilde.height);
+  const lerret = document.createElement("canvas");
+  lerret.width = lerret.height = Math.min(str, side);
+  lerret.getContext("2d").drawImage(bilde, (bilde.width - side) / 2, (bilde.height - side) / 2, side, side, 0, 0, lerret.width, lerret.height);
+  return await new Promise((ok) => lerret.toBlob(ok, "image/jpeg", 0.85));
+}
+
+// Rundt portrett: profilbilde hvis det finnes, ellers forbokstav i gull.
+function avatar(navn, bildeId, liten = false) {
+  const klasse = `medaljong${liten ? " liten" : ""}${bildeId ? " med-bilde" : ""}`;
+  return bildeId
+    ? `<div class="${klasse}"><img src="/api/bilder/${bildeId}" alt="" loading="lazy"></div>`
+    : `<div class="${klasse}" aria-hidden="true">${esc((navn || "?")[0])}</div>`;
+}
+
+let _profiler;
+async function hentProfiler() {
+  if (!_profiler) {
+    _profiler = {};
+    try { (await api("profiler")).forEach((p) => (_profiler[p.navn] = p)); } catch (_) {}
+  }
+  return _profiler;
 }
 
 // Skalerer ned bilder i nettleseren før opplasting, så de blir raske og små.
@@ -261,13 +290,15 @@ function visBilde(src, tekst) {
 async function byggStrom(boks, { mote = null, plassholder } = {}) {
   const { moter } = await hentData();
   const moteNavn = Object.fromEntries(moter.map((m) => [m.id, m.navn]));
+  const profiler = await hentProfiler();
+  const bildeAv = (n) => (profiler[n] || {}).bilde_id;
   const neste = nesteMote(moter);
   const valg = mote ? "" : `<div class="felt" style="flex:1 1 220px"><label for="p-mote">Knytt til møte (valgfritt)</label>
       <select id="p-mote"><option value="">Ingen</option>${moter.map((m) => `<option value="${esc(m.id)}">${esc(m.navn)}</option>`).join("")}</select></div>`;
 
   boks.innerHTML = `
     <form class="skjema skriv-post" id="ny-post">
-      <div class="post-hode"><div class="medaljong liten" aria-hidden="true">${esc(MEG[0])}</div><strong>${esc(MEG)}</strong></div>
+      <div class="post-hode">${avatar(MEG, bildeAv(MEG), true)}<strong>${esc(MEG)}</strong></div>
       <div class="felt"><label for="p-tekst" class="skjult">Ny post</label>
         <textarea id="p-tekst" maxlength="5000" placeholder="${esc(plassholder || `Hva tenker du på, ${MEG}?`)}"></textarea></div>
       <div style="display:flex; gap:18px; flex-wrap:wrap; align-items:flex-end">
@@ -289,7 +320,7 @@ async function byggStrom(boks, { mote = null, plassholder } = {}) {
     const merke = p.mote && !mote ? `<a class="post-mote" href="mote.html?id=${encodeURIComponent(p.mote)}">${esc(moteNavn[p.mote] || p.mote)}</a>` : "";
     return `<article class="post" data-id="${p.id}">
       <div class="post-hode">
-        <div class="medaljong liten" aria-hidden="true">${esc(p.navn[0])}</div>
+        ${avatar(p.navn, bildeAv(p.navn), true)}
         <div><strong>${esc(p.navn)}</strong><div class="dempet post-tid">${esc(tidTekst(p.opprettet))}${merke ? " · " + merke : ""}</div></div>
         ${p.navn === MEG ? `<button class="liten-knapp" style="margin-left:auto" data-slett-post="${p.id}">Slett</button>` : ""}
       </div>

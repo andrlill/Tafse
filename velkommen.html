@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Velkommen · TAFSE</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main class="side smal">
+  <p class="overline">Opptak i akademiet</p>
+  <h1 class="side-tittel" id="tittel">Velkommen</h1>
+  <div id="innhold"><p class="dempet">Laster …</p></div>
+</main>
+<script src="assets/app.js"></script>
+<script>
+(async () => {
+  const q = new URLSearchParams(location.search);
+  const navn = q.get("navn") || "";
+  const kode = q.get("kode") || "";
+  const boks = document.getElementById("innhold");
+  const { medlemmer } = await hentData();
+
+  if (!medlemmer.includes(navn)) {
+    boks.innerHTML = `<p>Denne lenken ser ikke riktig ut. Be den som sendte den om en ny, eller <a href="salongen.html">logg inn</a> hvis du allerede har bruker.</p>`;
+    return;
+  }
+  if (kode) {
+    let sjekk = { gyldig: false };
+    try { sjekk = await api(`invitasjon?navn=${encodeURIComponent(navn)}&kode=${encodeURIComponent(kode)}`); } catch (_) {}
+    if (!sjekk.gyldig) {
+      boks.innerHTML = `<p>Invitasjonslenken er ugyldig eller utløpt. Be om en ny.</p>`;
+      return;
+    }
+    if (sjekk.registrert) {
+      boks.innerHTML = `<p>Du har allerede laget bruker, ${esc(navn)}.</p><p><a class="knapp" href="salongen.html">Logg inn</a></p>`;
+      return;
+    }
+  }
+
+  document.getElementById("tittel").textContent = `Velkommen, ${navn}`;
+  boks.innerHTML = `
+    <form class="skjema" id="registrer">
+      <p style="margin:0">Du er invitert inn i Taffelakademiet for Samvær og Etegilder. Lag brukeren din under. Det du skriver og bildet du velger, vises for de andre brødrene på siden <a href="medlemmer.html">Brødrene</a>.</p>
+
+      <div class="felt">
+        <label for="fil">Profilbilde</label>
+        <div class="bilde-velger">
+          <div id="forhånd">${avatar(navn, null)}</div>
+          <input id="fil" type="file" accept="image/*" required style="flex:1 1 220px">
+        </div>
+      </div>
+
+      <div class="felt"><label for="om">Om deg selv</label>
+        <textarea id="om" maxlength="3000" required placeholder="Hva du driver med, hvor du kommer fra, livretten din, fremste meritt innen etegilder"></textarea></div>
+
+      <div class="felt"><label for="tafse">Hva betyr TAFSE for deg?</label>
+        <textarea id="tafse" maxlength="3000" required></textarea></div>
+
+      ${kode ? "" : `<div class="felt"><label for="akademi">Akademipassord</label><input id="akademi" type="password" required></div>`}
+
+      <div class="to-kol">
+        <div class="felt"><label for="passord">Velg passord (minst seks tegn)</label><input id="passord" type="password" minlength="6" autocomplete="new-password" required></div>
+        <div class="felt"><label for="passord2">Gjenta passordet</label><input id="passord2" type="password" minlength="6" autocomplete="new-password" required></div>
+      </div>
+
+      <div><button class="knapp" type="submit">Bli med</button></div>
+      <div id="melding" role="status"></div>
+    </form>`;
+
+  let profilbilde = null;
+  const filFelt = document.getElementById("fil");
+  filFelt.addEventListener("change", async () => {
+    const melding = document.getElementById("melding");
+    melding.innerHTML = "";
+    profilbilde = null;
+    if (!filFelt.files[0]) return;
+    try {
+      profilbilde = await krympProfilbilde(filFelt.files[0]);
+      const url = URL.createObjectURL(profilbilde);
+      document.getElementById("forhånd").innerHTML = `<div class="medaljong med-bilde"><img src="${url}" alt="Forhåndsvisning av profilbildet"></div>`;
+    } catch (err) {
+      melding.innerHTML = `<p class="melding feil">${esc(err.message)}</p>`;
+    }
+  });
+
+  document.getElementById("registrer").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const melding = document.getElementById("melding");
+    const knapp = e.target.querySelector("button[type=submit]");
+    const passord = document.getElementById("passord").value;
+    if (passord !== document.getElementById("passord2").value) {
+      melding.innerHTML = `<p class="melding feil">Passordene er ikke like.</p>`;
+      return;
+    }
+    if (!profilbilde) {
+      melding.innerHTML = `<p class="melding feil">Velg et profilbilde.</p>`;
+      return;
+    }
+    knapp.disabled = true;
+    melding.innerHTML = `<p class="melding">Lager brukeren …</p>`;
+    try {
+      const fd = new FormData();
+      fd.append("navn", navn);
+      if (kode) fd.append("kode", kode);
+      else fd.append("akademipassord", document.getElementById("akademi").value);
+      fd.append("om", document.getElementById("om").value);
+      fd.append("tafse", document.getElementById("tafse").value);
+      fd.append("passord", passord);
+      fd.append("fil", profilbilde, "profil.jpg");
+      await api("registrer", { method: "POST", body: fd });
+      location.href = "medlemmer.html";
+    } catch (err) {
+      melding.innerHTML = `<p class="melding feil">${esc(err.message)}</p>`;
+      knapp.disabled = false;
+    }
+  });
+})();
+</script>
+</body>
+</html>
