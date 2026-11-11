@@ -24,6 +24,7 @@ const SIDER = [
   ["vedtekter.html", "Vedtekter"],
   ["saker.html", "Saker"],
   ["medlemmer.html", "Brødrene"],
+  ["verden.html", "Hva skjer?"],
   ["fortellingen.html", "Fortellingen"],
   ["spill.html", "Spill"],
 ];

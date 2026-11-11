@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hva skjer? · TAFSE</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main class="side">
+  <div id="utgave"><p class="dempet">Laster …</p></div>
+  <section class="seksjon" id="arkiv-seksjon" hidden>
+    <h2>Tidligere steder</h2>
+    <div class="arkiv" id="arkiv"></div>
+  </section>
+</main>
+<script src="assets/app.js"></script>
+<script>
+// Ortografisk klode med lengde- og breddegrader og en prikk for stedet
+function klode(lat, lon) {
+  const R = 100, rad = Math.PI / 180;
+  const l0 = (lon - 25) * rad, p0 = Math.max(-60, Math.min(60, lat * 0.7)) * rad;
+  const proj = (la, lo) => {
+    const p = la * rad, l = lo * rad;
+    const synlig = Math.sin(p0) * Math.sin(p) + Math.cos(p0) * Math.cos(p) * Math.cos(l - l0) >= 0;
+    return { x: 110 + R * Math.cos(p) * Math.sin(l - l0), y: 110 - R * (Math.cos(p0) * Math.sin(p) - Math.sin(p0) * Math.cos(p) * Math.cos(l - l0)), synlig };
+  };
+  const linje = (pkt) => {
+    let d = "", pen = false;
+    for (const q of pkt) {
+      if (!q.synlig) { pen = false; continue; }
+      d += `${pen ? "L" : "M"}${q.x.toFixed(1)} ${q.y.toFixed(1)}`;
+      pen = true;
+    }
+    return d;
+  };
+  let sti = "";
+  for (let lo = -180; lo < 180; lo += 30) sti += linje(Array.from({ length: 61 }, (_, i) => proj(-90 + i * 3, lo)));
+  for (let la = -60; la <= 60; la += 30) sti += linje(Array.from({ length: 121 }, (_, i) => proj(la, -180 + i * 3)));
+  const s = proj(lat, lon);
+  return `<svg class="klode" viewBox="0 0 220 220" role="img" aria-label="Klode med stedet markert">
+    <circle cx="110" cy="110" r="${R}" fill="none" stroke="#c9a24a" stroke-opacity=".6"/>
+    <path d="${sti}" fill="none" stroke="#c9a24a" stroke-opacity=".22" stroke-width=".8"/>
+    <circle cx="${s.x.toFixed(1)}" cy="${s.y.toFixed(1)}" r="12" fill="#c9a24a" fill-opacity=".15"/>
+    <circle cx="${s.x.toFixed(1)}" cy="${s.y.toFixed(1)}" r="4.5" fill="#e2c174"/>
+  </svg>`;
+}
+
+function datoLang(iso) {
+  const d = tilDato(iso);
+  return `${d.getDate()}. ${MANEDER[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+function koordinater(lat, lon) {
+  return `${Math.abs(lat).toFixed(2)}° ${lat >= 0 ? "N" : "S"}, ${Math.abs(lon).toFixed(2)}° ${lon >= 0 ? "Ø" : "V"}`;
+}
+
+const lenke = (k) => k && k.url ? `<a href="${esc(k.url)}" target="_blank" rel="noopener">${esc(k.navn || k.url)}</a>` : esc((k && k.navn) || "");
+
+(async () => {
+  const boks = document.getElementById("utgave");
+  let indeks;
+  try {
+    indeks = await (await fetch("data/steder/index.json", { cache: "no-cache" })).json();
+  } catch (_) {
+    indeks = { utgaver: [] };
+  }
+  const utgaver = indeks.utgaver || [];
+  if (!utgaver.length) {
+    boks.innerHTML = `<p class="overline">Ukens sted</p><h1 class="side-tittel">Hva skjer?</h1><p class="tomt">Første utgave kommer onsdag.</p>`;
+    return;
+  }
+  const id = new URLSearchParams(location.search).get("id") || utgaver[0].id;
+  const valgt = utgaver.find((u) => u.id === id) || utgaver[0];
+
+  let u;
+  try {
+    u = await (await fetch(`data/steder/${encodeURIComponent(valgt.id)}.json`, { cache: "no-cache" })).json();
+  } catch (_) {
+    boks.innerHTML = `<p class="melding feil">Fant ikke utgaven.</p>`;
+    return;
+  }
+  document.title = `Hva skjer i ${u.sted}? · TAFSE`;
+  const kart = `https://www.openstreetmap.org/?mlat=${u.lat}&mlon=${u.lon}#map=11/${u.lat}/${u.lon}`;
+
+  boks.innerHTML = `
+    <p class="overline">${valgt === utgaver[0] ? "Ukens sted" : "Fra arkivet"} · ${esc(datoLang(u.dato))}</p>
+    <h1 class="side-tittel" style="margin-bottom:8px">Hva skjer i ${esc(u.sted)}?</h1>
+    <p class="sted-under">${esc([u.region, u.land].filter(Boolean).join(", "))}</p>
+
+    <div class="sted-topp">
+      <div class="sted-kart">
+        ${klode(u.lat, u.lon)}
+        <a class="dempet" href="${kart}" target="_blank" rel="noopener">${koordinater(u.lat, u.lon)} · Se kart</a>
+      </div>
+      <div>
+        <p class="sted-ingress">${esc(u.ingress)}</p>
+        ${(u.fakta || []).length ? `<dl class="fakta">${u.fakta.map((f) => `<div><dt>${esc(f.tittel)}</dt><dd>${esc(f.verdi)}</dd></div>`).join("")}</dl>` : ""}
+      </div>
+    </div>
+
+    ${(u.saker || []).length ? `<section class="seksjon">
+      <h2>Siste nytt</h2>
+      <div class="saker-liste">
+        ${u.saker.map((s) => `<article class="nyhet">
+          ${s.dato ? `<p class="nyhet-dato">${esc(s.dato)}</p>` : ""}
+          <h3>${esc(s.tittel)}</h3>
+          <p>${esc(s.tekst)}</p>
+          ${s.kilde ? `<p class="dempet nyhet-kilde">Kilde: ${lenke(s.kilde)}</p>` : ""}
+        </article>`).join("")}
+      </div>
+    </section>` : ""}
+
+    ${u.kuriosa ? `<section class="seksjon"><h2>Verdt å vite</h2><p class="sted-kuriosa">${esc(u.kuriosa)}</p></section>` : ""}
+
+    ${(u.kilder || []).length ? `<section class="seksjon kilder"><h2>Kilder</h2><ul>${u.kilder.map((k) => `<li>${lenke(k)}</li>`).join("")}</ul></section>` : ""}`;
+
+  if (utgaver.length > 1 || valgt !== utgaver[0]) {
+    document.getElementById("arkiv-seksjon").hidden = false;
+    document.getElementById("arkiv").innerHTML = utgaver.map((a) => `<a href="verden.html?id=${encodeURIComponent(a.id)}"${a.id === valgt.id ? ' aria-current="page"' : ""}>
+      <span class="dempet">${esc(datoLang(a.dato))}</span>
+      <strong>${esc(a.sted)}</strong>
+      <span>${esc(a.land)}</span>
+    </a>`).join("");
+  }
+})();
+</script>
+</body>
+</html>

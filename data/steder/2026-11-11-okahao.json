@@ -1,0 +1,89 @@
+{
+  "id": "2026-11-11-okahao",
+  "dato": "2026-11-11",
+  "sted": "Okahao",
+  "land": "Namibia",
+  "landkode": "NA",
+  "region": "Omusati-regionen",
+  "lat": -17.8876,
+  "lon": 15.0668,
+  "ingress": "Okahao er en småby på de flate slettene i Omusati-regionen nord i Namibia, om lag 73 kilometer vest for Oshakati. Byen vokste fram rundt en finsk misjonsstasjon og er den største i Ongandjera, området der Namibias første president, Sam Nujoma, ble født. Den siste uken har handlet om byens årlige kulturmesse og en fotballturnering med uvanlig gode premier, men også om sorg etter en av årets verste trafikkulykker i regionen.",
+  "fakta": [
+    {
+      "tittel": "Innbyggere",
+      "verdi": "7 486 (folketelling 2023)"
+    },
+    {
+      "tittel": "Språk",
+      "verdi": "Oshiwambo, dialekten oshingandjera"
+    },
+    {
+      "tittel": "Ordfører",
+      "verdi": "Gandja Iiyambo (SWAPO), siden desember 2025"
+    },
+    {
+      "tittel": "Klima",
+      "verdi": "Halvtørt steppeklima"
+    },
+    {
+      "tittel": "Næring",
+      "verdi": "Selvbergingsjordbruk, to åpne markeder"
+    }
+  ],
+  "saker": [
+    {
+      "dato": "Første uke i november 2026",
+      "tittel": "Kulturmesse med husdyrauksjon",
+      "tekst": "Byens årlige kulturmesse, Ehao Cultural Expo, ble åpnet av SWAPO-parlamentarikeren Natangwe Ithete. Programmet strakk seg fra tirsdag til søndag med utstillinger, handel, fortellerkunst, musikk og husdyrauksjoner. Ithete ba innbyggerne gjøre kultur, idrett og håndverk til næring, med ordene «Okahao cannot develop without us», og ønsket velkommen regjeringens plan om et idrettsstadion i hver valgkrets.",
+      "kilde": {
+        "navn": "The Observer (Namibia)",
+        "url": "https://observer24.com.na/ithete-urges-okahao-residents-to-turn-culture-into-economic-opportunities/"
+      }
+    },
+    {
+      "dato": "6.–8. november 2026",
+      "tittel": "Ordførerens cup: 40 000 dollar til vinnerne",
+      "tekst": "Bystyret arrangerte en tredagers turnering i ungdomsfotball, veteranfotball, nettball og volleyball. Vinnerlaget i ungdomsfotballen fikk 40 000 namibiske dollar, pokal, 20 gullmedaljer og nye drakter. Ordfører Gandja Iiyambo begrunnet satsingen med at de fleste av byens talentfulle unge utøvere ennå ikke er oppdaget.",
+      "kilde": {
+        "navn": "New Era",
+        "url": "https://neweralive.na/okahao-mayors-cup-set-for-november/"
+      }
+    },
+    {
+      "dato": "1. november 2026",
+      "tittel": "Sju døde i frontkollisjon ved Elim",
+      "tekst": "Natt til søndag 1. november kolliderte en pickup og en SUV i Elim-svingen på hovedveien mellom Okahao og Oshakati. Sju mennesker omkom, blant dem afrobeat-artisten Nally Simson (33), som hadde et trofast publikum i det namibiske musikkmiljøet. Begravelsesfølgene ble eskortert av politiet gjennom Oshakati og Ongwediva.",
+      "kilde": {
+        "navn": "Yen.com.gh",
+        "url": "https://yen.com.gh/entertainment/celebrities/314907-namibian-afrobeat-musician-nally-simson-dies-33-road-accident-claimed-7/"
+      }
+    }
+  ],
+  "kuriosa": "Finske misjonærer forsøkte første gang å etablere seg i Ongandjera i 1871, men måtte trekke seg ut to år senere etter en konflikt med den lokale kongen. De kom tilbake i 1903, flyttet stasjonen i 1908 på grunn av vannmangel, og grunnla i 1947 et seminar for kvinner her. Navnet Okahao ble tatt i bruk først på 1960-tallet. I dag har byen to sykehus, et fengsel og en grusflystripe på rundt én kilometer.",
+  "kilder": [
+    {
+      "navn": "The Observer: Ithete urges Okahao residents to turn culture into economic opportunities",
+      "url": "https://observer24.com.na/ithete-urges-okahao-residents-to-turn-culture-into-economic-opportunities/"
+    },
+    {
+      "navn": "New Era: Okahao Mayor’s Cup set for November",
+      "url": "https://neweralive.na/okahao-mayors-cup-set-for-november/"
+    },
+    {
+      "navn": "Yen.com.gh: Namibian Afrobeat musician Nally Simson dies at 33",
+      "url": "https://yen.com.gh/entertainment/celebrities/314907-namibian-afrobeat-musician-nally-simson-dies-33-road-accident-claimed-7/"
+    },
+    {
+      "navn": "allAfrica: Families send loved ones to final resting place",
+      "url": "https://allafrica.com/stories/202611090770.html"
+    },
+    {
+      "navn": "Namibian Sun: Swapo names local authority leaders in Omusati",
+      "url": "https://www.namibiansun.com/politics/swapo-names-local-authority-leaders-in-omusati2025-12-05179079"
+    },
+    {
+      "navn": "Wikipedia: Okahao",
+      "url": "https://en.wikipedia.org/wiki/Okahao"
+    }
+  ]
+}

@@ -62,7 +62,7 @@ h1, h2, h3 { font-family: var(--display); font-weight: 600; letter-spacing: .04e
 }
 .merke svg { width: 42px; height: 32px; }
 .merke span { font-family: var(--display); font-weight: 700; font-size: 24px; letter-spacing: .25em; }
-.meny { display: flex; gap: 22px; }
+.meny { display: flex; gap: 20px; }
 .meny a {
   font-family: var(--display);
   font-size: 14px;
@@ -86,7 +86,7 @@ h1, h2, h3 { font-family: var(--display); font-weight: 600; letter-spacing: .04e
   min-height: 44px;
 }
 
-@media (max-width: 1020px) {
+@media (max-width: 1240px) {
   .meny-knapp { display: block; }
   .meny {
     display: none;
@@ -410,3 +410,30 @@ input:focus, select:focus, textarea:focus, .knapp:focus-visible, a:focus-visible
   .spill-skjerm p { font-size: 16px; line-height: 1.45; }
   .spill-regler { font-size: 14px; line-height: 1.4; }
 }
+
+/* Hva skjer? */
+.sted-under { font-style: italic; font-size: 22px; color: var(--dempet); margin: 0 0 36px; }
+.sted-topp { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 40px; align-items: start; }
+@media (max-width: 760px) { .sted-topp { grid-template-columns: 1fr; gap: 20px; } }
+.sted-kart { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.sted-kart a { font-size: 15px; }
+.klode { width: 220px; height: 220px; }
+.sted-ingress { font-size: 22px; line-height: 1.5; margin: 0 0 24px; }
+.fakta { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0; margin: 0; border-top: 1px solid var(--linje); }
+.fakta div { padding: 12px 0; border-bottom: 1px solid var(--linje); padding-right: 16px; }
+.fakta dt { font-family: var(--display); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--gull); }
+.fakta dd { margin: 4px 0 0; }
+.saker-liste { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.nyhet { border: 1px solid var(--linje); background: var(--flate); padding: 22px 24px; display: flex; flex-direction: column; gap: 8px; }
+.nyhet h3 { margin: 0; font-size: 20px; line-height: 1.25; }
+.nyhet p { margin: 0; }
+.nyhet-dato { font-family: var(--display); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--gull); }
+.nyhet-kilde { font-size: 15px; margin-top: auto !important; padding-top: 6px; }
+.sted-kuriosa { font-size: 20px; max-width: 780px; margin: 0; }
+.kilder ul { padding-left: 1.2em; margin: 0; font-size: 16px; color: var(--dempet); }
+.kilder li { margin-bottom: 6px; word-break: break-word; }
+.arkiv { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.arkiv a { text-decoration: none; color: var(--tekst); border: 1px solid var(--linje); background: var(--flate); padding: 16px 18px; display: flex; flex-direction: column; gap: 2px; }
+.arkiv a:hover, .arkiv a[aria-current] { border-color: var(--gull); }
+.arkiv strong { font-family: var(--display); font-size: 18px; color: var(--gull-lys); font-weight: 600; }
+.arkiv span { font-size: 15px; }
