@@ -329,3 +329,5 @@ input:focus, select:focus, textarea:focus, .knapp:focus-visible, a:focus-visible
 [hidden] { display: none !important; }
 #port-felt { display: flex; flex-direction: column; gap: 18px; }
 #port-felt:empty { display: none; }
+.kylix-lenke { display: inline-block; line-height: 0; transition: transform .2s ease, filter .2s ease; }
+.kylix-lenke:hover { transform: translateY(-2px); filter: brightness(1.15); }

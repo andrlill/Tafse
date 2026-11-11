@@ -50,7 +50,7 @@
 </main>
 <script src="assets/app.js"></script>
 <script>
-document.getElementById("hero").insertAdjacentHTML("afterbegin", LOGO_STOR);
+document.getElementById("hero").insertAdjacentHTML("afterbegin", `<a class="kylix-lenke" href="https://en.wikipedia.org/wiki/Kylix" target="_blank" rel="noopener" title="Hva er en kylix?" aria-label="Kylix på Wikipedia (åpnes i ny fane)">${LOGO_STOR}</a>`);
 
 hentData().then(({ moter }) => {
   const neste = nesteMote(moter);
