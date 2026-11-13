@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2048 · TAFSE</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main class="side">
+  <p class="overline">Spill</p>
+  <h1 class="side-tittel">2048</h1>
+  <nav class="spillhall" aria-label="Spillene">
+    <a href="symposion.html">Symposion</a>
+    <a href="2048.html" class="aktiv" aria-current="page">2048</a>
+    <a href="honningfella.html">Honningfella</a>
+    <a href="spill.html">Idus Martiae</a>
+  </nav>
+
+  <div class="t-oppsett">
+    <section class="t-spill" aria-label="Spillet">
+      <div class="t-hode">
+        <div class="t-tall"><span>Poeng</span><strong id="t-poeng">0</strong></div>
+        <div class="t-tall"><span>Din rekord</span><strong id="t-rekord">0</strong></div>
+        <button class="liten-knapp" type="button" id="t-ny">Nytt spill</button>
+      </div>
+      <div class="t-brett" id="t-brett" tabindex="0" aria-label="Brettet. Bruk piltastene eller sveip."></div>
+      <p class="t-hjelp">Piltaster eller sveip. To like slår seg sammen.</p>
+    </section>
+    <section class="t-side">
+      <h2 class="t-tittel">Tavlen</h2>
+      <div class="t-faner" role="tablist">
+        <button type="button" class="t-fane aktiv" data-fane="uke" role="tab" aria-selected="true">Denne uka</button>
+        <button type="button" class="t-fane" data-fane="alle" role="tab" aria-selected="false">Alle tider</button>
+      </div>
+      <div id="t-tavle"><p class="dempet">Laster …</p></div>
+    </section>
+  </div>
+</main>
+<script src="assets/app.js"></script>
+<script src="assets/2048.js"></script>
+</body>
+</html>

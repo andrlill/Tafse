@@ -40,7 +40,7 @@ function byggRamme() {
   const her = (location.pathname.split("/").pop() || "index").replace(/\.html$/, "");
   const meny = SIDER.map(([fil, navn]) => {
     const stamme = fil.replace(/\.html$/, "");
-    const aktiv = stamme === her || (her === "mote" && stamme === "moter") || (["spill", "honningfella"].includes(her) && stamme === "symposion") || (her === "bror" && stamme === "medlemmer");
+    const aktiv = stamme === her || (her === "mote" && stamme === "moter") || (["spill", "honningfella", "2048"].includes(her) && stamme === "symposion") || (her === "bror" && stamme === "medlemmer");
     return `<a href="${fil}"${aktiv ? ' class="aktiv" aria-current="page"' : ""}>${navn}</a>`;
   }).join("");
   const topp = document.createElement("header");

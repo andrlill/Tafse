@@ -20,6 +20,7 @@ Nettsiden til Taffelakademiet for Samvær og Etegilder.
 | `fortellingen.html` | Nettversjonen av lanseringspresentasjonen |
 | `spill.html`, `assets/spill.js` | Spillet Idus Martiae, med tavle for brødrene |
 | `symposion.html`, `assets/symposion.js`, `lib/symposion.js` | Spillet Symposion, den felles byen. Regler og serverlogikk ligger i `lib/symposion.js` |
+| `2048.html`, `assets/2048.js` | Spillet 2048, med toppliste for uka og for alle tider |
 | `honningfella.html`, `assets/honningfella.js` | Spillet Honningfella. Oppdragene ligger i `data/honningfella/oppdrag.json`, se `data/honningfella/OPPSKRIFT.md` |
 | `verden.html`, `data/steder/` | «Hva skjer?»: ukens tilfeldige sted, med arkiv. Se `data/steder/OPPSKRIFT.md` |
 | `data/moter.json` | **Møtedatoer, Tafsemestere og medlemsliste. Endre her.** |

@@ -121,6 +121,14 @@ async function sikreSkjema(db) {
     db.prepare(`CREATE INDEX IF NOT EXISTS poster_mote ON poster (mote)`),
     db.prepare(`CREATE INDEX IF NOT EXISTS svar_post ON svar (post_id)`),
     ...SYMPOSION_SKJEMA.map((sql) => db.prepare(sql)),
+    db.prepare(`CREATE TABLE IF NOT EXISTS tall2048 (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      navn TEXT NOT NULL,
+      poeng INTEGER NOT NULL,
+      brikke INTEGER NOT NULL,
+      trekk INTEGER NOT NULL,
+      opprettet TEXT NOT NULL
+    )`),
   ]);
   // Eldre databaser mangler kolonnen tafse
   try { await db.prepare("ALTER TABLE profiler ADD COLUMN tafse TEXT").run(); } catch (_) {}
@@ -622,6 +630,31 @@ export async function onRequest({ request, env, params }) {
   // --- Spillet: Symposion (den felles byen). Logikken ligger i lib/symposion.js ---
   if (ressurs === "symposion" && (metode === "GET" || metode === "POST")) {
     return symposion({ db, meg, metode, handling: id, request, medlemmer: await medlemsliste(env, url), json, feil, lesJson, varsle });
+  }
+
+  // --- Spillet: 2048. Tavlen viser beste resultat per bror, denne uka og for alle tider ---
+  if (ressurs === "2048") {
+    if (metode === "GET") {
+      // Uka starter mandag kl. 00 norsk tid (regnet grovt som UTC+1)
+      const n = new Date(Date.now() + 3600000);
+      const mandag = new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate() - ((n.getUTCDay() + 6) % 7)) - 3600000).toISOString();
+      const beste = (hvor) => `SELECT t.navn, t.poeng, t.brikke FROM tall2048 t JOIN (SELECT navn, MAX(poeng) AS p FROM tall2048 ${hvor} GROUP BY navn) m ON m.navn = t.navn AND m.p = t.poeng ${hvor ? "AND t.opprettet >= ?" : ""} GROUP BY t.navn ORDER BY t.poeng DESC`;
+      const [alle, uke, antall] = await db.batch([
+        db.prepare(beste("")),
+        db.prepare(beste("WHERE opprettet >= ?")).bind(mandag, mandag),
+        db.prepare("SELECT COUNT(*) AS n FROM tall2048"),
+      ]);
+      return json({ alle: alle.results, uke: uke.results, antall: antall.results[0].n });
+    }
+    if (metode === "POST") {
+      const b = await lesJson(request);
+      const heltall = (v, min, maks) => Math.max(min, Math.min(maks, Math.round(Number(v) || 0)));
+      const brikke = heltall(b.brikke, 2, 131072);
+      if (brikke & (brikke - 1)) return feil(400, "Ugyldig brikke.");
+      await db.prepare("INSERT INTO tall2048 (navn, poeng, brikke, trekk, opprettet) VALUES (?, ?, ?, ?, ?)")
+        .bind(meg, heltall(b.poeng, 0, 4000000), brikke, heltall(b.trekk, 0, 100000), naa()).run();
+      return json({ ok: true }, 201);
+    }
   }
 
   // --- Varsler ---
