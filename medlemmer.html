@@ -14,6 +14,7 @@
 <main class="side">
   <p class="overline">Medlemsregister</p>
   <h1 class="side-tittel">Brødrene</h1>
+  <div class="skar-forklaring" id="forklaring" hidden></div>
   <div class="brodre" id="brodre"></div>
   <div id="skriv"></div>
 </main>
@@ -25,6 +26,47 @@
   moter.forEach((m) => m.tafsemestere.forEach((n) => (verv[n] = m)));
 
   let profiler = {};
+  let aktivitet = null;
+  let sortering = "skar";
+  const RANGER = [
+    [0, "Tiro", "rekrutt"],
+    [10, "Kvestor", ""],
+    [25, "Ædil", ""],
+    [50, "Pretor", ""],
+    [80, "Konsul", ""],
+    [130, "Pater Patriae", "fedrelandets far"],
+  ];
+  const HANDLINGER = {
+    poster: ["Post i Salongen", "poster"],
+    bilder: ["Bilde lastet opp", "bilder"],
+    svar: ["Svar eller kommentar", "svar"],
+    saker: ["Sak meldt inn", "saker"],
+    vedtatt: ["Sak vedtatt (bonus)", "vedtatt"],
+    stemmer: ["Stemme avgitt", "stemmer"],
+    skalMottatt: ["Skål fra en annen bror", "skåler"],
+    profil: ["Presentasjon skrevet", "presentasjon"],
+    seier: ["Overlevde Idus Martiae", "seier"],
+  };
+  function rang(skar) {
+    let i = 0;
+    while (i + 1 < RANGER.length && skar >= RANGER[i + 1][0]) i++;
+    const neste = RANGER[i + 1];
+    const fra = RANGER[i][0];
+    return { navn: RANGER[i][1], neste, andel: neste ? (skar - fra) / (neste[0] - fra) : 1 };
+  }
+  function skarHtml(n) {
+    const a = aktivitet && aktivitet.brodre[n];
+    if (!a) return "";
+    const r = rang(a.skar);
+    const deler = Object.entries(a.detaljer).filter(([, v]) => v > 0)
+      .map(([k, v]) => `<li><span>${HANDLINGER[k][0]}</span><span>${v} × ${aktivitet.vekt[k]} = ${v * aktivitet.vekt[k]}</span></li>`).join("");
+    return `<div class="skar">
+      <div class="skar-topp"><span class="skar-tall">${a.skar}</span><span class="skar-rang">${esc(r.navn)}</span></div>
+      <div class="skar-stolpe" role="img" aria-label="${r.neste ? `${r.neste[0] - a.skar} poeng til ${r.neste[1]}` : "Høyeste rang"}"><span style="width:${Math.round(r.andel * 100)}%"></span></div>
+      <p class="skar-neste">${r.neste ? `${r.neste[0] - a.skar} poeng til ${esc(r.neste[1])}` : "Høyeste rang er nådd"}</p>
+      ${deler ? `<details class="skar-detaljer"><summary>Slik er skåren regnet ut</summary><ul>${deler}</ul></details>` : ""}
+    </div>`;
+  }
   const harBruker = new Set(await api("brukere").catch(() => []));
   await hvemErJeg();
 
@@ -32,8 +74,26 @@
     if (MEG) {
       profiler = {};
       try { (await api("profiler")).forEach((p) => (profiler[p.navn] = p)); } catch (_) {}
+      try { aktivitet = await api("aktivitet"); } catch (_) { aktivitet = null; }
     }
-    document.getElementById("brodre").innerHTML = medlemmer.map((n) => {
+    const forklaring = document.getElementById("forklaring");
+    if (aktivitet) {
+      forklaring.hidden = false;
+      forklaring.innerHTML = `<div class="sorter" role="group" aria-label="Sorter brødrene">
+          <span class="dempet">Sorter etter</span>
+          <button type="button" data-sorter="skar" aria-pressed="${sortering === "skar"}">Skår</button>
+          <button type="button" data-sorter="navn" aria-pressed="${sortering === "navn"}">Navn</button>
+        </div>
+        <details>
+          <summary>Hvordan regnes skåren?</summary>
+          <p>Hver handling på siden gir poeng. Rangene følger det romerske embetsløpet: ${RANGER.map((r) => `${esc(r[1])} (${r[0]})`).join(", ")}.</p>
+          <ul>${Object.entries(HANDLINGER).map(([k, [tekst]]) => `<li><span>${tekst}</span><span>${aktivitet.vekt[k]} poeng</span></li>`).join("")}</ul>
+        </details>`;
+    }
+    const rekkefolge = aktivitet && sortering === "skar"
+      ? [...medlemmer].sort((a, b) => (aktivitet.brodre[b]?.skar || 0) - (aktivitet.brodre[a]?.skar || 0) || a.localeCompare(b, "no"))
+      : medlemmer;
+    document.getElementById("brodre").innerHTML = rekkefolge.map((n) => {
       const m = verv[n];
       const p = profiler[n] || {};
       const vervTekst = m
@@ -48,6 +108,7 @@
         ${avatar(n, MEG ? p.bilde_id : null)}
         <h3>${esc(n)}${n === MEG ? ' <span class="merkelapp">Deg</span>' : ""}</h3>
         <span class="verv">${vervTekst}</span>
+        ${skarHtml(n)}
         ${tekst}
       </article>`;
     }).join("");
@@ -66,6 +127,13 @@
   let venter;
   window.addEventListener("resize", () => { clearTimeout(venter); venter = setTimeout(visSeMer, 150); });
   document.fonts && document.fonts.ready.then(visSeMer);
+
+  document.getElementById("forklaring").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-sorter]");
+    if (!b || b.dataset.sorter === sortering) return;
+    sortering = b.dataset.sorter;
+    tegn();
+  });
 
   document.getElementById("brodre").addEventListener("click", (e) => {
     const knapp = e.target.closest(".se-mer");
