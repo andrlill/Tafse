@@ -95,6 +95,17 @@ async function sikreSkjema(db) {
       fullfort INTEGER NOT NULL,
       opprettet TEXT NOT NULL
     )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS varsler (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      mottaker TEXT NOT NULL,
+      avsender TEXT NOT NULL,
+      type TEXT NOT NULL,
+      tekst TEXT NOT NULL,
+      lenke TEXT NOT NULL,
+      lest INTEGER NOT NULL DEFAULT 0,
+      opprettet TEXT NOT NULL
+    )`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS varsler_mottaker ON varsler (mottaker, id)`),
     db.prepare(`CREATE TABLE IF NOT EXISTS profiler (
       navn TEXT PRIMARY KEY,
       tekst TEXT NOT NULL,
@@ -208,6 +219,17 @@ function nesteMote(moter) {
   const idag = new Date().toISOString().slice(0, 10);
   return (moter || []).find((m) => !m.dato || m.dato >= idag) || null;
 }
+
+// Sender et varsel til hver mottaker (unntatt avsenderen selv, og hver mottaker bare én gang)
+async function varsle(db, mottakere, { avsender, type, tekst: t, lenke }) {
+  const unike = [...new Set(mottakere.filter((m) => m && m !== avsender))];
+  if (!unike.length) return;
+  const naa = new Date().toISOString();
+  await db.batch(unike.map((m) =>
+    db.prepare("INSERT INTO varsler (mottaker, avsender, type, tekst, lenke, opprettet) VALUES (?, ?, ?, ?, ?, ?)").bind(m, avsender, type, t, lenke, naa)));
+}
+const utdrag = (t, n = 80) => (t.length > n ? t.slice(0, n - 1).trimEnd() + "…" : t);
+const postLenke = (post) => (post.mote && post.mote !== "salongen" ? `mote.html?id=${encodeURIComponent(post.mote)}#post-${post.id}` : `salongen.html#post-${post.id}`);
 
 // Personlig invitasjonskode, avledet av navnet og akademipassordet
 const invitasjonskode = async (env, navn) => (await hmac(env.TAFSE_PASSORD, `invitasjon|${navn}`)).slice(0, 20);
@@ -351,11 +373,13 @@ export async function onRequest({ request, env, params }) {
         .prepare("INSERT INTO forslag (navn, type, paragraf, tittel, tekst, begrunnelse, mote, opprettet) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
         .bind(meg, type, type === "Vedtektsendring" ? tekst(b.paragraf, 40) : "", tittel, innhold, tekst(b.begrunnelse, 5000), mote ? mote.id : null, naa())
         .run();
+      const { results: alle } = await db.prepare("SELECT navn FROM brukere").all();
+      await varsle(db, alle.map((x) => x.navn), { avsender: meg, type: "ny-sak", tekst: `meldte inn en ny sak: «${utdrag(tittel)}»`, lenke: `saker.html#sak-${r.meta.last_row_id}` });
       return json({ id: r.meta.last_row_id }, 201);
     }
     if (id && !under && metode === "PATCH") {
       const b = await lesJson(request);
-      const sak = await db.prepare("SELECT navn FROM forslag WHERE id = ?").bind(Number(id)).first();
+      const sak = await db.prepare("SELECT navn, tittel FROM forslag WHERE id = ?").bind(Number(id)).first();
       if (!sak) return feil(404, "Fant ikke saken.");
       if (!STATUSER.includes(b.status)) return feil(400, "Ugyldig status.");
       const data = await lesData(env, url);
@@ -363,6 +387,8 @@ export async function onRequest({ request, env, params }) {
       const kan = (await erAdmin(env, url, meg)) || (neste && neste.tafsemestere.includes(meg)) || (b.status === "trukket" && sak.navn === meg);
       if (!kan) return feil(403, "Bare Tafsemesterne kan registrere utfallet av en sak.");
       await db.prepare("UPDATE forslag SET status = ? WHERE id = ?").bind(b.status, Number(id)).run();
+      const utfall = { vedtatt: "som vedtatt", forkastet: "som forkastet", oppfolging: "som vedtatt, til oppfølging", innmeldt: "som åpen igjen" }[b.status];
+      if (utfall) await varsle(db, [sak.navn], { avsender: meg, type: "status", tekst: `registrerte saken din «${utdrag(sak.tittel)}» ${utfall}`, lenke: `saker.html#sak-${Number(id)}` });
       return json({ ok: true });
     }
     if (id && !under && metode === "DELETE") {
@@ -376,7 +402,7 @@ export async function onRequest({ request, env, params }) {
     }
     if (id && under === "stem" && metode === "POST") {
       const { stemme } = await lesJson(request);
-      const sak = await db.prepare("SELECT status FROM forslag WHERE id = ?").bind(Number(id)).first();
+      const sak = await db.prepare("SELECT status, navn, tittel FROM forslag WHERE id = ?").bind(Number(id)).first();
       if (!sak) return feil(404, "Fant ikke saken.");
       if (sak.status !== "innmeldt") return feil(400, "Saken er ferdigbehandlet.");
       if (stemme === null || stemme === "") {
@@ -384,13 +410,21 @@ export async function onRequest({ request, env, params }) {
         return json({ ok: true });
       }
       if (!STEMMER.includes(stemme)) return feil(400, "Ugyldig stemme.");
+      const forste = !(await db.prepare("SELECT 1 FROM stemmer WHERE sak_id = ? AND navn = ?").bind(Number(id), meg).first());
+      if (forste) await varsle(db, [sak.navn], { avsender: meg, type: "stemme", tekst: `stemte på saken din «${utdrag(sak.tittel)}»`, lenke: `saker.html#sak-${Number(id)}` });
       await db.prepare("INSERT INTO stemmer (sak_id, navn, stemme) VALUES (?, ?, ?) ON CONFLICT(sak_id, navn) DO UPDATE SET stemme = excluded.stemme").bind(Number(id), meg, stemme).run();
       return json({ ok: true });
     }
     if (id && under === "kommentar" && metode === "POST") {
       const t = tekst((await lesJson(request)).tekst, 3000);
       if (!t) return feil(400, "Kommentaren er tom.");
+      const sak = await db.prepare("SELECT navn, tittel FROM forslag WHERE id = ?").bind(Number(id)).first();
+      if (!sak) return feil(404, "Fant ikke saken.");
+      const { results: andre } = await db.prepare("SELECT DISTINCT navn FROM sakskommentarer WHERE sak_id = ?").bind(Number(id)).all();
       await db.prepare("INSERT INTO sakskommentarer (sak_id, navn, tekst, opprettet) VALUES (?, ?, ?, ?)").bind(Number(id), meg, t, naa()).run();
+      const lenke = `saker.html#sak-${Number(id)}`;
+      await varsle(db, [sak.navn], { avsender: meg, type: "sakskommentar", tekst: `kommenterte saken din «${utdrag(sak.tittel, 50)}»: «${utdrag(t, 60)}»`, lenke });
+      await varsle(db, andre.map((x) => x.navn).filter((n) => n !== sak.navn), { avsender: meg, type: "sakskommentar", tekst: `kommenterte også saken «${utdrag(sak.tittel, 50)}»: «${utdrag(t, 60)}»`, lenke });
       return json({ ok: true }, 201);
     }
   }
@@ -458,13 +492,27 @@ export async function onRequest({ request, env, params }) {
       const { tekst: t } = await lesJson(request);
       const innhold = tekst(t, 3000);
       if (!innhold) return feil(400, "Svaret er tomt.");
-      if (!(await db.prepare("SELECT 1 FROM poster WHERE id = ?").bind(Number(id)).first())) return feil(404, "Fant ikke posten.");
+      const post = await db.prepare("SELECT id, navn, mote FROM poster WHERE id = ?").bind(Number(id)).first();
+      if (!post) return feil(404, "Fant ikke posten.");
+      const { results: andre } = await db.prepare("SELECT DISTINCT navn FROM svar WHERE post_id = ?").bind(Number(id)).all();
       await db.prepare("INSERT INTO svar (post_id, navn, tekst, opprettet) VALUES (?, ?, ?, ?)").bind(Number(id), meg, innhold, naa()).run();
+      const lenke = postLenke(post);
+      await varsle(db, [post.navn], { avsender: meg, type: "svar", tekst: `svarte på posten din: «${utdrag(innhold)}»`, lenke });
+      await varsle(db, andre.map((x) => x.navn).filter((n) => n !== post.navn), { avsender: meg, type: "svar", tekst: `svarte også på en post du har kommentert: «${utdrag(innhold)}»`, lenke });
       return json({ ok: true }, 201);
     }
     if (id && under === "skal" && metode === "POST") {
+      const post = await db.prepare("SELECT id, navn, mote, tekst FROM poster WHERE id = ?").bind(Number(id)).first();
+      if (!post) return feil(404, "Fant ikke posten.");
       const finnes = await db.prepare("SELECT 1 FROM skal WHERE post_id = ? AND navn = ?").bind(Number(id), meg).first();
       await db.prepare(finnes ? "DELETE FROM skal WHERE post_id = ? AND navn = ?" : "INSERT INTO skal (post_id, navn) VALUES (?, ?)").bind(Number(id), meg).run();
+      const lenke = postLenke(post);
+      if (finnes) {
+        // Angret skål: fjern varselet hvis det ikke er lest ennå
+        await db.prepare("DELETE FROM varsler WHERE type = 'skal' AND avsender = ? AND lenke = ? AND lest = 0").bind(meg, lenke).run();
+      } else {
+        await varsle(db, [post.navn], { avsender: meg, type: "skal", tekst: post.tekst ? `skålte for posten din: «${utdrag(post.tekst, 60)}»` : "skålte for bildet ditt", lenke });
+      }
       return json({ skalt: !finnes });
     }
   }
@@ -562,6 +610,25 @@ export async function onRequest({ request, env, params }) {
         .bind(meg, oppdrag, heltall(b.skar, -100000, 200000), heltall(b.riktige, 0, moter), moter, heltall(b.prikker, 0, 3), b.fullfort ? 1 : 0, naa())
         .run();
       return json({ ok: true }, 201);
+    }
+  }
+
+  // --- Varsler ---
+  if (ressurs === "varsler") {
+    if (!id && metode === "GET") {
+      const [{ results }, ulest] = await db.batch([
+        db.prepare("SELECT id, avsender, type, tekst, lenke, lest, opprettet FROM varsler WHERE mottaker = ? ORDER BY id DESC LIMIT 40").bind(meg),
+        db.prepare("SELECT COUNT(*) AS n FROM varsler WHERE mottaker = ? AND lest = 0").bind(meg),
+      ]);
+      return json({ varsler: results, uleste: ulest.results[0].n });
+    }
+    if (id === "lest" && metode === "POST") {
+      const b = await lesJson(request);
+      if (Number(b.id)) await db.prepare("UPDATE varsler SET lest = 1 WHERE id = ? AND mottaker = ?").bind(Number(b.id), meg).run();
+      else await db.prepare("UPDATE varsler SET lest = 1 WHERE mottaker = ? AND lest = 0").bind(meg).run();
+      // Rydder bort gamle, leste varsler
+      await db.prepare("DELETE FROM varsler WHERE mottaker = ? AND lest = 1 AND opprettet < ?").bind(meg, new Date(Date.now() - 90 * 86400000).toISOString()).run();
+      return json({ ok: true });
     }
   }
 

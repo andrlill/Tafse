@@ -604,3 +604,29 @@ input:focus, select:focus, textarea:focus, .knapp:focus-visible, a:focus-visible
   .pe-knapper .knapp { min-width: 130px; }
   #pe-melding { position: absolute; bottom: -2px; right: 0; font-size: 14px; }
 }
+
+/* Varsler */
+.meny { margin-left: auto; }
+.varsel { position: relative; }
+.varsel-knapp { position: relative; background: none; border: 1px solid transparent; color: var(--gull); width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.varsel-knapp:hover, .varsel-knapp[aria-expanded="true"] { border-color: var(--linje); }
+.varsel-tall { position: absolute; top: 4px; right: 2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--rod); color: #fff; font-family: var(--display); font-size: 11px; font-weight: 700; line-height: 18px; text-align: center; }
+.varsel-panel { position: absolute; right: 0; top: calc(100% + 8px); width: min(380px, calc(100vw - 32px)); max-height: 70vh; overflow-y: auto; background: var(--flate); border: 1px solid var(--gull); z-index: 40; box-shadow: 0 12px 32px rgba(0, 0, 0, .55); }
+.varsel-hode { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--linje); position: sticky; top: 0; background: var(--flate); }
+.varsel-hode strong { font-family: var(--display); font-size: 13px; letter-spacing: .16em; text-transform: uppercase; color: var(--gull); }
+.varsel-hode .lenkeknapp { font-size: 15px; }
+.varsel-liste { list-style: none; margin: 0; padding: 0; }
+.varsel-liste a { display: flex; flex-direction: column; gap: 2px; padding: 12px 16px 12px 22px; text-decoration: none; color: var(--dempet); border-bottom: 1px solid var(--linje); font-size: 16px; line-height: 1.4; position: relative; }
+.varsel-liste a strong { color: var(--tekst); font-weight: 500; }
+.varsel-liste a.ulest { color: var(--tekst); background: var(--flate2); }
+.varsel-liste a.ulest::before { content: ""; position: absolute; left: 8px; top: 19px; width: 7px; height: 7px; border-radius: 50%; background: var(--gull); }
+.varsel-liste a:hover { background: var(--bunn); }
+.varsel-tid { font-size: 13px; color: var(--dempet); }
+.varsel-tomt { padding: 18px 16px; color: var(--dempet); font-style: italic; }
+@media (max-width: 1240px) { .varsel { margin-left: auto; } .meny-knapp { margin-left: 4px; } }
+.fremhevet { animation: fremhev 2.4s ease-out; }
+@keyframes fremhev { 0%, 30% { box-shadow: 0 0 0 2px var(--gull); background-color: var(--flate2); } 100% { box-shadow: 0 0 0 0 transparent; } }
+@media (max-width: 640px) {
+  .varsel { position: static; }
+  .varsel-panel { position: fixed; left: 12px; right: 12px; top: 100px; width: auto; max-height: calc(100vh - 120px); }
+}

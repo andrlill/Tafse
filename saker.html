@@ -125,7 +125,7 @@ kreverInnlogging(boks, async () => {
     if (s.navn === MEG && s.status === "innmeldt") handlinger.push(`<button class="liten-knapp" data-status="trukket" data-id="${s.id}">Trekk saken</button>`);
     if (s.navn === MEG) handlinger.push(`<button class="liten-knapp" data-slett="${s.id}">Slett</button>`);
 
-    return `<article class="innlegg sak">
+    return `<article class="innlegg sak" id="sak-${s.id}">
       <div class="innlegg-topp">
         <span class="overline" style="margin:0">${esc(s.type)}${vedtekt && s.paragraf ? ` · ${esc(s.paragraf)}` : ""}</span>
         <span class="merkelapp status-${esc(s.status)}">${esc(STATUS_NAVN[s.status] || s.status)}</span>
@@ -226,6 +226,17 @@ kreverInnlogging(boks, async () => {
   }
 
   await last();
+
+  // Fra et varsel: bytt til riktig fane og rull til saken
+  function tilAnker() {
+    const m = /^#sak-(\d+)$/.exec(location.hash);
+    if (!m) return;
+    const sak = data.saker.find((s) => s.id === Number(m[1]));
+    if (sak && (visning === "apne") !== APEN(sak)) { visning = APEN(sak) ? "apne" : "ferdige"; tegn(); }
+    fremhevAnker();
+  }
+  tilAnker();
+  window.addEventListener("hashchange", tilAnker);
 });
 </script>
 </body>

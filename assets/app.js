@@ -48,8 +48,15 @@ function byggRamme() {
   topp.innerHTML = `<div class="meander" aria-hidden="true"></div>
   <div class="topp-inner">
     <a class="merke" href="index.html">${LOGO}<span>TAFSE</span></a>
-    <button class="meny-knapp" aria-expanded="false" aria-controls="hovedmeny">Meny</button>
     <nav class="meny" id="hovedmeny" aria-label="Hovedmeny">${meny}</nav>
+    <div class="varsel" id="varsel" hidden>
+      <button class="varsel-knapp" type="button" aria-expanded="false" aria-controls="varsel-panel" aria-label="Varsler"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15L6 16z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><span class="varsel-tall" hidden></span></button>
+      <div class="varsel-panel" id="varsel-panel" hidden>
+        <div class="varsel-hode"><strong>Varsler</strong><button class="lenkeknapp" type="button" id="les-alle">Merk alle som lest</button></div>
+        <ol class="varsel-liste"></ol>
+      </div>
+    </div>
+    <button class="meny-knapp" aria-expanded="false" aria-controls="hovedmeny">Meny</button>
   </div>`;
   document.body.prepend(topp);
   const knapp = topp.querySelector(".meny-knapp");
@@ -142,7 +149,82 @@ async function hvemErJeg() {
   return MEG;
 }
 
+// ---------- Varsler ----------
+
+let varselStartet = false;
+let varslene = [];
+
+async function hentVarsler() {
+  if (!MEG || document.hidden) return;
+  try {
+    const { varsler, uleste } = await api("varsler");
+    varslene = varsler;
+    const tall = document.querySelector(".varsel-tall");
+    tall.hidden = !uleste;
+    tall.textContent = uleste > 9 ? "9+" : uleste;
+    document.querySelector(".varsel-knapp").setAttribute("aria-label", uleste ? `Varsler, ${uleste} uleste` : "Varsler");
+    tegnVarsler();
+  } catch (_) {}
+}
+
+function tegnVarsler() {
+  const liste = document.querySelector(".varsel-liste");
+  liste.innerHTML = varslene.length
+    ? varslene.map((v) => `<li><a href="${esc(v.lenke)}" data-varsel="${v.id}" class="${v.lest ? "" : "ulest"}">
+        <span><strong>${esc(v.avsender)}</strong> ${esc(v.tekst)}</span>
+        <span class="varsel-tid">${esc(tidTekst(v.opprettet))}</span></a></li>`).join("")
+    : `<li class="varsel-tomt">Ingen varsler ennå.</li>`;
+}
+
+function startVarsler() {
+  const boks = document.getElementById("varsel");
+  if (!boks || varselStartet) return;
+  varselStartet = true;
+  boks.hidden = false;
+  const knapp = boks.querySelector(".varsel-knapp");
+  const panel = boks.querySelector(".varsel-panel");
+  const lukk = () => { panel.hidden = true; knapp.setAttribute("aria-expanded", "false"); };
+  knapp.addEventListener("click", (e) => {
+    e.stopPropagation();
+    panel.hidden = !panel.hidden;
+    knapp.setAttribute("aria-expanded", String(!panel.hidden));
+    if (!panel.hidden) hentVarsler();
+  });
+  document.addEventListener("click", (e) => { if (!boks.contains(e.target)) lukk(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !panel.hidden) { lukk(); knapp.focus(); } });
+  boks.querySelector("#les-alle").addEventListener("click", async () => {
+    await api("varsler/lest", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" }).catch(() => {});
+    hentVarsler();
+  });
+  panel.addEventListener("click", (e) => {
+    const a = e.target.closest("[data-varsel]");
+    if (!a) return;
+    // Marker som lest uten å holde igjen navigeringen
+    fetch("/api/varsler/lest", { method: "POST", credentials: "same-origin", keepalive: true, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: Number(a.dataset.varsel) }) });
+    lukk();
+    setTimeout(hentVarsler, 400);
+  });
+  hentVarsler();
+  setInterval(hentVarsler, 60000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) hentVarsler(); });
+}
+
+// Ruller til og markerer elementet i adressens #-del (f.eks. #post-12 eller #sak-3)
+function fremhevAnker() {
+  const id = decodeURIComponent(location.hash.slice(1));
+  if (!id) return false;
+  const el = document.getElementById(id);
+  if (!el) return false;
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+  el.classList.remove("fremhevet");
+  void el.offsetWidth;
+  el.classList.add("fremhevet");
+  return true;
+}
+window.addEventListener("hashchange", () => fremhevAnker());
+
 function visInnloggetLinje() {
+  if (MEG) startVarsler();
   const p = document.querySelector(".bunn-status");
   if (!p) return;
   p.innerHTML = MEG
@@ -319,7 +401,7 @@ async function byggStrom(boks, { mote = null, plassholder } = {}) {
   function postHtml(p) {
     const skalt = p.skal.includes(MEG);
     const merke = p.mote && !mote ? `<a class="post-mote" href="mote.html?id=${encodeURIComponent(p.mote)}">${esc(moteNavn[p.mote] || p.mote)}</a>` : "";
-    return `<article class="post" data-id="${p.id}">
+    return `<article class="post" id="post-${p.id}" data-id="${p.id}">
       <div class="post-hode">
         ${avatar(p.navn, bildeAv(p.navn), true)}
         <div><strong>${esc(p.navn)}</strong><div class="dempet post-tid">${esc(tidTekst(p.opprettet))}${merke ? " · " + merke : ""}</div></div>
@@ -422,6 +504,7 @@ async function byggStrom(boks, { mote = null, plassholder } = {}) {
 
   flere.addEventListener("click", () => last(true));
   await last();
+  fremhevAnker();
 }
 
 // ---------- Aktivitetsskår og rang ----------

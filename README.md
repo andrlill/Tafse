@@ -73,6 +73,12 @@ tid (§ 6 nr. 2). Brødrene kan stemme for, mot eller avstå og kommentere. Stem
 saken avgjøres på Tafsemøtet. Tafsemesterne for neste møte og administratorer registrerer utfallet
 (vedtatt eller forkastet). Den som meldte inn saken, kan trekke den.
 
+## Varsler
+
+Bjellen i toppmenyen viser varsler til den som er logget inn: svar på egne poster, svar på poster
+man har kommentert, skåler, nye saker, stemmer og kommentarer på egne saker, og utfallet av egne saker.
+Varslene lages i `functions/api/` (søk etter `varsle(`). Leste varsler eldre enn 90 dager ryddes bort.
+
 ## Personvern
 
 Forside, kalender, vedtekter, fortellingen og navnelisten over brødrene er åpne for alle.
