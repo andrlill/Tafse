@@ -18,7 +18,6 @@ const LOGO_STOR = `<svg class="logo-stor" viewBox="0 0 200 150" aria-hidden="tru
 </svg>`;
 
 const SIDER = [
-  ["kalender.html", "Kalender"],
   ["salongen.html", "Salongen"],
   ["moter.html", "Møtene"],
   ["vedtekter.html", "Vedtekter"],

@@ -7,14 +7,14 @@ Nettsiden til Taffelakademiet for Samvær og Etegilder.
 | Fil | Innhold |
 | --- | --- |
 | `index.html` | Forsiden |
-| `kalender.html` | Alle møtedatoer |
+| `kalender.html` | Videresender til Møtene (slått sammen) |
 | `vedtekter.html` | Vedtektene (§ 1–12) |
 | `salongen.html` | Salongen: poster, bilder, svar og skåler (krever innlogging) |
 | `saker.html` | Saker til behandling: innmelding, veiledende avstemning og kommentarer (krever innlogging) |
 | `medlemmer.html` | Brødrene, med profilbilde, presentasjon og bytte av passord |
 | `velkommen.html` | Registrering fra den personlige invitasjonslenken |
 | `invitasjoner.html` | Oversikt over invitasjonslenker (kun administratorer) |
-| `moter.html`, `mote.html` | Møtene, med bilder og kommentarer (krever innlogging) |
+| `moter.html`, `mote.html` | Møtene: kommende og avholdte møter, kalenderfil, og egen side per møte med bilder og poster |
 | `fortellingen.html` | Nettversjonen av lanseringspresentasjonen |
 | `spill.html`, `assets/spill.js` | Spillet Idus Martiae, med tavle for brødrene |
 | `verden.html`, `data/steder/` | «Hva skjer?»: ukens tilfeldige sted, med arkiv. Se `data/steder/OPPSKRIFT.md` |

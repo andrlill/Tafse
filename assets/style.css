@@ -465,3 +465,5 @@ input:focus, select:focus, textarea:focus, .knapp:focus-visible, a:focus-visible
 .sorter { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .sorter button { font-family: var(--display); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; background: transparent; color: var(--dempet); border: 1px solid var(--linje); padding: 8px 14px; min-height: 40px; cursor: pointer; }
 .sorter button[aria-pressed="true"] { color: var(--bunn); background: var(--gull); border-color: var(--gull); }
+
+.seksjon-tittel { font-size: 18px; letter-spacing: .16em; text-transform: uppercase; color: var(--gull); margin: 0 0 16px; }

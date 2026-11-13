@@ -2,76 +2,11 @@
 <html lang="no">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kalender · TAFSE</title>
-<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css">
+<title>Flyttet · TAFSE</title>
+<meta http-equiv="refresh" content="0; url=moter.html">
+<link rel="canonical" href="moter.html">
 </head>
-<body>
-<main class="side smal">
-  <p class="overline">Møteplan</p>
-  <h1 class="side-tittel">Kalender</h1>
-
-  <ol class="mote-liste" id="liste"></ol>
-
-  <p style="margin-top:32px; display:flex; gap:12px; flex-wrap:wrap">
-    <button class="knapp" id="ics" type="button">Legg møtene i kalenderen din</button>
-  </p>
-  <p class="dempet" style="font-size:16px">Laster ned en kalenderfil med alle møter som har fast dato. Åpne den på mobilen eller i Outlook/Google Kalender.</p>
-</main>
-<script src="assets/app.js"></script>
-<script>
-hentData().then(({ moter }) => {
-  const neste = nesteMote(moter);
-  document.getElementById("liste").innerHTML = moter.map((m) => {
-    const d = tilDato(m.dato);
-    const st = status(m);
-    const klasse = m === neste ? "neste" : st;
-    const datoBoks = d
-      ? `<span class="dag">${d.getDate()}</span><span class="mnd">${MANEDER_KORT[d.getMonth()]} ${d.getFullYear()}</span>`
-      : `<span class="periode">${esc(m.periode || "Ikke fastsatt")}</span>`;
-    const merke = m === neste ? `<span class="merkelapp">Neste</span>` : st === "forbi" ? `<span class="merkelapp" style="color:var(--dempet);border-color:var(--linje)">Avholdt</span>` : "";
-    return `<li class="mote ${klasse}">
-      <div class="mote-dato">${datoBoks}</div>
-      <div>
-        <h3>${esc(m.navn)}${merke}</h3>
-        <div class="dempet">Tafsemestere: ${esc(mesterTekst(m))}</div>
-        ${d ? `<div class="dempet" style="font-size:16px">${esc(datoTekst(m))}</div>` : ""}
-      </div>
-      <a class="knapp sekundar" href="mote.html?id=${encodeURIComponent(m.id)}">${st === "forbi" ? "Bilder" : "Møteside"}</a>
-    </li>`;
-  }).join("");
-
-  document.getElementById("ics").addEventListener("click", () => {
-    const pad = (n) => String(n).padStart(2, "0");
-    const linjer = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//TAFSE//Kalender//NO", "CALSCALE:GREGORIAN"];
-    moter.filter((m) => m.dato).forEach((m) => {
-      const d = tilDato(m.dato);
-      const neste = new Date(d.getTime() + 86400000);
-      const f = (x) => `${x.getFullYear()}${pad(x.getMonth() + 1)}${pad(x.getDate())}`;
-      linjer.push(
-        "BEGIN:VEVENT",
-        `UID:${m.id}@tafse.no`,
-        `DTSTAMP:${f(new Date())}T000000Z`,
-        `DTSTART;VALUE=DATE:${f(d)}`,
-        `DTEND;VALUE=DATE:${f(neste)}`,
-        `SUMMARY:TAFSE – ${m.navn}`,
-        `DESCRIPTION:Tafsemestere: ${mesterTekst(m)}. Dress er påbudt (§ 4).`,
-        "END:VEVENT"
-      );
-    });
-    linjer.push("END:VCALENDAR");
-    const blob = new Blob([linjer.join("\r\n")], { type: "text/calendar" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "tafse-moter.ics";
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  });
-});
-</script>
+<body style="background:#0b0b0a;color:#ece4d2;font-family:Georgia,serif">
+<p>Kalenderen er slått sammen med <a href="moter.html" style="color:#e2c174">Møtene</a>.</p>
 </body>
 </html>
