@@ -25,7 +25,7 @@ const SIDER = [
   ["medlemmer.html", "Brødrene"],
   ["verden.html", "Hva skjer?"],
   ["fortellingen.html", "Fortellingen"],
-  ["spill.html", "Spill"],
+  ["symposion.html", "Spill"],
 ];
 
 const MANEDER = ["januar", "februar", "mars", "april", "mai", "juni", "juli", "august", "september", "oktober", "november", "desember"];
@@ -40,7 +40,7 @@ function byggRamme() {
   const her = (location.pathname.split("/").pop() || "index").replace(/\.html$/, "");
   const meny = SIDER.map(([fil, navn]) => {
     const stamme = fil.replace(/\.html$/, "");
-    const aktiv = stamme === her || (her === "mote" && stamme === "moter") || (her === "honningfella" && stamme === "spill") || (her === "bror" && stamme === "medlemmer");
+    const aktiv = stamme === her || (her === "mote" && stamme === "moter") || (["spill", "honningfella"].includes(her) && stamme === "symposion") || (her === "bror" && stamme === "medlemmer");
     return `<a href="${fil}"${aktiv ? ' class="aktiv" aria-current="page"' : ""}>${navn}</a>`;
   }).join("");
   const topp = document.createElement("header");

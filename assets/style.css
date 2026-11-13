@@ -677,3 +677,116 @@ input:focus, select:focus, textarea:focus, .knapp:focus-visible, a:focus-visible
   .varsel { position: static; }
   .varsel-panel { position: fixed; left: 12px; right: 12px; top: 100px; width: auto; max-height: calc(100vh - 120px); }
 }
+
+/* Symposion: den felles byen */
+.sy-etikett { display: block; font-family: var(--display); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--gull); margin: 0 0 4px; }
+.sy-ikon { width: 1em; height: 1em; vertical-align: -.12em; flex: none; }
+.sy-topp { display: flex; gap: 16px; align-items: stretch; justify-content: space-between; flex-wrap: wrap; margin-bottom: 14px; }
+.sy-brikker { display: flex; gap: 10px; flex-wrap: wrap; }
+.sy-brikke { display: flex; align-items: center; gap: 8px; border: 1px solid var(--linje); background: var(--flate); padding: 8px 14px; min-width: 112px; }
+.sy-brikke .sy-ikon { font-size: 22px; }
+.sy-brikke strong { font-family: var(--display); font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.sy-brikke span { font-size: 13px; color: var(--dempet); text-transform: uppercase; letter-spacing: .1em; }
+.sy-brikke.blink { animation: sy-blink .7s ease-out; }
+@keyframes sy-blink { 0% { border-color: var(--gull-lys); background: #3a2f14; transform: scale(1.06); } 100% { transform: none; } }
+.knapp small { display: block; font-family: var(--brod); font-size: 13px; letter-spacing: 0; text-transform: none; font-weight: 400; opacity: .85; margin-top: 2px; }
+.sy-topp .knapp, .sy-panel .knapp { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; }
+.sy-bat { animation: sy-dupp 5s ease-in-out infinite; }
+.sy-offer { animation: sy-puls 2.2s ease-in-out infinite; }
+.sy-ofret { border: 1px solid var(--linje); padding: 8px 14px; display: flex; flex-direction: column; justify-content: center; }
+.sy-ofret small { color: var(--dempet); font-size: 14px; }
+.sy-prikker { display: flex; gap: 5px; margin: 2px 0 4px; }
+.sy-prikker i { width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--gull); }
+.sy-prikker i.full { background: var(--gull); }
+@keyframes sy-puls { 0%, 100% { box-shadow: 0 0 0 0 rgba(201, 162, 74, .55); } 50% { box-shadow: 0 0 0 9px rgba(201, 162, 74, 0); } }
+
+.sy-kartboks { position: relative; border: 1px solid var(--gull); background: #0a0f12; overflow: hidden; }
+.sy-kartrull { position: relative; overflow-x: auto; overscroll-behavior-x: contain; }
+.sy-kart { display: block; width: 100%; min-width: 760px; height: auto; }
+.sy-kartrull .sy-sprett { position: absolute; transform: translate(-50%, 0); font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--gull-lys); text-shadow: 0 2px 6px #000; white-space: nowrap; pointer-events: none; animation: sy-sprett 1.6s ease-out forwards; }
+@keyframes sy-sprett { 0% { opacity: 0; transform: translate(-50%, 10px); } 15% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -60px); } }
+.sy-stjerner circle { animation: sy-blunk 4s ease-in-out infinite; }
+@keyframes sy-blunk { 0%, 100% { opacity: .9; } 50% { opacity: .25; } }
+.sy-glitter path { opacity: 0; animation: sy-glitter 6s ease-in-out infinite; }
+@keyframes sy-glitter { 0%, 100% { opacity: 0; } 50% { opacity: .28; } }
+.sy-flamme { animation: sy-blunk 1.3s ease-in-out infinite; }
+.sy-tomt { cursor: pointer; outline: none; }
+.sy-navn { font-family: var(--display); font-size: 13px; letter-spacing: .08em; fill: var(--tekst); paint-order: stroke; stroke: #14130d; stroke-width: 3.5px; }
+.sy-tomt.ledig .sy-navn { fill: #8d8468; }
+.sy-tomt.mitt .sy-navn { fill: var(--gull-lys); font-weight: 700; }
+.sy-ring { stroke: transparent; stroke-width: 2; }
+.sy-tomt.mitt .sy-ring { stroke: var(--gull); animation: sy-ringpuls 2.4s ease-in-out infinite; }
+.sy-tomt.valgt .sy-ring, .sy-tomt:focus-visible .sy-ring { stroke: var(--tekst); stroke-dasharray: 5 4; }
+@media (hover: hover) { .sy-tomt:hover .sy-ring { stroke: var(--gull-lys); } }
+@keyframes sy-ringpuls { 0%, 100% { stroke-opacity: 1; } 50% { stroke-opacity: .35; } }
+.sy-dupp { animation: sy-dupp 1.5s ease-in-out infinite; }
+.sy-dupp[hidden] { display: none; }
+@keyframes sy-dupp { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+.sy-monument { cursor: pointer; }
+.sy-prosent { font-family: var(--display); font-size: 13px; fill: var(--gull-lys); letter-spacing: .1em; paint-order: stroke; stroke: #14130d; stroke-width: 3px; }
+@media (prefers-reduced-motion: reduce) { .sy-stjerner circle, .sy-glitter path, .sy-flamme, .sy-dupp, .sy-offer, .sy-host.klar, .sy-tomt.mitt .sy-ring { animation: none; } }
+
+.sy-velkommen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; background: rgba(11, 11, 10, .78); }
+.sy-velkommen h2 { margin: 0 0 8px; font-size: clamp(22px, 4vw, 34px); }
+.sy-velkommen p { max-width: 520px; margin: 0 0 16px; }
+.sy-toast { position: absolute; left: 50%; top: 14px; transform: translate(-50%, -20px); max-width: 90%; background: var(--bunn); border: 1px solid var(--gull); padding: 9px 18px; font-size: 17px; opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; text-align: center; }
+.sy-toast.vis { opacity: 1; transform: translate(-50%, 0); }
+.sy-toast.feil { border-color: var(--rod); color: #f2b3a6; }
+.sy-tips { margin: 12px 0 16px; padding-left: 14px; border-left: 2px solid var(--gull); font-style: italic; color: var(--dempet); min-height: 1.5em; }
+
+.sy-panel, .sy-boks { border: 1px solid var(--linje); background: var(--flate); padding: 22px 24px; }
+.sy-panel h3, .sy-boks h3 { margin: 0 0 6px; font-size: 24px; }
+.sy-panel p, .sy-boks p { margin: 0 0 8px; }
+.sy-panelhode { display: flex; gap: 16px; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+.sy-fullt { font-size: 18px; margin: 0 !important; }
+.sy-host { min-width: 220px; }
+.sy-host.klar { animation: sy-puls 1.8s ease-in-out infinite; }
+.sy-byggliste { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.sy-bygg { border: 1px solid var(--linje); background: var(--bunn); padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; }
+.sy-bygg h4 { margin: 0; font-family: var(--display); font-size: 17px; letter-spacing: .04em; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.sy-bygg h4 span { font-size: 12px; color: var(--gull); letter-spacing: .14em; text-transform: uppercase; }
+.sy-bygg p { margin: 0; font-size: 16px; }
+.sy-bygg.last { border-style: dashed; opacity: .75; }
+.sy-rate { font-size: 17px !important; }
+.sy-lager { height: 8px; background: var(--linje); overflow: hidden; }
+.sy-lager span { display: block; height: 100%; width: 0; background: var(--gull); transition: width .9s linear; }
+.sy-lager span.full { background: var(--gull-lys); animation: sy-blunk 1.2s ease-in-out infinite; }
+.sy-lagertall { font-size: 14px !important; color: var(--dempet); font-variant-numeric: tabular-nums; }
+.sy-utvid { margin-top: auto; width: 100%; display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap; }
+.sy-utvid.rad { border-color: var(--gull); color: var(--gull-lys); }
+.sy-utvid:disabled { opacity: .55; cursor: default; }
+.sy-pris { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+.sy-besok { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.sy-besok .knapp:disabled { cursor: default; }
+
+.sy-to { display: grid; grid-template-columns: 3fr 2fr; gap: 18px; margin-top: 18px; align-items: start; }
+.sy-krav { display: grid; grid-template-columns: 1fr auto; gap: 6px 14px; align-items: center; margin-top: 14px; }
+.sy-kravtekst { display: flex; gap: 8px; align-items: center; font-size: 17px; }
+.sy-krav .sy-lager { grid-column: 1; }
+.sy-giknapper { grid-column: 2; grid-row: 1 / span 2; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.sy-givere { list-style: none; margin: 0; padding: 0; font-size: 17px; }
+.sy-givere li { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; border-bottom: 1px solid var(--linje); }
+.sy-givere li.meg, .sy-givere li.meg .lenkeknapp { color: var(--gull-lys); }
+.sy-rang .lenkeknapp { font-size: inherit; text-decoration: none; color: var(--tekst); }
+.sy-logg { list-style: none; margin: 0; padding: 0; font-size: 16px; }
+.sy-logg li { padding: 4px 0; color: var(--dempet); }
+.sy-logg strong { color: var(--tekst); font-weight: 500; }
+.sy-logg span { font-size: 13px; opacity: .7; white-space: nowrap; }
+
+@media (max-width: 760px) {
+  .sy-brikker { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: 100%; }
+  .sy-brikke { min-width: 0; flex-direction: column; gap: 0; padding: 6px 4px; text-align: center; }
+  .sy-brikke strong { font-size: 17px; }
+  .sy-brikke span { font-size: 10px; }
+  .sy-offer, .sy-ofret { width: 100%; }
+  .sy-panel, .sy-boks { padding: 16px 14px; }
+  .sy-host { width: 100%; }
+  .sy-to { grid-template-columns: 1fr; }
+  .sy-byggliste { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .sy-bygg { padding: 12px; }
+  .sy-bygg h4 { flex-direction: column; gap: 0; font-size: 15px; }
+  .sy-bygg p { font-size: 14px; }
+  .sy-rate { font-size: 15px !important; }
+  .sy-krav { grid-template-columns: 1fr; }
+  .sy-giknapper { grid-column: 1; grid-row: auto; justify-content: flex-start; }
+}

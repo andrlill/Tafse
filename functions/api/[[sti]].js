@@ -4,6 +4,8 @@
 //   - en hemmelighet (secret) TAFSE_PASSORD. Den brukes til å signere innlogginger
 //     og invitasjonslenker, og fungerer som reservepassord ved registrering.
 
+import { symposion, SKJEMA as SYMPOSION_SKJEMA } from "../../lib/symposion.js";
+
 const MAKS_BILDE = 1_900_000; // byte, D1 tåler rundt 2 MB per rad
 const BILDETYPER = ["image/jpeg", "image/png", "image/webp"];
 const STATUSER = ["innmeldt", "oppfolging", "vedtatt", "forkastet", "trukket"];
@@ -118,6 +120,7 @@ async function sikreSkjema(db) {
     db.prepare(`CREATE INDEX IF NOT EXISTS bilder_mote ON bilder (mote)`),
     db.prepare(`CREATE INDEX IF NOT EXISTS poster_mote ON poster (mote)`),
     db.prepare(`CREATE INDEX IF NOT EXISTS svar_post ON svar (post_id)`),
+    ...SYMPOSION_SKJEMA.map((sql) => db.prepare(sql)),
   ]);
   // Eldre databaser mangler kolonnen tafse
   try { await db.prepare("ALTER TABLE profiler ADD COLUMN tafse TEXT").run(); } catch (_) {}
@@ -614,6 +617,11 @@ export async function onRequest({ request, env, params }) {
         .run();
       return json({ ok: true }, 201);
     }
+  }
+
+  // --- Spillet: Symposion (den felles byen). Logikken ligger i lib/symposion.js ---
+  if (ressurs === "symposion" && (metode === "GET" || metode === "POST")) {
+    return symposion({ db, meg, metode, handling: id, request, medlemmer: await medlemsliste(env, url), json, feil, lesJson, varsle });
   }
 
   // --- Varsler ---
