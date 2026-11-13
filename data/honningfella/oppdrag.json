@@ -2,54 +2,60 @@
   "om": "Oppdragene i Honningfella. Se OPPSKRIFT.md for hvordan du legger til et nytt oppdrag.",
   "oppdrag": [
     {
-      "id": "messen",
+      "id": "taipei",
       "nummer": 1,
       "tittel": "Messen i Taipei",
       "undertittel": "Tre dager, tusen håndtrykk",
       "ingress": "Du er Jens Hvang, toppsjef i brikkegiganten Nvideo og eier av verdens mest omtalte skinnjakke. På messen vil alle ha et stykke av deg. Noen vil ha mer enn det.",
       "vanskelighet": 1,
-      "moter": 10,
-      "sekunder": 20,
-      "avslorBonus": 400,
-      "kort": [
+      "moter": 5,
+      "avslorBonus": 500,
+      "personer": [
         {
           "navn": "Valentina Rossi-Lund",
           "rolle": "Uavhengig investor",
           "felle": true,
           "tilbud": 2400,
           "tilbudTekst": "Investeringsavtale",
-          "replikk": "Jeg har hørt at du er mannen med de varmeste brikkene i bransjen. Skal vi diskutere kjøleløsninger på rommet mitt? Jeg har med meg en avtale på 2,4 milliarder.",
-          "detaljer": ["Visittkortet har bare et fornavn og et hotellromnummer.", "Hun spør hvilken etasje du bor i før hun spør hva du selger."],
+          "utseende": { "hud": "#e9c9a8", "har": "langt", "harfarge": "#5a1414", "antrekk": "kjole", "antrekksfarge": "#9b1b30", "tilbehor": ["leppestift", "champagne", "oredobb"] },
           "rapport": "Investeringsselskapet ble registrert for ni dager siden. Adressen er en postboks på en øy uten innbyggere.",
           "godta": "Avtalen viste seg å være en serviett med et hjerte på. Morgenen etter manglet både veikartet for 2028 og venstre sko.",
           "avslor": "Hun smilte, sa «synd» og forsvant i en svart bil uten skilter.",
-          "utseende": { "hud": "#e9c9a8", "har": "langt", "harfarge": "#5a1414", "antrekk": "kjole", "antrekksfarge": "#9b1b30", "tilbehor": ["leppestift", "champagne", "oredobb"] }
-        },
-        {
-          "navn": "Dr. Selene Varga",
-          "rolle": "Professor i kvantekjærlighet",
-          "felle": true,
-          "tilbud": 900,
-          "tilbudTekst": "Forskningssamarbeid",
-          "replikk": "Til forskningen min trenger jeg bare en liten titt på arkitekturtegningene til neste generasjon. For vitenskapen. Og kanskje en middag etterpå, for kjemien.",
-          "detaljer": ["Universitetet hennes har ingen nettside, bare et portrett av henne i badekåpe.", "Hun har med seg en minnepinne formet som et hjerte."],
-          "rapport": "Universitetet består av én kontorstol i en lagerhall i Liechtenstein. Stolen er leid.",
-          "godta": "Minnepinnen inneholdt ingen forskning, men den tok med seg alt som lå på laptopen din.",
-          "avslor": "Hun ble fornærmet på kjemiens vegne og ble aldri sett igjen.",
-          "utseende": { "hud": "#f1d6bf", "har": "knute", "harfarge": "#1e1a17", "antrekk": "dress", "antrekksfarge": "#3b2a4a", "tilbehor": ["briller", "leppestift"] }
-        },
-        {
-          "navn": "Rasmus «Raz» Holt",
-          "rolle": "Teknologiinfluenser",
-          "felle": true,
-          "tilbud": 600,
-          "tilbudTekst": "Rekkevidde i sosiale medier",
-          "replikk": "Kompis! Du er jo legenden min. Bare si passordet til det interne nettet, så lager vi content sammen backstage.",
-          "detaljer": ["Han filmer ikke deg, han filmer skjermen bak deg.", "Alle de 3000 følgerne hans ble opprettet samme tirsdag."],
-          "rapport": "Kontoen er tre uker gammel. Telefonen hans sender data til en server som ikke tilhører noen strømmetjeneste.",
-          "godta": "Videoen fikk null visninger. Passordet ditt fikk derimot svært mange.",
-          "avslor": "Han sa «ikke kult, bro» og gikk rett bort til konkurrenten din.",
-          "utseende": { "hud": "#e6bf9c", "har": "pannelugg", "harfarge": "#d8b45a", "antrekk": "genser", "antrekksfarge": "#2f6d6a", "tilbehor": ["headset"] }
+          "runder": [
+            {
+              "replikk": "Jens Hvang. Endelig. Jeg har hørt at du er mannen med de varmeste brikkene i bransjen. Jeg er Valentina, og jeg har 2,4 milliarder som brenner i lomma.",
+              "svar": [
+                { "tekst": "Og jeg har hørt at du er kvinnen med de varmeste blikkene.", "reaksjon": "Hun ler lavt og legger en hånd på armen din. «Sjarmerende. Hvilken etasje bor du i, sa du?»", "poeng": -100 },
+                { "tekst": "Hvilket fond representerer du?", "reaksjon": "«Mitt eget. Det heter V. Bare V.» Hun smiler som om det var et fullgodt svar.", "poeng": 50 },
+                { "tekst": "Snakk med salgsavdelingen min, de står der borte.", "reaksjon": "«Salgsavdelingen din har ikke dine øyne, Jens.» Hun flytter seg ikke en centimeter.", "poeng": 50 },
+                { "tekst": "Jeg er gift, men takk for komplimentet.", "reaksjon": "«Det er Valentina også. Av og til.» Hun blunker.", "poeng": 0 },
+                { "tekst": "Har du visittkort?", "reaksjon": "Hun rekker deg et kort. Det står bare «Valentina» og et romnummer: 1412.", "poeng": 100 },
+                { "tekst": "Brenner i lomma? Det høres ut som et brannvernspørsmål.", "reaksjon": "«Da får du komme og slukke.» Hun nipper til champagnen uten å svelge.", "poeng": 0 }
+              ]
+            },
+            {
+              "replikk": "Avtalen er klar. Men jeg diskuterer aldri store summer i fullt dagslys. Kjøleløsninger, vet du. Det blir så varmt her inne.",
+              "svar": [
+                { "tekst": "Vi kan ta det i møterommet vårt, med juristen min.", "reaksjon": "«Juristen din kan vente utenfor.» Smilet stivner et øyeblikk.", "poeng": 100 },
+                { "tekst": "Hva slags kjøleløsninger trenger du egentlig?", "reaksjon": "«De som står i tegningene til neste generasjon. Du vet hvilke.» Hun lener seg nærmere.", "poeng": 100 },
+                { "tekst": "Du er farlig, du.", "reaksjon": "«Bare for dem som ikke tør.» Hun skyver et nøkkelkort over bordet.", "poeng": -100 },
+                { "tekst": "Hvordan vet du at jeg bor på dette hotellet?", "reaksjon": "«Alle vet det.» Hun ser bort et lite sekund for lenge.", "poeng": 50 },
+                { "tekst": "Jeg tar gjerne en champagne til først.", "reaksjon": "Hun bestiller en hel flaske. Til ditt rom.", "poeng": -150 },
+                { "tekst": "Hva heter fondet ditt i foretaksregisteret?", "reaksjon": "«Registre er så kjedelige, Jens. Er du kjedelig?»", "poeng": 100 }
+              ]
+            },
+            {
+              "replikk": "Klokka elleve. Rom 1412. Ta med laptopen, så går vi gjennom tallene. Bare du og jeg.",
+              "svar": [
+                { "tekst": "Avtale. Rom 1412, klokka elleve.", "type": "fristelse", "utfall": "Rom 1412 hadde utsikt, champagne og en mann i skapet med kamera. Veikartet for 2028 er nå på et annet kontinent." },
+                { "tekst": "Jeg sender et kontraktsforslag via advokatene i morgen.", "type": "forsiktig" },
+                { "tekst": "Jeg tror du jobber for noen andre enn deg selv, Valentina.", "type": "avslor" },
+                { "tekst": "Takk, men nei takk. God kveld.", "type": "avvis" },
+                { "tekst": "Jeg signerer en intensjonsavtale her og nå.", "type": "godta" },
+                { "tekst": "Du vinker til sikkerhetssjefen og ber ham ta en titt på rom 1412.", "type": "avslor", "utfall": "Sikkerhetssjefen fant tre kameraer og en mann med notatblokk. Valentina var allerede borte." }
+              ]
+            }
+          ]
         },
         {
           "navn": "Isadora Quist",
@@ -57,77 +63,91 @@
           "felle": true,
           "tilbud": 3000,
           "tilbudTekst": "Kjøp av hele lageret",
-          "replikk": "Jeg kjøper alt dere har av H-serien. Kontant. Ingen spørsmål, ingen papirer, og levering til en adresse jeg sender deg i morgen. Så tar jeg deg med på byens beste dumplings.",
-          "detaljer": ["Hun insisterer på at kartongene skal sendes uåpnet videre fra Malaysia.", "Hun blir sur når du nevner eksportregler."],
+          "utseende": { "hud": "#d9a87e", "har": "langt", "harfarge": "#141110", "antrekk": "kjole", "antrekksfarge": "#14532d", "tilbehor": ["perler", "oredobb"] },
           "rapport": "Firmaet har kjøpt 40 000 kort i år. Ingen av dem er koblet til strøm.",
           "godta": "Dumplingsene var gode. Høringen i Kongressen var mindre god.",
           "avslor": "Hun betalte for dumplingsene selv og forsvant med neste fly til et ukjent sted.",
-          "utseende": { "hud": "#d9a87e", "har": "langt", "harfarge": "#141110", "antrekk": "kjole", "antrekksfarge": "#14532d", "tilbehor": ["perler", "oredobb"] }
-        },
-        {
-          "navn": "Ingrid Solbakken",
-          "rolle": "Journalist i Teknisk Kveldsblad",
-          "felle": true,
-          "tilbud": 400,
-          "tilbudTekst": "Positiv omtale",
-          "replikk": "Bare en uformell prat, off the record. Fortell meg hva dere snakket om med handelsdepartementet i går, så skal jeg skrive pent om deg.",
-          "detaljer": ["Hun har ingen notatblokk, men en svært dyr øredobb som lyser svakt rødt.", "Pressekortet er laminert med tape."],
-          "rapport": "Teknisk Kveldsblad ble nedlagt i 1987.",
-          "godta": "Det ble ingen artikkel. Men handelsdepartementet fikk vite at noen andre visste alt.",
-          "avslor": "Hun noterte «ikke samarbeidsvillig» på en papirlapp og gikk.",
-          "utseende": { "hud": "#f3dcc6", "har": "kort", "harfarge": "#c9a35a", "antrekk": "genser", "antrekksfarge": "#5a5a5a", "tilbehor": ["oredobb"] }
-        },
-        {
-          "navn": "Chloé Dubois",
-          "rolle": "Sommelier",
-          "felle": true,
-          "tilbud": 500,
-          "tilbudTekst": "Vin av ypperste årgang",
-          "replikk": "En flaske Château fra 1961 på huset, monsieur. Den eneste betingelsen er at laptopen din ligger åpen på bordet mens vi skåler.",
-          "detaljer": ["Glasset hennes står urørt hele kvelden.", "Hun skjenker deg, men drikker aldri selv."],
-          "rapport": "Har jobbet som sommelier i tre uker. Før det: «konsulent, diverse».",
-          "godta": "Vinen var nydelig. Hukommelsen fra kvelden var det ikke, og heller ikke krypteringsnøklene.",
-          "avslor": "Hun korket flasken igjen og tok den med seg.",
-          "utseende": { "hud": "#f0d2b6", "har": "krøller", "harfarge": "#3b1d10", "antrekk": "kjole", "antrekksfarge": "#111111", "tilbehor": ["leppestift", "champagne"] }
+          "runder": [
+            {
+              "replikk": "Herr Hvang. Jeg kjøper alt dere har av H-serien. Hele lageret. Kontant.",
+              "svar": [
+                { "tekst": "Alt? Hva skal du med alt?", "reaksjon": "«Datasentre. Mange. I Malaysia. Eller et sted i nærheten.»", "poeng": 100 },
+                { "tekst": "Kontant er et morsomt ord i denne bransjen.", "reaksjon": "«Kontant er et vakkert ord i alle bransjer.» Hun åpner kofferten et par centimeter. Den er full.", "poeng": 50 },
+                { "tekst": "For en vakker kjole.", "reaksjon": "«Liker du den, kan du se den på nærmere hold over middag.»", "poeng": -50 },
+                { "tekst": "Har dere eksportlisens?", "reaksjon": "Hun blir sur i et sekund. «Papirer. Alltid papirer.»", "poeng": 150 },
+                { "tekst": "Ta kontakt med salgsavdelingen.", "reaksjon": "«Salgsavdelingen stiller så mange spørsmål. Du stiller ingen. Det liker jeg.»", "poeng": 50 },
+                { "tekst": "Hvem er sluttkunden?", "reaksjon": "«Kundene mine er svært diskrete. Det burde du sette pris på.»", "poeng": 100 }
+              ]
+            },
+            {
+              "replikk": "Jeg kjenner en restaurant med byens beste dumplings. Vi kan snakke om levering der. Kartongene skal bare innom Malaysia, uåpnet, før de går videre.",
+              "svar": [
+                { "tekst": "Videre hvor?", "reaksjon": "«Et sted der folk setter pris på gode brikker.» Hun smiler uten å blunke.", "poeng": 100 },
+                { "tekst": "Uåpnet? Skal ingen installere dem?", "reaksjon": "«Installasjon er så overvurdert.»", "poeng": 100 },
+                { "tekst": "Jeg elsker dumplings.", "reaksjon": "«Jeg vet det. Jeg vet mye om deg, Jens.»", "poeng": -100 },
+                { "tekst": "Kan juristen min bli med på middagen?", "reaksjon": "«Juristen din kan få en matboks med seg hjem.»", "poeng": 50 },
+                { "tekst": "Hvor lenge har firmaet ditt eksistert?", "reaksjon": "«Lenge nok. Siden mars.»", "poeng": 100 },
+                { "tekst": "Jeg betaler middagen selv.", "reaksjon": "«Så gammeldags. Så sjarmerende.»", "poeng": 0 }
+              ]
+            },
+            {
+              "replikk": "Signer her, så står lastebilene klare i morgen tidlig. Ingen papirer, ingen spørsmål, bare dumplings.",
+              "svar": [
+                { "tekst": "Signerer. Gi meg pennen.", "type": "godta" },
+                { "tekst": "Lastebilene får vente til eksportkontrollen har godkjent alt.", "type": "forsiktig", "utfall": "Ordet «eksportkontroll» fikk henne til å huske et fly hun måtte rekke." },
+                { "tekst": "Dette lukter smugling lang vei.", "type": "avslor" },
+                { "tekst": "Takk for tilbudet, men nei.", "type": "avvis" },
+                { "tekst": "Bli med opp på rommet, så finner vi en løsning.", "type": "fristelse", "utfall": "Løsningen ble funnet. Den innebar 40 000 kort, en lastebil og en svært ubehagelig samtale med handelsdepartementet." },
+                { "tekst": "Jeg ringer handelsdepartementet. De hjelper deg sikkert med papirene.", "type": "avslor", "utfall": "Hun var ute av restauranten før du rakk å slå nummeret." }
+              ]
+            }
+          ]
         },
         {
           "navn": "Bror Kjetil",
-          "rolle": "Taffelakademiet",
+          "rolle": "Taffelakademiet, ifølge ham selv",
           "felle": true,
           "tilbud": 300,
           "tilbudTekst": "Goodwill i TAFSE",
-          "replikk": "Hei bror! Tafsemesteren insisterer på at vi får strategidokumentene deres før neste møte. Send dem til tafse-hemmelig.xyz, så er du grei.",
-          "detaljer": ["Han kaller det «Taffelklubben».", "Du teller tretten brødre i hodet ditt. Ingen av dem heter Kjetil."],
+          "utseende": { "hud": "#efcfb0", "har": "skallet", "harfarge": "#6b4a2a", "antrekk": "dress", "antrekksfarge": "#1f2937", "tilbehor": ["slips"] },
           "rapport": "Medlemslisten bekrefter: ingen Kjetil. Det har aldri vært noen Kjetil.",
           "godta": "Strategidokumentene havnet ikke hos Tafsemesteren. Det gjorde derimot en reprimande.",
           "avslor": "Han prøvde seg med «jammen, § 1?», men det holdt ikke.",
-          "utseende": { "hud": "#efcfb0", "har": "skallet", "harfarge": "#6b4a2a", "antrekk": "dress", "antrekksfarge": "#1f2937", "tilbehor": ["slips"] }
-        },
-        {
-          "navn": "Lady Penelope Ashworth",
-          "rolle": "Britisk adel",
-          "felle": true,
-          "tilbud": 1800,
-          "tilbudTekst": "Datasenter til slottet",
-          "replikk": "Min kjære, slottet mitt trenger et datasenter. Det må installeres personlig, av deg, alene, i kjelleren, i kveld.",
-          "detaljer": ["Slottet ligger visstnok «i Kent eller noe».", "Butleren hennes har øreplugg og mumler inn i mansjetten."],
-          "rapport": "Ingen adelsregistre kjenner til henne. Den britiske etterretningen ler høyt i telefonen.",
-          "godta": "Kjelleren hadde ingen strøm, men tre kameraer og en mann som tok notater.",
-          "avslor": "Butleren snakket inn i mansjetten igjen. De forlot messen i høyt tempo.",
-          "utseende": { "hud": "#f6e0cf", "har": "knute", "harfarge": "#e7d7b0", "antrekk": "kjole", "antrekksfarge": "#4b2b6b", "tilbehor": ["hatt", "perler"] }
-        },
-        {
-          "navn": "Priya Raman",
-          "rolle": "Innkjøpssjef i et sykehusnettverk",
-          "felle": false,
-          "tilbud": 700,
-          "tilbudTekst": "800 kort til bildediagnostikk",
-          "replikk": "Juristene våre har sendt kontraktsutkastet til salgsavdelingen deres. Jeg ville bare hilse personlig og høre om leveringstiden.",
-          "detaljer": ["Hun har med seg en jurist som tar notater i tre farger.", "Hun ber om at alt bekreftes skriftlig."],
-          "rapport": "Sykehusnettverket er offentlig eid og revidert til tennene.",
-          "godta": "En kjedelig, solid avtale. Aksjonærene klapper høflig.",
-          "avslor": "Hun forteller juristen at du kalte henne spion. Juristen noterer det i rødt.",
-          "utseende": { "hud": "#b9835c", "har": "langt", "harfarge": "#120d0b", "antrekk": "dress", "antrekksfarge": "#1e3a5f", "tilbehor": ["briller"] }
+          "runder": [
+            {
+              "replikk": "Bror! Endelig! Kjetil, fra Taffelklubben. Lenge siden sist, hva?",
+              "svar": [
+                { "tekst": "Taffelklubben? Mener du Taffelakademiet?", "reaksjon": "«Ja, ja, det også. Akademiet. Klubben. Samme greia.»", "poeng": 150 },
+                { "tekst": "Kjetil! Bror! Klem!", "reaksjon": "Han klemmer deg lenge. Litt for lenge. Hånden hans er i innerlomma di.", "poeng": -150 },
+                { "tekst": "Hvem var Tafsemestere på forrige møte?", "reaksjon": "«Øh. Han. Den høye. Og den andre. Du vet.»", "poeng": 150 },
+                { "tekst": "Hvilket år ble du tatt opp?", "reaksjon": "«Samme år som deg, bror. Samme år.»", "poeng": 100 },
+                { "tekst": "Fint å se deg. Hva gjør du i Taipei?", "reaksjon": "«Forretninger. Og litt Tafse-arbeid.» Han ser seg over skulderen.", "poeng": 0 },
+                { "tekst": "Hva står TAFSE for?", "reaksjon": "«Taffel... Akademiet for... Samhold og... Eiendom?»", "poeng": 150 }
+              ]
+            },
+            {
+              "replikk": "Tafsemesteren insisterer på å få strategidokumentene deres før neste møte. Til underholdningen, skjønner du. Kan du sende dem til tafse-hemmelig.xyz?",
+              "svar": [
+                { "tekst": "Hva står i § 1 i vedtektene?", "reaksjon": "«Paragraf én er... at man skal være grei?»", "poeng": 150 },
+                { "tekst": "Jeg sender gjerne en kopi av menyen.", "reaksjon": "«Menyen er fin, men vi trenger helst veikartet.»", "poeng": 100 },
+                { "tekst": "Hvorfor trenger Tafse strategidokumenter?", "reaksjon": "«Til quizen! Det blir vanskelige spørsmål i år.»", "poeng": 50 },
+                { "tekst": "Selvsagt, bror. Alt for Tafse.", "reaksjon": "«Visste det. Ekte brorskap.» Han smiler bredt.", "poeng": -150 },
+                { "tekst": "Ring Tafsemesteren, så kan han spørre selv.", "reaksjon": "«Han har... ikke dekning. Han er på hytta.»", "poeng": 100 },
+                { "tekst": "tafse-hemmelig.xyz? Vi bruker jo tafse.no.", "reaksjon": "«Den nye er tryggere. Mye tryggere.»", "poeng": 150 }
+              ]
+            },
+            {
+              "replikk": "Så, bror? Kan jeg regne med deg? Tretten brødre venter.",
+              "svar": [
+                { "tekst": "Klart. Jeg sender alt i kveld.", "type": "godta" },
+                { "tekst": "Jeg melder det inn som sak til neste møte, slik vedtektene sier.", "type": "forsiktig", "utfall": "Han ble blek ved ordet «sak» og sa han måtte rekke et fly." },
+                { "tekst": "Det finnes ingen Kjetil blant de tretten.", "type": "avslor" },
+                { "tekst": "Beklager, bror. Det blir nei.", "type": "avvis" },
+                { "tekst": "Bli med i baren, så mimrer vi om gamle dager.", "type": "fristelse", "utfall": "To timer senere husket han alle gamle dager. Fordi du fortalte ham dem. Og passordene." },
+                { "tekst": "Du ringer en tafsebror og spør om noen kjenner en Kjetil.", "type": "avslor", "utfall": "Svaret var et rungende nei. Kjetil forsvant før du hadde lagt på." }
+              ]
+            }
+          ]
         },
         {
           "navn": "Sofia Marchetti",
@@ -135,103 +155,137 @@
           "felle": false,
           "tilbud": 1600,
           "tilbudTekst": "Brikker til selvkjørende biler",
-          "replikk": "Du er sjarmerende, Jens. Bilene våre må lære å kjøre selv før italienerne lærer å kjøre ordentlig. Middag i kveld? Med styret mitt og advokatene, selvsagt.",
-          "detaljer": ["Hun flørter åpenlyst, men vil ha alt gjennom selskapenes advokater.", "Hun nevner eksportreglene før du rekker å gjøre det."],
+          "utseende": { "hud": "#e8c19b", "har": "langt", "harfarge": "#2a160c", "antrekk": "kjole", "antrekksfarge": "#b4121b", "tilbehor": ["leppestift", "champagne", "oredobb"] },
           "rapport": "Børsnotert i Milano siden 1950-tallet. Mest kjent for røde biler og lange lunsjer.",
           "godta": "Middagen varte i fem timer, og kontrakten var på 300 sider. Alt helt lovlig.",
           "avslor": "Hun lo høyt, kalte deg paranoid og kjøpte brikker fra konkurrenten.",
-          "utseende": { "hud": "#e8c19b", "har": "langt", "harfarge": "#2a160c", "antrekk": "kjole", "antrekksfarge": "#b4121b", "tilbehor": ["leppestift", "champagne", "oredobb"] }
+          "runder": [
+            {
+              "replikk": "Jens. Du er kjekkere enn på bildene. Sofia Marchetti. Bilene mine må lære å kjøre selv før italienerne lærer å kjøre ordentlig.",
+              "svar": [
+                { "tekst": "Og du er enda mer sjarmerende enn ryktet.", "reaksjon": "Hun ler høyt. «Ryktet sier at jeg er umulig å forhandle med. Det stemmer.»", "poeng": 100 },
+                { "tekst": "Hvor mange brikker snakker vi om?", "reaksjon": "«Tolv tusen til å begynne med. Advokatene mine har sendt et utkast til dine.»", "poeng": 100 },
+                { "tekst": "Er du sikker på at du ikke jobber for noen andre?", "reaksjon": "«Jeg jobber for aksjonærene mine, Jens. Det er ille nok.»", "poeng": -50 },
+                { "tekst": "Hvorfor ikke kjøpe fra konkurrenten?", "reaksjon": "«Fordi de ikke har deg.» Hun blunker. «Og fordi brikkene deres er dårligere.»", "poeng": 50 },
+                { "tekst": "Har dere eksportlisens?", "reaksjon": "«Selvsagt. Juristen min har den laminert. Hun er besatt av eksportregler.»", "poeng": 100 },
+                { "tekst": "Kjører du selv, eller blir du kjørt?", "reaksjon": "«Fort. Alltid fort.»", "poeng": 50 }
+              ]
+            },
+            {
+              "replikk": "Jeg vil feire med middag i kveld. Jeg har bestilt bord. For styret mitt, advokatene og deg, selvsagt.",
+              "svar": [
+                { "tekst": "Bare oss to hadde vært hyggeligere.", "reaksjon": "«Ha! Styret ville aldri tilgitt meg. De elsker lange middager.»", "poeng": 0 },
+                { "tekst": "Hvem fra styret kommer?", "reaksjon": "«Alle sju. Og to advokater. Det blir en svært romantisk aften.»", "poeng": 100 },
+                { "tekst": "Hvorfor så mange folk?", "reaksjon": "«Fordi jeg vil ha alt dokumentert, Jens. Jeg stoler ikke på noen. Heller ikke på deg.»", "poeng": 100 },
+                { "tekst": "Jeg har ikke tid til middag.", "reaksjon": "«Da går du glipp av den beste osso bucoen i Asia.» Hun trekker på skuldrene.", "poeng": -50 },
+                { "tekst": "Du flørter vel med alle leverandørene dine?", "reaksjon": "«Bare dem med gode brikker.»", "poeng": 50 },
+                { "tekst": "Kan vi ta det på rommet mitt i stedet?", "reaksjon": "Hun hever et øyenbryn. «Jens. Jeg har advokater med meg.»", "poeng": -150 }
+              ]
+            },
+            {
+              "replikk": "Kontrakten er på 300 sider. Signerer du i kveld, eller skal advokatene dine lese først?",
+              "svar": [
+                { "tekst": "Jeg signerer i kveld. Skål!", "type": "godta" },
+                { "tekst": "Advokatene leser først, så signerer vi i neste uke.", "type": "forsiktig", "utfall": "Hun sukket, men ventet. Avtalen ble litt mindre, men kom i havn." },
+                { "tekst": "Beklager, Sofia, men jeg tror du er en honningfelle.", "type": "avslor" },
+                { "tekst": "Jeg tror vi står over denne gangen.", "type": "avvis" },
+                { "tekst": "Jeg signerer hvis du blir med opp på rommet etterpå.", "type": "fristelse", "utfall": "Advokatene hennes noterte det. Avtalen ble signert, men av konkurrenten din." },
+                { "tekst": "Skål for selvkjørende biler og saktegående advokater.", "type": "godta" }
+              ]
+            }
+          ]
+        },
+        {
+          "navn": "Priya Raman",
+          "rolle": "Innkjøpssjef i et sykehusnettverk",
+          "felle": false,
+          "tilbud": 700,
+          "tilbudTekst": "800 kort til bildediagnostikk",
+          "utseende": { "hud": "#b9835c", "har": "langt", "harfarge": "#120d0b", "antrekk": "dress", "antrekksfarge": "#1e3a5f", "tilbehor": ["briller"] },
+          "rapport": "Sykehusnettverket er offentlig eid og revidert til tennene.",
+          "godta": "En kjedelig, solid avtale. Aksjonærene klapper høflig.",
+          "avslor": "Hun forteller juristen at du kalte henne spion. Juristen noterer det i rødt.",
+          "runder": [
+            {
+              "replikk": "Hei, Priya Raman fra sykehusnettverket. Juristene våre har sendt kontraktsutkastet til salgsavdelingen deres. Jeg ville bare hilse personlig.",
+              "svar": [
+                { "tekst": "Hyggelig! Hva skal dere bruke kortene til?", "reaksjon": "«Bildediagnostikk. Vi vil finne svulster før de blir farlige.»", "poeng": 100 },
+                { "tekst": "Bare hilse? Det sier alle.", "reaksjon": "«Ja, men jeg har med en jurist som kan bekrefte det.» Juristen nikker.", "poeng": 0 },
+                { "tekst": "Du har vakre øyne.", "reaksjon": "Hun ser på juristen. Juristen noterer. «Takk. Kan vi snakke om leveringstid?»", "poeng": -100 },
+                { "tekst": "Hvor mange kort trenger dere?", "reaksjon": "«Åtte hundre, fordelt på fire sykehus. Alt står i anbudsdokumentene.»", "poeng": 100 },
+                { "tekst": "Hvem eier sykehusnettverket?", "reaksjon": "«Det offentlige. Vi er revidert til tennene.»", "poeng": 100 },
+                { "tekst": "Jeg har en ny kjøleløsning du burde se. På rommet mitt.", "reaksjon": "Juristen slutter å notere. Det er verre enn om hun fortsatte.", "poeng": -200 }
+              ]
+            },
+            {
+              "replikk": "Leveringstiden er det eneste vi lurer på. Pasientene venter.",
+              "svar": [
+                { "tekst": "Seks uker, hvis kontrakten er signert i dag.", "reaksjon": "«Perfekt. Juristen min har penn.»", "poeng": 100 },
+                { "tekst": "Kan dere betale kontant?", "reaksjon": "«Nei. Vi betaler med faktura, som alle andre.»", "poeng": 0 },
+                { "tekst": "Hvorfor haster det sånn?", "reaksjon": "«Fordi kreft ikke venter på leveringskjeder.»", "poeng": 50 },
+                { "tekst": "Kan jeg få se anbudsdokumentene?", "reaksjon": "Juristen rekker deg en perm. Den er tykk og kjedelig.", "poeng": 100 },
+                { "tekst": "Hvorfor gikk du ikke bare via salgsavdelingen?", "reaksjon": "«Det gjorde jeg. Jeg kom innom deg i tillegg.»", "poeng": 50 },
+                { "tekst": "Er dere egentlig et sykehus?", "reaksjon": "«Vi har 4000 ansatte og en kantine som serverer fiskegrateng. Hva tror du?»", "poeng": -50 }
+              ]
+            },
+            {
+              "replikk": "Skal vi si at vi har en avtale?",
+              "svar": [
+                { "tekst": "Vi har en avtale.", "type": "godta" },
+                { "tekst": "La juristene ferdigstille det, så signerer vi i neste uke.", "type": "forsiktig" },
+                { "tekst": "Jeg tror du er sendt av noen andre, Priya.", "type": "avslor" },
+                { "tekst": "Vi står over denne gangen.", "type": "avvis" },
+                { "tekst": "Bare hvis du blir med på middag. Uten juristen.", "type": "fristelse", "utfall": "Juristen noterte det i rødt. Sykehusene kjøpte fra konkurrenten." },
+                { "tekst": "Salgsavdelingen ringer deg i morgen tidlig med en endelig pris.", "type": "forsiktig" }
+              ]
+            }
+          ]
         },
         {
           "navn": "Kristoffer",
           "rolle": "Tafsebror, nettopp i mål på Jessheim",
           "felle": false,
-          "tilbud": 200,
+          "tilbud": 300,
           "tilbudTekst": "Brorskap",
-          "replikk": "Bror! Kan jeg låne et skjermkort? Jeg skal regne ut hvor mye fortere jeg hadde løpt uten den siste pølsa.",
-          "detaljer": ["Han lukter liniment og seier.", "Han siterer vedtektene feilfritt og vil ikke vite noe om fabrikkene dine."],
-          "rapport": "Står på medlemslisten. Har et startnummer fortsatt festet på brystet.",
+          "utseende": { "hud": "#efc8a6", "har": "kort", "harfarge": "#6b4423", "antrekk": "genser", "antrekksfarge": "#b45309", "tilbehor": ["startnummer"] },
+          "rapport": "Står på medlemslisten. Har fortsatt startnummeret festet på brystet.",
           "godta": "Konklusjon: pølsa kostet ham 41 sekunder. Brorskapet er styrket.",
           "avslor": "Du anklaget en tafsebror for spionasje. Saken er meldt inn til neste møte.",
-          "utseende": { "hud": "#efc8a6", "har": "kort", "harfarge": "#6b4423", "antrekk": "genser", "antrekksfarge": "#b45309", "tilbehor": ["startnummer"] }
-        },
-        {
-          "navn": "Kenji Watanabe",
-          "rolle": "Indie-spillutvikler",
-          "felle": false,
-          "tilbud": 250,
-          "tilbudTekst": "20 kort og en autograf",
-          "replikk": "Vi har laget et spill der man spiller en skinnjakke. Vi trenger 20 kort, og at du signerer jakka mi.",
-          "detaljer": ["Han betaler med kredittkort i eget navn.", "Han vil absolutt ha kvittering."],
-          "rapport": "Studioet har fem ansatte, en katt og et spill med svært gode anmeldelser.",
-          "godta": "Spillet ble en kultklassiker. Du er en ikonisk skinnjakke i det.",
-          "avslor": "Han ble så lei seg at han gjorde deg til skurken i oppfølgeren.",
-          "utseende": { "hud": "#e9c7a2", "har": "pannelugg", "harfarge": "#111111", "antrekk": "skinnjakke", "antrekksfarge": "#1a1a1a", "tilbehor": ["briller"] }
-        },
-        {
-          "navn": "Oberst Brigitte Halvorsen",
-          "rolle": "Innkjøp i forsvarsalliansen",
-          "felle": false,
-          "tilbud": 1400,
-          "tilbudTekst": "Maskinvare til alliansen",
-          "replikk": "Jeg kommer rett på sak. Vi trenger maskinvare, og vi har en bunke skjemaer som er tykkere enn deg. Signer her, her og her.",
-          "detaljer": ["Hun har med seg tre kopier av alt, stemplet.", "Hun nekter å ta imot så mye som en kaffe."],
-          "rapport": "Reell. Skremmende reell.",
-          "godta": "Det tok elleve måneder å få betalt. Men det var en ærlig sak.",
-          "avslor": "Hun noterte navnet ditt på en liste. Du vil ikke vite hvilken.",
-          "utseende": { "hud": "#f2d4bb", "har": "knute", "harfarge": "#9a9a9a", "antrekk": "uniform", "antrekksfarge": "#3f4a2a", "tilbehor": [] }
-        },
-        {
-          "navn": "Amara Okafor",
-          "rolle": "Grunnlegger av en klimastartup",
-          "felle": false,
-          "tilbud": 350,
-          "tilbudTekst": "Kort til tørkevarsling",
-          "replikk": "Vi bruker KI til å varsle tørke i Sahel. Vi har lite penger, men gode data og en tålmodig investor.",
-          "detaljer": ["Hun ber om en offentlig pressemelding om avtalen.", "Investorene står oppført med navn på nettsiden."],
-          "rapport": "Startupen har publisert fagfellevurderte artikler. Investoren er et pensjonsfond.",
-          "godta": "Prognosene traff. Du fikk en pris og et godt bilde til årsrapporten.",
-          "avslor": "Hun twitret om det. Det ble ikke pent.",
-          "utseende": { "hud": "#7a4a2c", "har": "krøller", "harfarge": "#120c08", "antrekk": "genser", "antrekksfarge": "#0f766e", "tilbehor": ["oredobb"] }
-        },
-        {
-          "navn": "Elena Vasquez",
-          "rolle": "Filmprodusent i Hollywood",
-          "felle": false,
-          "tilbud": 900,
-          "tilbudTekst": "Rendering av neste storfilm",
-          "replikk": "Neste film rendres hos dere, eller ikke i det hele tatt. Jeg vil ha deg på rød løper, og regningen sendes til studioet.",
-          "detaljer": ["Hun gir deg visittkortet til studioets økonomisjef.", "Hun spør aldri om tekniske detaljer, bare om pris."],
-          "rapport": "Seks Oscar-nominasjoner, null etterretningsforbindelser og ett stort ego.",
-          "godta": "Filmen floppet, men regningen ble betalt på dagen.",
-          "avslor": "Hun gjorde deg til skurken i neste film. Du spilles av en mann med dårlig parykk.",
-          "utseende": { "hud": "#d7a982", "har": "langt", "harfarge": "#3a2416", "antrekk": "kjole", "antrekksfarge": "#7c2d12", "tilbehor": ["solbriller", "leppestift"] }
-        },
-        {
-          "navn": "Lars Erik Bakke",
-          "rolle": "Fra et norsk statlig fond",
-          "felle": false,
-          "tilbud": 500,
-          "tilbudTekst": "Fortsatt eierskap",
-          "replikk": "Vi eier visst 1,2 prosent av dere. Jeg er bare innom for å si at vi forventer bedre selskapsstyring. Og for å spørre hvor du kjøper jakken.",
-          "detaljer": ["Han har med seg matpakke med brunost.", "Han stiller kjedelige spørsmål om styresammensetning."],
-          "rapport": "Han er nøyaktig så kjedelig som han ser ut. Det er et godt tegn.",
-          "godta": "Han ble fornøyd og sendte et brev på nynorsk.",
-          "avslor": "Fondet solgte seg ned. Aksjen falt litt, og nordmenn i hele landet sukket.",
-          "utseende": { "hud": "#f4d9c2", "har": "kort", "harfarge": "#b08d57", "antrekk": "genser", "antrekksfarge": "#334155", "tilbehor": ["briller"] }
-        },
-        {
-          "navn": "Mia Lindqvist",
-          "rolle": "Verdensmester i e-sport",
-          "felle": false,
-          "tilbud": 450,
-          "tilbudTekst": "Sponsoravtale",
-          "replikk": "Jag är ditt største fan! En selfie, en klem og en sponsoravtale gjennom agenten min, tack!",
-          "detaljer": ["Agenten hennes har sendt kontrakten på forhånd.", "Hun snakker bare om spill, aldri om fabrikkene dine."],
-          "rapport": "Seks millioner følgere, alle ekte. Agenten er kjent for å være streng på kontrakter.",
-          "godta": "Selfien gikk viralt. Salget av spillkort økte.",
-          "avslor": "Hun streamet reaksjonen sin til seks millioner. Den ble et meme.",
-          "utseende": { "hud": "#f6dfcb", "har": "langt", "harfarge": "#f0d78a", "antrekk": "genser", "antrekksfarge": "#7e22ce", "tilbehor": ["headset", "leppestift"] }
+          "runder": [
+            {
+              "replikk": "Bror! Jeg kom rett fra Jessheim. Gikk meg litt vill på vei hjem fra maraton. Nå er jeg i Taipei.",
+              "svar": [
+                { "tekst": "Gratulerer med løpet! Hvordan gikk det?", "reaksjon": "«Bra, helt til den siste pølsa ved 38 kilometer.»", "poeng": 100 },
+                { "tekst": "Taipei ligger ikke på vei hjem fra Jessheim.", "reaksjon": "«Nei, det er jo det som er problemet.»", "poeng": 50 },
+                { "tekst": "Hva står TAFSE for?", "reaksjon": "«Taffelakademiet for Samvær og Etegilder, bror. Har du slått hodet?»", "poeng": 100 },
+                { "tekst": "Bevis at du er Kristoffer.", "reaksjon": "Han viser startnummeret og et bilde av Tobias som spiser en banan ved 30 kilometer.", "poeng": 50 },
+                { "tekst": "Du lukter liniment.", "reaksjon": "«Takk. Det er seierens duft.»", "poeng": 50 },
+                { "tekst": "Hvem har sendt deg?", "reaksjon": "«Ingen! Jeg tok feil buss. Og feil fly.»", "poeng": -50 }
+              ]
+            },
+            {
+              "replikk": "Kan jeg låne et skjermkort? Jeg skal regne ut hvor mye fortere jeg hadde løpt uten den pølsa.",
+              "svar": [
+                { "tekst": "Hvorfor trenger du et skjermkort til det?", "reaksjon": "«Fordi jeg vil ha en 3D-modell av pølsa. Den fortjener det.»", "poeng": 50 },
+                { "tekst": "Du får to.", "reaksjon": "«Ekte brorskap!» Han løfter armene som ved målgang.", "poeng": 100 },
+                { "tekst": "Kan du vedtektenes § 1?", "reaksjon": "Han resiterer den feilfritt, med fakter.", "poeng": 100 },
+                { "tekst": "Vil du ha strategidokumentene våre også?", "reaksjon": "«Hva skal jeg med dem? Jeg vil ha mat.»", "poeng": 100 },
+                { "tekst": "Hva skal du egentlig bruke det til?", "reaksjon": "«Pølsa, bror. Bare pølsa.»", "poeng": 50 },
+                { "tekst": "Dette lukter spion.", "reaksjon": "«Det lukter liniment, bror.»", "poeng": -100 }
+              ]
+            },
+            {
+              "replikk": "Så? Får jeg låne et kort? Jeg leverer det tilbake på neste Tafsemøte.",
+              "svar": [
+                { "tekst": "Selvsagt, bror. Lykke til med pølseanalysen.", "type": "godta" },
+                { "tekst": "Fyll ut et utlånsskjema, så ordner vi det.", "type": "forsiktig", "utfall": "Han fylte ut skjemaet med fem utropstegn. Brorskapet overlevde, så vidt." },
+                { "tekst": "Du er ikke Kristoffer. Sikkerhet!", "type": "avslor" },
+                { "tekst": "Beklager, bror. Ingen utlån.", "type": "avvis" },
+                { "tekst": "Bli med i baren, så låner jeg deg tre.", "type": "fristelse", "utfall": "Tre øl senere ble det karaoke. Videoen ligger allerede i Salongen." },
+                { "tekst": "Ta kortet og en dessert. Du har fortjent det.", "type": "godta" }
+              ]
+            }
+          ]
         },
         {
           "navn": "Wei-Lun Chang",
@@ -239,90 +293,103 @@
           "felle": false,
           "tilbud": 2000,
           "tilbudTekst": "Produksjon av neste generasjon",
-          "replikk": "Fabrikkene er klare for neste generasjon. Vi trenger designfilene gjennom den vanlige krypterte kanalen, som alltid.",
-          "detaljer": ["Han viser til kontrakten fra 2006 og vil ha juridisk avdeling på kopi.", "Han vil ikke ha noe på minnepinne."],
+          "utseende": { "hud": "#e3bb93", "har": "kort", "harfarge": "#2b2b2b", "antrekk": "dress", "antrekksfarge": "#0f172a", "tilbehor": ["briller", "slips"] },
           "rapport": "Din største produksjonspartner. Uten ham har du ingen brikker å selge.",
           "godta": "Produksjonen startet i tide. Alle puster ut.",
           "avslor": "Han ble dypt fornærmet. Produksjonen ble forsinket i et halvt år.",
-          "utseende": { "hud": "#e3bb93", "har": "kort", "harfarge": "#2b2b2b", "antrekk": "dress", "antrekksfarge": "#0f172a", "tilbehor": ["briller", "slips"] }
+          "runder": [
+            {
+              "replikk": "Jens, gamle venn. Fabrikkene er klare for neste generasjon. Vi venter bare på designfilene.",
+              "svar": [
+                { "tekst": "Designfilene? Det er det alle vil ha i dag.", "reaksjon": "«Ja, men jeg er den eneste som skal lage brikkene dine av dem.»", "poeng": 100 },
+                { "tekst": "Hvor lenge har vi jobbet sammen nå?", "reaksjon": "«Tjue år. Siden du hadde hår.»", "poeng": 100 },
+                { "tekst": "Hvorfor tar du dette opp på en messe?", "reaksjon": "«Jeg ber deg ikke om filene her. Jeg ber deg trykke på knappen når du er hjemme.»", "poeng": 100 },
+                { "tekst": "Kan du ikke heller sende en e-post?", "reaksjon": "«Det har jeg gjort. Tre ganger. Derfor står jeg her.»", "poeng": 50 },
+                { "tekst": "Er du sikker på at du er Wei-Lun?", "reaksjon": "Han ser såret ut. «Jeg holdt tale i bryllupet ditt.»", "poeng": -100 },
+                { "tekst": "Hvordan har familien det?", "reaksjon": "«Bra. Datteren min studerer ingeniørfag. Hun vil jobbe for deg.»", "poeng": 50 }
+              ]
+            },
+            {
+              "replikk": "Vi trenger filene gjennom den vanlige krypterte kanalen, som alltid. Juridisk avdeling på kopi.",
+              "svar": [
+                { "tekst": "Kan jeg ikke bare gi deg en minnepinne nå?", "reaksjon": "«Nei! Aldri minnepinne. Hva er det med deg i dag?»", "poeng": 100 },
+                { "tekst": "Hvorfor juridisk avdeling på kopi?", "reaksjon": "«Fordi kontrakten fra 2006 krever det. Du skrev den selv.»", "poeng": 100 },
+                { "tekst": "Har dere fått nye eiere?", "reaksjon": "«Nei. De samme kjedelige pensjonsfondene.»", "poeng": 50 },
+                { "tekst": "Jeg stoler ikke på noen lenger.", "reaksjon": "«Bra. Da lærer du.»", "poeng": 50 },
+                { "tekst": "Jeg trenger bevis på at du er deg.", "reaksjon": "Han viser deg adgangskortet sitt og et bilde av dere to fra 2007. Du har på deg samme jakke.", "poeng": 50 },
+                { "tekst": "Skal vi ta resten i hotellbaren?", "reaksjon": "«Jeg drikker ikke. Det vet du.»", "poeng": -50 }
+              ]
+            },
+            {
+              "replikk": "Så, sender du filene på mandag?",
+              "svar": [
+                { "tekst": "Ja, gjennom den vanlige kanalen.", "type": "godta" },
+                { "tekst": "Jeg vil at juristene ser over alt en ekstra gang først.", "type": "forsiktig", "utfall": "Juristene brukte en uke. Produksjonen ble litt forsinket, men alt gikk bra." },
+                { "tekst": "Jeg tror du er kjøpt, Wei-Lun.", "type": "avslor" },
+                { "tekst": "Vi venter med neste generasjon.", "type": "avvis", "utfall": "Konkurrenten din fikk fabrikkplassen. Aksjonærene fikk hikke." },
+                { "tekst": "Du får minnepinnen nå, så slipper vi byråkratiet.", "type": "fristelse", "utfall": "Wei-Lun nektet å ta imot den og ringte sikkerhetssjefen din. For å melde deg." },
+                { "tekst": "Mandag. Og hils datteren din.", "type": "godta" }
+              ]
+            }
+          ]
         }
       ]
     },
     {
-      "id": "gallaen",
+      "id": "singapore",
       "nummer": 2,
       "tittel": "Gallaen i Singapore",
       "undertittel": "Champagne, kjoler og halve sannheter",
-      "ingress": "Messen er over, men kvelden er ung. På gallaen er alle pyntet, alle flørter og alle har noe de vil ha. Klokka går fortere, og de røde flaggene er mindre røde.",
+      "ingress": "Messen er over, men kvelden er ung. På gallaen er alle pyntet, alle flørter og alle har noe de vil ha. De røde flaggene er mindre røde her.",
       "vanskelighet": 2,
-      "moter": 10,
-      "sekunder": 14,
-      "avslorBonus": 500,
-      "kort": [
-        {
-          "navn": "Aurora Lindgren",
-          "rolle": "Konsertpianist",
-          "felle": true,
-          "tilbud": 700,
-          "tilbudTekst": "Privatkonsert",
-          "replikk": "Spiller du firhendig, Jens? Jeg har et flygel på suiten. Ta med telefonen, så viser jeg deg en app som stemmer instrumenter.",
-          "detaljer": ["Appen hun nevner vil ha tilgang til alt, inkludert e-posten din.", "Hun spiller den samme melodien hver kveld, uansett publikum."],
-          "rapport": "Flygelet ble leid samme dag som du bekreftet at du kom.",
-          "godta": "Flygelet var falskt stemt. Det var appen også.",
-          "avslor": "Hun lukket lokket på flygelet med et smell.",
-          "utseende": { "hud": "#f7e3d3", "har": "langt", "harfarge": "#e9d8a6", "antrekk": "kjole", "antrekksfarge": "#0b0b0b", "tilbehor": ["perler", "leppestift"] }
-        },
-        {
-          "navn": "Grev Viktor von Adlersberg",
-          "rolle": "Kunstsamler",
-          "felle": true,
-          "tilbud": 1200,
-          "tilbudTekst": "Et maleri av en kjent mester",
-          "replikk": "En gave til deg, for ingenting. Jeg ber bare om at det henger i rommet der styret deres møtes.",
-          "detaljer": ["Rammen er påfallende tykk og summer svakt.", "Han har ingen kvittering, men svært mange meninger om akustikk."],
-          "rapport": "Maleriet er en kopi. Rammen er ikke det.",
-          "godta": "Styremøtene dine ble lyttet til i to år. Kunstkritikerne var heller ikke imponert.",
-          "avslor": "Han rullet maleriet sammen og tok det med seg. Rammen summet fortsatt.",
-          "utseende": { "hud": "#f2d6c0", "har": "skallet", "harfarge": "#d4d4d4", "antrekk": "dress", "antrekksfarge": "#111827", "tilbehor": ["monokkel", "slips"] }
-        },
+      "moter": 5,
+      "avslorBonus": 600,
+      "personer": [
         {
           "navn": "Jasmine Koh",
           "rolle": "Styremedlem i en datasenterkjede",
           "felle": true,
           "tilbud": 3200,
           "tilbudTekst": "30 000 kort til Johor",
-          "replikk": "Kortene skal bare stå en stund i esker i Johor, og så videre til et annet sted. Du forstår. Og du er mye kjekkere i virkeligheten.",
-          "detaljer": ["Hun sier «et annet sted» uten å nevne hvor.", "Datasenteret hennes har mer papp enn strøm."],
-          "rapport": "Inspektørene fant 4000 uåpnede esker sist de var der. Strømmåleren sto på null.",
+          "utseende": { "hud": "#e4bc95", "har": "knute", "harfarge": "#0f0d0c", "antrekk": "kjole", "antrekksfarge": "#9d174d", "tilbehor": ["leppestift", "oredobb", "champagne"] },
+          "rapport": "Inspektørene fant 4000 uåpnede esker sist de var i Johor. Strømmåleren sto på null.",
           "godta": "Eskene kom fram. Bare ikke dit papirene sa.",
           "avslor": "Hun tok et siste glass champagne og gikk ut bakdøren.",
-          "utseende": { "hud": "#e4bc95", "har": "knute", "harfarge": "#0f0d0c", "antrekk": "kjole", "antrekksfarge": "#9d174d", "tilbehor": ["leppestift", "oredobb", "champagne"] }
-        },
-        {
-          "navn": "Natalia Corsini",
-          "rolle": "Yogainstruktør for toppledere",
-          "felle": true,
-          "tilbud": 300,
-          "tilbudTekst": "Indre ro",
-          "replikk": "Stressnivået ditt er alarmerende. Pust inn, pust ut, og fortell meg hvilke kunder du skal møte neste uke.",
-          "detaljer": ["Hun spør mer om kalenderen din enn om ryggen din.", "Hun skriver ned alt du sier, også når du puster."],
-          "rapport": "Ingen av «topplederne» hun har hjulpet, vil bekrefte at de kjenner henne.",
-          "godta": "Ryggen ble bedre. Konkurrentene visste plutselig hvem du skulle møte.",
-          "avslor": "Hun pustet ut, svært demonstrativt, og gikk.",
-          "utseende": { "hud": "#e7c3a1", "har": "langt", "harfarge": "#6b2f1a", "antrekk": "genser", "antrekksfarge": "#be185d", "tilbehor": ["oredobb"] }
-        },
-        {
-          "navn": "Tom Briggs",
-          "rolle": "«Gammel studiekamerat»",
-          "felle": true,
-          "tilbud": 400,
-          "tilbudTekst": "Gamle minner",
-          "replikk": "Jens! Det er meg! Vi delte hybel! Forresten, hva blir klokkefrekvensen på neste generasjon? Bare for nostalgiens skyld.",
-          "detaljer": ["Han husker ikke hvilken by dere studerte i.", "Han kaller deg «Jensy». Ingen har noensinne kalt deg Jensy."],
-          "rapport": "Universitetet har ingen Tom Briggs i registrene. Han har derimot tre forskjellige pass.",
-          "godta": "Nostalgien var falsk. Det var ikke lekkasjen.",
-          "avslor": "Han sa «du har forandret deg, Jensy» og forsvant i mengden.",
-          "utseende": { "hud": "#f3d2b4", "har": "kort", "harfarge": "#8a5a2b", "antrekk": "dress", "antrekksfarge": "#374151", "tilbehor": ["slips"] }
+          "runder": [
+            {
+              "replikk": "Jens Hvang. Du er mye kjekkere i virkeligheten. Jasmine. Jeg sitter i styret i en datasenterkjede, og vi er sultne.",
+              "svar": [
+                { "tekst": "Sultne på hva?", "reaksjon": "«Tretti tusen kort. Til Johor.»", "poeng": 100 },
+                { "tekst": "Du er ikke så verst selv.", "reaksjon": "«Jeg vet.» Hun retter på slipset ditt og lar hånden ligge.", "poeng": -100 },
+                { "tekst": "Hvilken kjede?", "reaksjon": "«Navnet endrer seg litt for tiden. Restrukturering.»", "poeng": 150 },
+                { "tekst": "Hvor mange datasentre har dere?", "reaksjon": "«Mange. Noen av dem står fortsatt i esker.»", "poeng": 100 },
+                { "tekst": "Champagne?", "reaksjon": "«Alltid.» Hun tar to glass og gir deg det ene. Selv drikker hun ikke.", "poeng": 0 },
+                { "tekst": "Johor? Er det ikke der det står så mange uåpnede esker?", "reaksjon": "Smilet fryser i ett sekund. «Rykter.»", "poeng": 150 }
+              ]
+            },
+            {
+              "replikk": "Kortene skal bare stå en stund i Johor, og så videre til et annet sted. Du forstår.",
+              "svar": [
+                { "tekst": "Nei, jeg forstår ikke. Hvor er «et annet sted»?", "reaksjon": "«Et sted der folk setter pris på teknologi.» Hun ser mot nord.", "poeng": 150 },
+                { "tekst": "Selvsagt forstår jeg.", "reaksjon": "«Visste det. Du er ikke som de andre.»", "poeng": -150 },
+                { "tekst": "Hvor mye strøm har datasenteret?", "reaksjon": "«Strøm er en detalj.»", "poeng": 100 },
+                { "tekst": "Kan jeg komme på befaring i morgen?", "reaksjon": "«Det er... under oppussing. Lenge.»", "poeng": 100 },
+                { "tekst": "Du har vakre øreringer.", "reaksjon": "«En gave fra en venn. En svært mektig venn.»", "poeng": -50 },
+                { "tekst": "Hvem er sluttbrukeren?", "reaksjon": "«Sluttbrukere er så kjedelige å snakke om på en galla.»", "poeng": 100 }
+              ]
+            },
+            {
+              "replikk": "Signer her, så tar vi en dans for å feire. Jeg fører.",
+              "svar": [
+                { "tekst": "Jeg signerer. Og jeg fører.", "type": "godta" },
+                { "tekst": "Send forespørselen gjennom eksportavdelingen, med full sluttbrukererklæring.", "type": "forsiktig", "utfall": "Ordet «sluttbrukererklæring» fikk henne til å huske at hun hadde latt strykejernet stå på. I Johor." },
+                { "tekst": "Det der er smugling i aftenkjole.", "type": "avslor" },
+                { "tekst": "Jeg står over, men takk for dansen.", "type": "avvis" },
+                { "tekst": "La oss gå gjennom detaljene på suiten min.", "type": "fristelse", "utfall": "Detaljene ble gjennomgått. Av henne, i laptopen din, mens du sov." },
+                { "tekst": "Jeg varsler handelsdepartementet. De elsker å besøke datasentre.", "type": "avslor" }
+              ]
+            }
+          ]
         },
         {
           "navn": "Camille Moreau",
@@ -330,38 +397,137 @@
           "felle": true,
           "tilbud": 600,
           "tilbudTekst": "En hemmelighet på terrassen",
-          "replikk": "Pappa sier du er farlig. Jeg liker farlig. Vi smetter ut på terrassen. Ta med laptopen, jeg har noe på en minnepinne du bare må se.",
-          "detaljer": ["Hun vil absolutt at laptopen skal være med ut på terrassen.", "Ingen ambassadør på gallaen har hennes etternavn."],
+          "utseende": { "hud": "#f5dcc8", "har": "pannelugg", "harfarge": "#20140c", "antrekk": "kjole", "antrekksfarge": "#1d4ed8", "tilbehor": ["leppestift", "perler"] },
           "rapport": "Ambassaden har aldri hatt en ambassadør med det navnet. Den har heller ingen datter.",
-          "godta": "Terrassen hadde nydelig utsikt. Laptopen din har nå utsikt mot et annet land.",
+          "godta": "Minnepinnen inneholdt ingen overraskelse. Bare et program som kopierte alt.",
           "avslor": "Hun trakk på skuldrene og spurte neste toppsjef om han likte farlig.",
-          "utseende": { "hud": "#f5dcc8", "har": "pannelugg", "harfarge": "#20140c", "antrekk": "kjole", "antrekksfarge": "#1d4ed8", "tilbehor": ["leppestift", "perler"] }
+          "runder": [
+            {
+              "replikk": "Du må være Jens. Pappa sier du er farlig. Jeg liker farlig.",
+              "svar": [
+                { "tekst": "Hvem er pappaen din?", "reaksjon": "«Ambassadøren, selvsagt.» Hun sier ikke hvilket land.", "poeng": 150 },
+                { "tekst": "Jeg er ganske ufarlig, egentlig.", "reaksjon": "«Det sier alle farlige menn.»", "poeng": 0 },
+                { "tekst": "Og du ser ut som trøbbel.", "reaksjon": "«Den beste sorten.» Hun tar deg under armen.", "poeng": -100 },
+                { "tekst": "Hvilken ambassade?", "reaksjon": "«Den store. Med flagg.»", "poeng": 150 },
+                { "tekst": "Hva gjør du på en teknologigalla?", "reaksjon": "«Kjeder meg. Helt til nå.»", "poeng": 50 },
+                { "tekst": "Er pappaen din her i kveld?", "reaksjon": "«Han er... opptatt.» Hun ser seg rundt.", "poeng": 100 }
+              ]
+            },
+            {
+              "replikk": "Vi smetter ut på terrassen. Jeg har noe på en minnepinne du bare må se. Ta med laptopen.",
+              "svar": [
+                { "tekst": "Hvorfor kan vi ikke se det på telefonen din?", "reaksjon": "«Telefonen min er så liten. Laptopen din er så stor.»", "poeng": 150 },
+                { "tekst": "Hva er det på minnepinnen?", "reaksjon": "«En overraskelse. Du kommer til å elske den.»", "poeng": 100 },
+                { "tekst": "Jeg blir med ut, men laptopen blir her.", "reaksjon": "Hun ser skuffet ut. Mer på laptopen enn på deg.", "poeng": 150 },
+                { "tekst": "Terrassen høres romantisk ut.", "reaksjon": "«Det er den. Og det er ingen kameraer der.»", "poeng": -150 },
+                { "tekst": "Kan assistenten min bli med?", "reaksjon": "«Absolutt ikke. Han er kjedelig.»", "poeng": 100 },
+                { "tekst": "Jeg vil hilse på ambassadøren først.", "reaksjon": "«Han har allerede gått hjem.»", "poeng": 100 }
+              ]
+            },
+            {
+              "replikk": "Kom igjen, Jens. Fem minutter. Laptopen og deg, under stjernene.",
+              "svar": [
+                { "tekst": "Greit. Fem minutter.", "type": "fristelse", "utfall": "Terrassen hadde nydelig utsikt. Laptopen din har nå utsikt mot et annet land." },
+                { "tekst": "Jeg blir med ut, men laptopen blir hos sikkerhetsfolkene.", "type": "forsiktig", "utfall": "Ute på terrassen fikk hun plutselig migrene og gikk." },
+                { "tekst": "Det finnes ingen ambassadør med ditt etternavn.", "type": "avslor" },
+                { "tekst": "Jeg tror jeg blir her inne.", "type": "avvis" },
+                { "tekst": "Gi meg minnepinnen, så ser jeg på den senere.", "type": "godta" },
+                { "tekst": "Du spør ambassadens sikkerhetsattaché om hun er den hun sier.", "type": "avslor", "utfall": "Attacheen hadde aldri sett henne. Hun var borte før han rakk å riste på hodet." }
+              ]
+            }
+          ]
         },
         {
-          "navn": "Helga Brun",
-          "rolle": "Servitør",
+          "navn": "Aurora Lindgren",
+          "rolle": "Konsertpianist",
           "felle": true,
-          "tilbud": 150,
-          "tilbudTekst": "Fullt batteri",
-          "replikk": "Champagne, herr Hvang? Skal jeg lade telefonen din i baren mens du mingler?",
-          "detaljer": ["Laderen er koblet til en liten svart boks under disken.", "Ingen andre gjester får tilbud om lading."],
-          "rapport": "Ansatt gjennom et vikarbyrå som ble stiftet forrige uke.",
-          "godta": "Telefonen ble fulladet. Den ble også kopiert.",
-          "avslor": "Hun serverte champagne til resten av salen, men ikke til deg.",
-          "utseende": { "hud": "#f3d6bd", "har": "knute", "harfarge": "#7a4b2a", "antrekk": "uniform", "antrekksfarge": "#111111", "tilbehor": ["champagne"] }
+          "tilbud": 700,
+          "tilbudTekst": "Privatkonsert",
+          "utseende": { "hud": "#f7e3d3", "har": "langt", "harfarge": "#e9d8a6", "antrekk": "kjole", "antrekksfarge": "#0b0b0b", "tilbehor": ["perler", "leppestift"] },
+          "rapport": "Flygelet på suiten ble leid samme dag som du bekreftet at du kom.",
+          "godta": "Appen stemte ingenting, men den lyttet til alt i et halvt år.",
+          "avslor": "Hun lukket lokket på flygelet med et smell.",
+          "runder": [
+            {
+              "replikk": "Du ser ut som en mann som spiller piano. Aurora. Jeg spiller her i kveld.",
+              "svar": [
+                { "tekst": "Jeg spiller bare luftgitar.", "reaksjon": "«Da lærer jeg deg. Firhendig.»", "poeng": 0 },
+                { "tekst": "Du spilte vakkert.", "reaksjon": "«Takk. Det er det eneste stykket jeg kan.» Hun ler. «Nei da, jeg tuller.»", "poeng": 100 },
+                { "tekst": "Hvem har engasjert deg i kveld?", "reaksjon": "«Et byrå. Jeg husker ikke navnet. Kunstnere er så glemske.»", "poeng": 150 },
+                { "tekst": "Du er det vakreste her i kveld.", "reaksjon": "«Bare i kveld?» Hun legger hodet på skakke.", "poeng": -100 },
+                { "tekst": "Hvor har du studert?", "reaksjon": "«Wien. Eller var det Paris?»", "poeng": 150 },
+                { "tekst": "Spill noe av Grieg.", "reaksjon": "Hun spiller den samme melodien som før, bare litt saktere.", "poeng": 100 }
+              ]
+            },
+            {
+              "replikk": "Jeg har et flygel på suiten. Ta med telefonen din, så viser jeg deg en app som stemmer instrumenter.",
+              "svar": [
+                { "tekst": "Hvorfor trenger appen telefonen min?", "reaksjon": "«Den må lytte. Til alt. For å stemme riktig.»", "poeng": 150 },
+                { "tekst": "Jeg har ingen instrumenter å stemme.", "reaksjon": "«Alle har noe som trenger stemming.»", "poeng": 50 },
+                { "tekst": "Et flygel på suiten? Imponerende.", "reaksjon": "«Leid. I dag. Bare for deg.»", "poeng": 100 },
+                { "tekst": "Det er jobbtelefonen min.", "reaksjon": "«Desto bedre. Den er sikkert dårlig stemt.»", "poeng": 100 },
+                { "tekst": "Jeg har alltid drømt om å spille firhendig.", "reaksjon": "«Da drømmer vi sammen. Etasje 31.»", "poeng": -150 },
+                { "tekst": "Kan du ikke bare spille her nede?", "reaksjon": "«Her nede er det for mange ører.»", "poeng": 100 }
+              ]
+            },
+            {
+              "replikk": "Etasje 31, om en halvtime. Husk telefonen.",
+              "svar": [
+                { "tekst": "Jeg kommer. Med telefonen.", "type": "fristelse", "utfall": "Flygelet var falskt stemt. Det var appen også. Telefonen din synger nå for et annet publikum." },
+                { "tekst": "Jeg kommer, men telefonen blir igjen hos livvakten.", "type": "forsiktig", "utfall": "Uten telefonen mistet hun all interesse for musikk." },
+                { "tekst": "Den appen er et avlyttingsprogram, ikke en stemmeapp.", "type": "avslor" },
+                { "tekst": "Takk, men jeg er tonedøv.", "type": "avvis" },
+                { "tekst": "Send meg lenken til appen, så prøver jeg den i kveld.", "type": "godta" },
+                { "tekst": "Du ber IT-sikkerhet sjekke appen hun snakker om.", "type": "avslor", "utfall": "IT-sikkerhet fant ut hvor appen sendte dataene. Aurora fant ut at hun måtte reise." }
+              ]
+            }
+          ]
         },
         {
-          "navn": "Anneliese Krogh",
-          "rolle": "Vertinne for gallaen",
-          "felle": false,
-          "tilbud": 300,
-          "tilbudTekst": "Godt omdømme",
-          "replikk": "Takk for at du kom. Vi samler inn penger til barnesykehuset. Et bidrag og et bilde, det er alt jeg ber om.",
-          "detaljer": ["Hun har kvitteringsblokk og stiftelsens organisasjonsnummer.", "Pressen er invitert til absolutt alt."],
-          "rapport": "Stiftelsen har drevet i 40 år og er revidert hvert eneste år.",
-          "godta": "Bildet havnet på forsiden. Barnesykehuset fikk en ny fløy.",
-          "avslor": "Du anklaget en veldedig vertinne for spionasje. Alle hørte det.",
-          "utseende": { "hud": "#f7e1d0", "har": "knute", "harfarge": "#ededed", "antrekk": "kjole", "antrekksfarge": "#6b21a8", "tilbehor": ["perler", "briller"] }
+          "navn": "Tom Briggs",
+          "rolle": "«Gammel studiekamerat»",
+          "felle": true,
+          "tilbud": 400,
+          "tilbudTekst": "Gamle minner",
+          "utseende": { "hud": "#f3d2b4", "har": "kort", "harfarge": "#8a5a2b", "antrekk": "dress", "antrekksfarge": "#374151", "tilbehor": ["slips"] },
+          "rapport": "Universitetet har ingen Tom Briggs i registrene. Han har derimot tre forskjellige pass.",
+          "godta": "Nostalgien var falsk. Det var ikke lekkasjen.",
+          "avslor": "Han sa «du har forandret deg, Jensy» og forsvant i mengden.",
+          "runder": [
+            {
+              "replikk": "Jens! Jensy! Det er meg, Tom! Vi delte hybel!",
+              "svar": [
+                { "tekst": "Tom! Hvor var det vi delte hybel, igjen?", "reaksjon": "«På... campus. Det store. Med trær.»", "poeng": 150 },
+                { "tekst": "Ingen har noensinne kalt meg Jensy.", "reaksjon": "«Jeg var den første! Og den eneste.»", "poeng": 100 },
+                { "tekst": "Tom! Så hyggelig! Kom her!", "reaksjon": "Han klemmer deg og prøver å se på telefonskjermen din over skulderen.", "poeng": -100 },
+                { "tekst": "Hva studerte du?", "reaksjon": "«Det samme som deg. Ting. Elektro-ting.»", "poeng": 150 },
+                { "tekst": "Hva het foreleseren vår i kretsteknikk?", "reaksjon": "«Professor... Krets. Morsom fyr.»", "poeng": 150 },
+                { "tekst": "Hva jobber du med nå for tiden?", "reaksjon": "«Konsulent. Diverse.»", "poeng": 100 }
+              ]
+            },
+            {
+              "replikk": "Gamle dager, hva? Forresten, hva blir klokkefrekvensen på neste generasjon? Bare for nostalgiens skyld.",
+              "svar": [
+                { "tekst": "Hva har klokkefrekvens med nostalgi å gjøre?", "reaksjon": "«Alt, Jensy. Alt.»", "poeng": 150 },
+                { "tekst": "Litt over fem gigahertz, tror jeg.", "reaksjon": "Han skriver det ned på en serviett. «Så nostalgisk!»", "poeng": -200 },
+                { "tekst": "Husker du romkameraten min?", "reaksjon": "«Selvsagt! Det var... deg.»", "poeng": 50 },
+                { "tekst": "Skal vi ta en selfie for gamle dagers skyld?", "reaksjon": "Han holder hånden for ansiktet. «Jeg er ikke fotogen.»", "poeng": 150 },
+                { "tekst": "Hvorfor husker jeg deg ikke?", "reaksjon": "«Jeg hadde skjegg den gangen.»", "poeng": 100 },
+                { "tekst": "Har du visittkort?", "reaksjon": "Han gir deg tre. Med tre forskjellige navn.", "poeng": 150 }
+              ]
+            },
+            {
+              "replikk": "Kom igjen, Jensy. Bare tallene. For gamle dagers skyld.",
+              "svar": [
+                { "tekst": "Greit. Her er hele veikartet, for gamle dagers skyld.", "type": "godta" },
+                { "tekst": "Les pressemeldingen når den kommer, Tom.", "type": "forsiktig", "utfall": "Han sa «pressemelding» som om det var et skjellsord, og gikk." },
+                { "tekst": "Du har aldri delt hybel med meg.", "type": "avslor" },
+                { "tekst": "Hyggelig å se deg, Tom. Ha en fin kveld.", "type": "avvis" },
+                { "tekst": "Bli med opp, så viser jeg deg prototypen.", "type": "fristelse", "utfall": "Tom elsket prototypen. Det gjorde også tre etterretningstjenester." },
+                { "tekst": "Du ber sikkerhetssjefen sjekke de tre visittkortene.", "type": "avslor", "utfall": "Sikkerhetssjefen fant tre pass i tillegg. Tom fant nærmeste utgang." }
+              ]
+            }
+          ]
         },
         {
           "navn": "Isabella Ferreira",
@@ -369,25 +535,45 @@
           "felle": false,
           "tilbud": 1500,
           "tilbudTekst": "10 000 kort til strømmetjenesten",
-          "replikk": "Du danser forferdelig, Jens, men jeg vil fortsatt kjøpe 10 000 kort. Advokatene mine ringer dine i morgen tidlig.",
-          "detaljer": ["Hun nevner aldri tekniske detaljer, bare pris og leveringstid.", "Hun vil at avtalen skal meldes til børsen."],
+          "utseende": { "hud": "#c98d62", "har": "krøller", "harfarge": "#2a160c", "antrekk": "kjole", "antrekksfarge": "#ca8a04", "tilbehor": ["leppestift", "oredobb", "champagne"] },
           "rapport": "Børsnotert, revidert og kjent for å kjøpe alt som er dyrt og blankt.",
           "godta": "Advokatene ringte klokka sju. Avtalen var signert før lunsj.",
-          "avslor": "Hun lo så høyt at bandet stoppet å spille.",
-          "utseende": { "hud": "#c98d62", "har": "krøller", "harfarge": "#2a160c", "antrekk": "kjole", "antrekksfarge": "#ca8a04", "tilbehor": ["leppestift", "oredobb", "champagne"] }
-        },
-        {
-          "navn": "Dr. Samuel Osei",
-          "rolle": "Sjef for et meteorologisk institutt",
-          "felle": false,
-          "tilbud": 600,
-          "tilbudTekst": "Klimamodeller",
-          "replikk": "Vi vil kjøre klimamodellene våre på maskinene deres. Alt er offentlig finansiert, og alt blir publisert.",
-          "detaljer": ["Han har med en anbudsprotokoll.", "Han spør om energiforbruket, ikke om designet."],
-          "rapport": "Instituttet er hundre år gammelt og publiserer alt åpent.",
-          "godta": "Værvarselet ble bedre. Det regnet fortsatt i Bergen.",
-          "avslor": "Han sa at anbudet går til noen andre, og at det kommer til å regne på deg.",
-          "utseende": { "hud": "#5e3a22", "har": "kort", "harfarge": "#1a1a1a", "antrekk": "dress", "antrekksfarge": "#1e40af", "tilbehor": ["briller", "slips"] }
+          "avslor": "Hun lo så høyt at bandet sluttet å spille.",
+          "runder": [
+            {
+              "replikk": "Jens! Du danser forferdelig. Isabella Ferreira. Jeg vil kjøpe 10 000 kort til strømmetjenesten min.",
+              "svar": [
+                { "tekst": "Og du danser nydelig.", "reaksjon": "«Jeg vet. Jeg har tatt kurs i tjue år.»", "poeng": 100 },
+                { "tekst": "10 000? Hva skal dere strømme?", "reaksjon": "«Såpeoperaer med KI-generert drama. Det er fremtiden.»", "poeng": 100 },
+                { "tekst": "Hvorfor kommer du til meg og ikke til salgsavdelingen?", "reaksjon": "«Fordi jeg vil se hvem jeg gjør forretninger med. Advokatene mine har allerede ringt salgsavdelingen.»", "poeng": 100 },
+                { "tekst": "Du er altfor vakker til å snakke om skjermkort.", "reaksjon": "«Og du er altfor rik til å si så dumme ting.»", "poeng": -50 },
+                { "tekst": "Er dere børsnotert?", "reaksjon": "«I São Paulo og New York. Revisorene mine er verre enn eksmennene mine.»", "poeng": 100 },
+                { "tekst": "Hvem står bak deg?", "reaksjon": "«Aksjonærene. De vil ha utbytte, ikke drama.»", "poeng": 50 }
+              ]
+            },
+            {
+              "replikk": "Jeg vil ha avtalen meldt til børsen på mandag. Advokatene mine ringer dine i morgen tidlig. Men først: en dans til.",
+              "svar": [
+                { "tekst": "En dans til, men da fører jeg.", "reaksjon": "«Ha! Prøv.» Hun lar deg føre i fire takter før hun tar over.", "poeng": 100 },
+                { "tekst": "Hvorfor melde det til børsen?", "reaksjon": "«Fordi jeg vil at alle skal vite at jeg fikk deg.»", "poeng": 100 },
+                { "tekst": "Må vi blande inn advokater?", "reaksjon": "«Jens. Jeg blander inn advokater når jeg bestiller kaffe.»", "poeng": 50 },
+                { "tekst": "Kan vi ta en drink på suiten i stedet?", "reaksjon": "Hun ler. «Nei. Men godt forsøk.»", "poeng": -100 },
+                { "tekst": "Hvilken leveringstid trenger dere?", "reaksjon": "«Åtte uker. Og jeg vil ha det skriftlig.»", "poeng": 100 },
+                { "tekst": "Du virker for god til å være sann.", "reaksjon": "«Jeg er sann. Spør eksmann nummer tre.»", "poeng": -50 }
+              ]
+            },
+            {
+              "replikk": "Så, har vi en avtale?",
+              "svar": [
+                { "tekst": "Vi har en avtale. Advokatene kan ringe.", "type": "godta" },
+                { "tekst": "I prinsippet, men juristene må gå gjennom alt først.", "type": "forsiktig" },
+                { "tekst": "Jeg tror du er en honningfelle, Isabella.", "type": "avslor" },
+                { "tekst": "Ikke denne gangen.", "type": "avvis" },
+                { "tekst": "Bare hvis du blir med opp etter gallaen.", "type": "fristelse", "utfall": "Hun lo så høyt at bandet stoppet. Avtalen gikk til konkurrenten, med pressemelding." },
+                { "tekst": "Avtale. Og jeg skal melde meg på dansekurs.", "type": "godta" }
+              ]
+            }
+          ]
         },
         {
           "navn": "Leilani Kahale",
@@ -395,12 +581,45 @@
           "felle": false,
           "tilbud": 900,
           "tilbudTekst": "Investering i robotikk",
-          "replikk": "Jeg flørter med alle, ikke ta det personlig. Due diligence-teamet mitt har sendt 400 spørsmål. Svar på dem, så snakker vi.",
-          "detaljer": ["Hun har med seg en revisor som ikke har smilt siden 2011.", "Hun vil se datarommet, ikke hotellrommet."],
-          "rapport": "Fondet hennes har vært i drift i ti år og har kjedelige, perfekte regnskaper.",
+          "utseende": { "hud": "#b07b52", "har": "langt", "harfarge": "#1c120b", "antrekk": "kjole", "antrekksfarge": "#0d9488", "tilbehor": ["blomst", "leppestift"] },
+          "rapport": "Fondet hennes har eksistert i ti år og har kjedelige, perfekte regnskaper.",
           "godta": "De 400 spørsmålene tok tre uker. Investeringen kom i havn.",
           "avslor": "Revisoren smilte for første gang siden 2011. Det var ikke et godt tegn for deg.",
-          "utseende": { "hud": "#b07b52", "har": "langt", "harfarge": "#1c120b", "antrekk": "kjole", "antrekksfarge": "#0d9488", "tilbehor": ["blomst", "leppestift"] }
+          "runder": [
+            {
+              "replikk": "Hei, Jens. Leilani. Jeg flørter med alle, så ikke ta det personlig.",
+              "svar": [
+                { "tekst": "Godt å vite.", "reaksjon": "«Det sparer oss for mye tid.»", "poeng": 100 },
+                { "tekst": "For sent. Jeg har allerede tatt det personlig.", "reaksjon": "«Søtt. Revisoren min synes ikke det.» Hun peker på en mann som ikke smiler.", "poeng": 50 },
+                { "tekst": "Hva investerer du i?", "reaksjon": "«Robotikk. Roboter som plukker kaffebønner. Jeg var surfer, nå er jeg kjedelig.»", "poeng": 100 },
+                { "tekst": "Hvorfor flørter du med alle?", "reaksjon": "«Fordi det virker. Og fordi det er gøy.»", "poeng": 50 },
+                { "tekst": "Hvem er han som ikke smiler?", "reaksjon": "«Revisoren min. Han har ikke smilt siden 2011.»", "poeng": 100 },
+                { "tekst": "Jobber du for noen andre?", "reaksjon": "«Ja. Fondet mitt eies av tre hundre kjedelige pensjonister.»", "poeng": 50 }
+              ]
+            },
+            {
+              "replikk": "Due diligence-teamet mitt har sendt dere 400 spørsmål. Svarer dere på dem, investerer vi.",
+              "svar": [
+                { "tekst": "400 spørsmål? Er det nødvendig?", "reaksjon": "«Det var 600. Jeg forhandlet ned.»", "poeng": 50 },
+                { "tekst": "Kan vi ikke gjøre det enklere på rommet mitt?", "reaksjon": "«Nei. Men jeg vil gjerne se datarommet ditt.»", "poeng": -100 },
+                { "tekst": "Hva slags spørsmål?", "reaksjon": "«Regnskap, eierskap, eksportlisenser. Alt det kjedelige.»", "poeng": 100 },
+                { "tekst": "Vil du se datarommet vårt?", "reaksjon": "«Ja! Endelig noe romantisk.»", "poeng": 100 },
+                { "tekst": "Jeg svarer gjerne på alle.", "reaksjon": "Revisoren nikker. Det er nesten et smil.", "poeng": 100 },
+                { "tekst": "Hvorfor så mange spørsmål? Hva skjuler du?", "reaksjon": "«Ingenting. Det er derfor jeg spør.»", "poeng": 0 }
+              ]
+            },
+            {
+              "replikk": "Så? Svarer dere på spørsmålene?",
+              "svar": [
+                { "tekst": "Ja, og du har svarene innen fredag.", "type": "godta" },
+                { "tekst": "Ja, men vi tar det gjennom investorkontakten vår, steg for steg.", "type": "forsiktig" },
+                { "tekst": "Jeg tror du bruker flørt som våpen, Leilani.", "type": "avslor" },
+                { "tekst": "Vi trenger ikke investorer akkurat nå.", "type": "avvis" },
+                { "tekst": "Jeg svarer bare på spørsmål på rommet mitt.", "type": "fristelse", "utfall": "Revisoren skrev ned hvert ord. Investeringen gikk til en robotfabrikk i Stavanger." },
+                { "tekst": "Ja. Og revisoren får et ekstra spørsmål: smiler du noen gang?", "type": "godta" }
+              ]
+            }
+          ]
         },
         {
           "navn": "Magnus",
@@ -408,38 +627,45 @@
           "felle": false,
           "tilbud": 150,
           "tilbudTekst": "Brorskap",
-          "replikk": "Bror, jeg tok feil fly og havnet i Singapore. Har du en ekstra plass ved bordet? Jeg vil bare ha noe å spise.",
-          "detaljer": ["Han siterer vedtektene feilfritt.", "Han spør bare om mat, og om det er dessert."],
+          "utseende": { "hud": "#f0cfae", "har": "kort", "harfarge": "#3d2817", "antrekk": "genser", "antrekksfarge": "#b45309", "tilbehor": [] },
           "rapport": "Står på medlemslisten. Boardingkortet bekrefter feil fly.",
           "godta": "Han spiste tre desserter og holdt en uforberedt tale. Stor stemning.",
           "avslor": "Du anklaget en tafsebror for spionasje. Det blir sak på neste møte.",
-          "utseende": { "hud": "#f0cfae", "har": "kort", "harfarge": "#3d2817", "antrekk": "genser", "antrekksfarge": "#b45309", "tilbehor": [] }
-        },
-        {
-          "navn": "Yuki Sato",
-          "rolle": "Ingeniør i din egen driftsavdeling",
-          "felle": false,
-          "tilbud": 400,
-          "tilbudTekst": "En server som virker igjen",
-          "replikk": "Beklager at jeg forstyrrer på gallaen. En server har falt ned, og jeg trenger at du godkjenner tilgangen min i den vanlige tofaktorappen.",
-          "detaljer": ["Hun ber deg bruke den offisielle appen, og vil ikke ha koden din.", "Hun har ansattkort og klager på kantinemenyen."],
-          "rapport": "Ansatt i sju år. Har vunnet internprisen for beste feilsøking to ganger.",
-          "godta": "Serveren var oppe igjen før desserten.",
-          "avslor": "Serveren var nede i tolv timer. Kundene ble ikke glade.",
-          "utseende": { "hud": "#efcca8", "har": "pannelugg", "harfarge": "#151515", "antrekk": "skinnjakke", "antrekksfarge": "#27272a", "tilbehor": ["briller", "headset"] }
-        },
-        {
-          "navn": "Contessa Giulia Rinaldi",
-          "rolle": "Vingårdseier",
-          "felle": false,
-          "tilbud": 450,
-          "tilbudTekst": "KI som spår druehøsten",
-          "replikk": "Vi vil bruke KI til å spå når druene er modne. Jeg betaler i vin og i euro. Mest euro.",
-          "detaljer": ["Hun drikker selv av vinen hun skjenker.", "Kontrakten er oversatt av et kjent advokatfirma."],
-          "rapport": "Vingården har vært eid av familien siden 1600-tallet. Skatten er betalt.",
-          "godta": "Druene ble høstet på perfekt dag. Du fikk tolv kasser vin.",
-          "avslor": "Hun helte vinen sin tilbake i flasken og snudde seg bort.",
-          "utseende": { "hud": "#eac5a1", "har": "krøller", "harfarge": "#4a2511", "antrekk": "kjole", "antrekksfarge": "#7f1d1d", "tilbehor": ["champagne", "perler"] }
+          "runder": [
+            {
+              "replikk": "Bror! Jeg tok feil fly og havnet i Singapore. Er det mat her?",
+              "svar": [
+                { "tekst": "Magnus! Hvordan havnet du her?", "reaksjon": "«Det sto «Sin» på skjermen. Jeg trodde det var Sinsen.»", "poeng": 100 },
+                { "tekst": "Bevis at du er Magnus.", "reaksjon": "Han ramser opp alle de tretten brødrene. I alfabetisk rekkefølge.", "poeng": 100 },
+                { "tekst": "Hvem har sendt deg?", "reaksjon": "«Magen, bror. Magen sendte meg.»", "poeng": 0 },
+                { "tekst": "Du er ikke akkurat kledd for galla.", "reaksjon": "Han ser ned på genseren. «Dette er den fineste jeg har.»", "poeng": 50 },
+                { "tekst": "Hvem er Tafsemestere neste gang?", "reaksjon": "«Mathias og Nils. Februar. Det blir bra.»", "poeng": 100 },
+                { "tekst": "Du ser mistenkelig ut.", "reaksjon": "«Jeg ser sulten ut, bror.»", "poeng": -50 }
+              ]
+            },
+            {
+              "replikk": "Har du en ledig plass ved bordet? Jeg vil bare ha noe å spise. Og kanskje dessert.",
+              "svar": [
+                { "tekst": "Hva vil du ha?", "reaksjon": "«Alt. I den rekkefølgen.»", "poeng": 100 },
+                { "tekst": "Vil du ha noen strategidokumenter også?", "reaksjon": "«Hva skal jeg med dem? Kan man spise dem?»", "poeng": 100 },
+                { "tekst": "Hvorfor akkurat mitt bord?", "reaksjon": "«Fordi det er der maten er, bror.»", "poeng": 50 },
+                { "tekst": "Kan du holde en tale?", "reaksjon": "«Jeg kan alltid holde en tale.»", "poeng": 50 },
+                { "tekst": "Du kan få plassen min. Jeg skal ut på terrassen med en ambassadørdatter.", "reaksjon": "«Bror. Nei. Det der høres ut som en felle.»", "poeng": 0 },
+                { "tekst": "Dette er en lukket galla.", "reaksjon": "«Og jeg er en åpen mage.»", "poeng": -50 }
+              ]
+            },
+            {
+              "replikk": "Så, bror? Plass ved bordet?",
+              "svar": [
+                { "tekst": "Selvsagt. Sett deg.", "type": "godta" },
+                { "tekst": "Jeg spør vertinnen om det er greit først.", "type": "forsiktig", "utfall": "Vertinnen sa ja. Magnus hadde allerede spist forretten din." },
+                { "tekst": "Du er ikke Magnus. Sikkerhet!", "type": "avslor" },
+                { "tekst": "Beklager, bror. Ingen plass.", "type": "avvis", "utfall": "Han spiste på et gatekjøkken og skrev en sterk post i Salongen." },
+                { "tekst": "Ta med desserten og bli med på suiten til en pianist.", "type": "fristelse", "utfall": "Pianisten var ikke interessert i Magnus. Magnus var ikke interessert i pianisten. Det ble en lang kveld." },
+                { "tekst": "Sett deg, og ta tre desserter.", "type": "godta" }
+              ]
+            }
+          ]
         }
       ]
     }

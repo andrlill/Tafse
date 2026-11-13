@@ -1,21 +1,32 @@
-// HONNINGFELLA: et spill om forførende tilbud og halve sannheter.
-// Du er Jens Hvang, toppsjef i Nvideo. Folk oppsøker deg ett og ett. Godta tilbudet,
-// eller avslør at det er en honningfelle. Oppdragene ligger i data/honningfella/oppdrag.json.
+// HONNINGFELLA: et samtalespill om forførende tilbud og halve sannheter.
+// Du er Jens Hvang, toppsjef i Nvideo. Folk oppsøker deg ett og ett, og hver samtale har tre runder.
+// I de to første sonderer du, i den tredje bestemmer du deg. Oppdragene ligger i data/honningfella/oppdrag.json.
 
 (() => {
   const rot = document.getElementById("hf");
   const tavle = document.getElementById("hf-tavle");
 
   // ---------- Regler (endres her) ----------
-  const RAPPORT_PRIS = 150;   // bakgrunnssjekk
-  const NOLE_STRAFF = 100;    // når tiden går ut
-  const FALSK_ALARM = 250;    // når du anklager en ærlig person
-  const MIN_FELLESTRAFF = 600; // minste tap når du går i fella
-  const GRANSKING = 1000;     // advokatregning ved tre prikker
+  const RAPPORT_PRIS = 150;        // bakgrunnssjekk
+  const FALSK_ALARM = 300;         // å anklage en ærlig person
+  const PINLIG = 300;              // å prøve seg på en ærlig person
+  const MIN_FELLESTRAFF = 600;     // minste tap når du går i fella
+  const FRISTELSE_GANGER = 1.5;    // å falle for fristelsen er verre enn å bare godta
+  const FORSIKTIG_ANDEL = 0.7;     // forsiktig ja til en ærlig: 70 % av tilbudet
+  const FORSIKTIG_FELLE = 100;     // forsiktig ja til en felle: fella trekker seg
+  const AVVIS_FELLE_ANDEL = 0.4;   // høflig nei til en felle: 40 % av bonusen
+  const GRANSKING = 1000;          // advokatregning ved tre prikker
   const MAKS_PRIKKER = 3;
   const MULT_STEG = 0.25;
   const MULT_MAKS = 2.5;
   const LOKAL_NOKKEL = "tafse-honningfella-beste";
+
+  const VALGNAVN = { godta: "Godtok", forsiktig: "Forsiktig ja", avslor: "Avslørte", avvis: "Avviste", fristelse: "Falt for fristelsen" };
+  const STANDARD = {
+    forsiktig: { aerlig: "Det tok litt lenger tid med advokater og papirer, men avtalen kom i havn.", felle: "Da det ble snakk om advokater og papirer, mistet de plutselig all interesse." },
+    avvis: { aerlig: "Avtalen gikk til konkurrenten. Ingen skade skjedd, bortsett fra på kvartalstallene.", felle: "Du takket høflig nei. Fella lukket seg om en annen toppsjef i stedet." },
+    fristelse: { aerlig: "Det ble pinlig. Svært pinlig. Og avtalen glapp." },
+  };
 
   let OPPDRAG = [];
   let mineBeste = {};
@@ -137,20 +148,30 @@
 
   // ---------- Menyen ----------
   function visMeny() {
-    stoppKlokke();
     s = null;
     const beste = { ...lesLokal(), ...mineBeste };
+    const p = (n) => `${n.toLocaleString("nb-NO")} %`;
     rot.innerHTML = `
       <div class="hf-meny">
         <p class="overline">Kontraspionasje for nybegynnere</p>
         <h2>Ikke alle som smiler, vil deg vel</h2>
-        <p class="hf-ingress">Du er Jens Hvang, toppsjef i brikkegiganten Nvideo. Ett og ett kommer folk bort til deg med tilbud du nesten ikke kan si nei til. Noen er ekte. Andre er honningfeller.</p>
+        <p class="hf-ingress">Du er Jens Hvang, toppsjef i brikkegiganten Nvideo. Folk kommer bort til deg med tilbud du nesten ikke kan si nei til. Hver samtale har tre runder: i de to første sonderer du terrenget, i den tredje bestemmer du deg. Noen er ærlige. Andre er honningfeller.</p>
+        <h3 class="hf-regeltittel">Slik får du poeng</h3>
+        <div class="tabell-boks"><table class="tavle hf-regeltabell">
+          <thead><tr><th>Ditt svar i siste runde</th><th>Hvis personen er ærlig</th><th>Hvis det er en honningfelle</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Godta</strong></td><td class="pluss">Hele tilbudet × multiplikator</td><td class="minus">Du taper tilbudet (minst ${MIN_FELLESTRAFF}) og får en prikk</td></tr>
+            <tr><td><strong>Forsiktig ja</strong><br><span class="dempet">via advokater og papirer</span></td><td class="pluss">${p(FORSIKTIG_ANDEL * 100)} av tilbudet × multiplikator</td><td>+${FORSIKTIG_FELLE}, fella trekker seg</td></tr>
+            <tr><td><strong>Avslør</strong></td><td class="minus">−${FALSK_ALARM}, falsk alarm</td><td class="pluss">Bonus × multiplikator</td></tr>
+            <tr><td><strong>Avvis høflig</strong></td><td>0, avtalen ryker</td><td>${p(AVVIS_FELLE_ANDEL * 100)} av bonusen</td></tr>
+            <tr><td><strong>Fristelsen</strong><br><span class="dempet">rommet, baren, terrassen</span></td><td class="minus">−${PINLIG}, det blir pinlig</td><td class="minus">${FRISTELSE_GANGER.toLocaleString("nb-NO")} × tapet, og en prikk</td></tr>
+          </tbody>
+        </table></div>
         <ul class="spill-regler hf-regler">
-          <li><strong>Godta</strong> et ekte tilbud, så får du det som loves. <strong>Avslør</strong> en felle, så får du bonus.</li>
-          <li>Riktige valg på rad øker multiplikatoren, helt opp til ×${MULT_MAKS.toLocaleString("nb-NO")}.</li>
-          <li>Går du i fella, taper du stort og får en prikk. ${MAKS_PRIKKER} prikker, og styret åpner gransking.</li>
-          <li>Anklager du en ærlig person, ryker avtalen og ${FALSK_ALARM} til. Nøler du, koster det ${NOLE_STRAFF}.</li>
-          <li>En <strong>bakgrunnssjekk</strong> koster ${RAPPORT_PRIS}, men kan redde deg. Tastatur: ← avslør, → godta, B sjekk.</li>
+          <li><strong>Samtalen teller også.</strong> Gode spørsmål gir poeng, uforsiktige svar koster. Regnskapet ser du først når møtet er over.</li>
+          <li><strong>Multiplikatoren</strong> starter på ×1 og øker med ${MULT_STEG.toLocaleString("nb-NO")} for hver riktige avgjørelse på rad, opp til ×${MULT_MAKS.toLocaleString("nb-NO")}. En bom setter den tilbake til ×1.</li>
+          <li><strong>Tre prikker</strong>, og styret åpner gransking. Det koster ${tall(GRANSKING)} i advokatregning.</li>
+          <li><strong>Bakgrunnssjekk</strong> koster ${RAPPORT_PRIS} og kan brukes én gang per person. Tastatur: 1 til 6 for svar, B for sjekk.</li>
         </ul>
         <div class="hf-oppdragsliste">
           ${OPPDRAG.map((o) => `
@@ -158,7 +179,7 @@
               <p class="overline">Oppdrag ${o.nummer} · <span title="Vanskelighet">${stjerner(o.vanskelighet || 1)}</span></p>
               <h3>${esc(o.tittel)}</h3>
               <p class="dempet hf-under">${esc(o.undertittel || "")}</p>
-              <p class="hf-oppdrag-meta">${o.moter} møter · ${o.sekunder} sekunder per møte</p>
+              <p class="hf-oppdrag-meta">${o.moter} samtaler · bonus for avsløring: ${o.avslorBonus}</p>
               <p class="hf-beste">${beste[o.id] !== undefined ? `Din beste: <strong>${skarTekst(beste[o.id])}</strong>` : "Ikke spilt ennå"}</p>
               <button class="knapp" type="button" data-start="${esc(o.id)}">Start oppdraget</button>
             </article>`).join("")}
@@ -168,9 +189,9 @@
 
   rot.addEventListener("click", (e) => {
     const b = e.target.closest("button");
-    if (!b) return;
+    if (!b || b.disabled) return;
     if (b.dataset.start) startOppdrag(b.dataset.start);
-    else if (b.dataset.valg) velg(b.dataset.valg);
+    else if (b.dataset.svar !== undefined) velgSvar(Number(b.dataset.svar));
     else if (b.dataset.sjekk !== undefined) sjekk();
     else if (b.dataset.neste !== undefined) neste();
     else if (b.dataset.meny !== undefined) visMeny();
@@ -178,20 +199,21 @@
   });
 
   // ---------- Spillet ----------
-  function trekkKort(o) {
-    const n = Math.min(o.moter, o.kort.length);
-    const feller = bland(o.kort.filter((k) => k.felle));
-    const ekte = bland(o.kort.filter((k) => !k.felle));
-    const lav = Math.round(n * 0.35), hoy = Math.round(n * 0.55);
+  function trekkPersoner(o) {
+    const n = Math.min(o.moter, o.personer.length);
+    const feller = bland(o.personer.filter((p) => p.felle));
+    const ekte = bland(o.personer.filter((p) => !p.felle));
+    const lav = Math.round(n * 0.4), hoy = Math.round(n * 0.6);
     let antall = lav + Math.floor(Math.random() * (hoy - lav + 1));
     antall = Math.max(n - ekte.length, Math.min(antall, feller.length));
     return bland([...feller.slice(0, antall), ...ekte.slice(0, n - antall)]);
   }
 
-  function perfektSkar(o, kort) {
+  function perfektSkar(o, personer) {
     let m = 1, sum = 0;
-    for (const k of kort) {
-      sum += (k.felle ? o.avslorBonus : k.tilbud) * m;
+    for (const p of personer) {
+      for (const r of p.runder.slice(0, 2)) sum += Math.max(0, ...r.svar.map((x) => x.poeng || 0));
+      sum += (p.felle ? o.avslorBonus : p.tilbud) * m;
       m = Math.min(MULT_MAKS, m + MULT_STEG);
     }
     return sum;
@@ -200,9 +222,9 @@
   function startOppdrag(id) {
     const o = OPPDRAG.find((x) => x.id === id);
     if (!o) return;
-    const kort = trekkKort(o);
-    s = { o, kort, i: 0, skar: 0, mult: 1, prikker: 0, riktige: 0, logg: [], sjekket: false, svart: false, perfekt: perfektSkar(o, kort) };
-    visKort();
+    const personer = trekkPersoner(o);
+    s = { o, personer, i: 0, skar: 0, mult: 1, prikker: 0, riktige: 0, logg: [], perfekt: perfektSkar(o, personer) };
+    visPerson();
   }
 
   function hud() {
@@ -210,148 +232,149 @@
       <div><span class="hf-etikett">Skår</span><strong class="${s.skar < 0 ? "minus" : ""}">${skarTekst(s.skar)}</strong></div>
       <div><span class="hf-etikett">Multiplikator</span><strong>×${s.mult.toLocaleString("nb-NO")}</strong></div>
       <div><span class="hf-etikett">Prikker</span><strong class="hf-prikker">${Array.from({ length: MAKS_PRIKKER }, (_, i) => `<span class="${i < s.prikker ? "full" : ""}"></span>`).join("")}</strong></div>
-      <div><span class="hf-etikett">Møte</span><strong>${s.i + 1} av ${s.kort.length}</strong></div>
+      <div><span class="hf-etikett">Samtale</span><strong>${s.i + 1} av ${s.personer.length}</strong></div>
     </div>`;
   }
+  function oppdaterHud() {
+    const h = rot.querySelector(".hf-hud");
+    if (h) h.outerHTML = hud();
+  }
 
-  function visKort() {
-    const k = s.kort[s.i];
-    s.sjekket = false;
-    s.svart = false;
+  function visPerson() {
+    const p = s.personer[s.i];
+    s.runde = 0;
+    s.samtale = 0;
     s.kostnad = 0;
+    s.sjekket = false;
+    s.ferdig = false;
     rot.innerHTML = `
       ${hud()}
-      <div class="hf-klokke" aria-hidden="true"><span id="hf-klokke"></span></div>
-      <article class="hf-kort">
-        <div class="hf-bilde">${portrett(k.utseende)}</div>
-        <div class="hf-innhold">
-          <p class="overline">${esc(s.o.tittel)}</p>
-          <h3 class="hf-navn">${esc(k.navn)}</h3>
-          <p class="hf-rolle">${esc(k.rolle)}</p>
-          <blockquote class="hf-replikk">«${esc(k.replikk)}»</blockquote>
-          <p class="hf-tilbud"><span class="hf-etikett">Tilbudet</span> ${esc(k.tilbudTekst)} <strong>${mill(k.tilbud)}</strong></p>
-          <div class="hf-detaljer">
-            <span class="hf-etikett">Du legger merke til</span>
-            <ul>${k.detaljer.map((d) => `<li>${esc(d)}</li>`).join("")}</ul>
+      <article class="hf-samtale">
+        <aside class="hf-person">
+          <div class="hf-bilde">${portrett(p.utseende)}</div>
+          <div class="hf-person-tekst">
+            <h3 class="hf-navn">${esc(p.navn)}</h3>
+            <p class="hf-rolle">${esc(p.rolle)}</p>
+            <p class="hf-tilbud"><span class="hf-etikett">Tilbudet</span>${esc(p.tilbudTekst)} <strong>${mill(p.tilbud)}</strong></p>
+            <button class="liten-knapp hf-sjekk" type="button" data-sjekk>Bakgrunnssjekk (−${RAPPORT_PRIS})</button>
+            <div class="hf-rapport" id="hf-rapport" hidden></div>
           </div>
-          <div class="hf-rapport" id="hf-rapport" hidden></div>
+        </aside>
+        <div class="hf-chat">
+          <p class="overline hf-runde" id="hf-runde"></p>
+          <div class="hf-replikker" id="hf-replikker" aria-live="polite"></div>
+          <div class="hf-valg" id="hf-valg"></div>
         </div>
-      </article>
-      <div class="hf-handlinger" id="hf-handlinger">
-        <button class="knapp hf-avslor" type="button" data-valg="avslor">Avslør fella</button>
-        <button class="liten-knapp hf-sjekk" type="button" data-sjekk>Bakgrunnssjekk (−${RAPPORT_PRIS})</button>
-        <button class="knapp" type="button" data-valg="godta">Godta tilbudet</button>
-      </div>`;
-    startKlokke(s.o.sekunder);
+      </article>`;
+    visRunde();
   }
 
-  let klokke = null;
-  function startKlokke(sek) {
-    stoppKlokke();
-    let igjen = sek * 1000;
-    let forrige = performance.now();
-    const strek = document.getElementById("hf-klokke");
-    klokke = setInterval(() => {
-      const nå = performance.now();
-      if (!document.hidden) igjen -= nå - forrige;
-      forrige = nå;
-      const andel = Math.max(0, igjen / (sek * 1000));
-      if (strek) {
-        strek.style.width = `${andel * 100}%`;
-        strek.classList.toggle("lite", andel < 0.3);
-      }
-      if (igjen <= 0) velg("tid");
-    }, 80);
+  function boble(hvem, tekst) {
+    const boks = document.getElementById("hf-replikker");
+    const d = document.createElement("div");
+    d.className = `hf-boble ${hvem}`;
+    d.innerHTML = tekst;
+    boks.append(d);
+    return d;
   }
-  function stoppKlokke() {
-    if (klokke) clearInterval(klokke);
-    klokke = null;
+
+  function visRunde() {
+    const p = s.personer[s.i];
+    const r = p.runder[s.runde];
+    document.getElementById("hf-runde").textContent = `Runde ${s.runde + 1} av ${p.runder.length}${s.runde === p.runder.length - 1 ? " · Avgjørelsen" : ""}`;
+    boble("dem", `<span class="hf-hvem">${esc(p.navn.split(" ")[0] === "Bror" ? p.navn : p.navn.split(" ")[0])}</span>${esc(r.replikk)}`);
+    s.rekkefolge = bland(r.svar.map((_, i) => i));
+    document.getElementById("hf-valg").innerHTML = `<ol class="hf-svarliste">${s.rekkefolge.map((idx, n) =>
+      `<li><button type="button" class="hf-svar" data-svar="${idx}"><span class="hf-nr">${n + 1}</span><span>${esc(r.svar[idx].tekst)}</span></button></li>`).join("")}</ol>`;
   }
 
   function sjekk() {
-    if (!s || s.svart || s.sjekket) return;
+    if (!s || s.ferdig || s.sjekket) return;
+    const p = s.personer[s.i];
     s.sjekket = true;
-    s.skar -= RAPPORT_PRIS;
     s.kostnad = RAPPORT_PRIS;
-    const k = s.kort[s.i];
+    s.skar -= RAPPORT_PRIS;
     const r = document.getElementById("hf-rapport");
-    r.innerHTML = `<span class="hf-etikett">Bakgrunnssjekk</span><p>${esc(k.rapport)}</p>`;
+    r.innerHTML = `<span class="hf-etikett">Bakgrunnssjekk</span><p>${esc(p.rapport)}</p>`;
     r.hidden = false;
-    const knapp = rot.querySelector("[data-sjekk]");
-    if (knapp) knapp.disabled = true;
-    const sk = rot.querySelector(".hf-hud strong");
-    if (sk) { sk.textContent = skarTekst(s.skar); sk.classList.toggle("minus", s.skar < 0); }
+    rot.querySelector("[data-sjekk]").disabled = true;
+    oppdaterHud();
   }
 
-  function velg(valg) {
-    if (!s || s.svart) return;
-    s.svart = true;
-    stoppKlokke();
-    const k = s.kort[s.i];
-    let delta = 0, riktig = false, tittel = "", tekst = "", klasse = "";
-    if (valg === "tid") {
-      delta = -NOLE_STRAFF;
-      s.mult = 1;
-      tittel = "Du nølte";
-      tekst = `Mens du tenkte, gikk ${esc(k.navn.split(" ")[0])} videre. ${k.felle ? "Det var for øvrig en honningfelle." : "Det var for øvrig et ærlig tilbud."}`;
-      klasse = "noytral";
-    } else if (k.felle && valg === "godta") {
-      delta = -Math.max(MIN_FELLESTRAFF, k.tilbud);
-      s.prikker += 1;
-      s.mult = 1;
-      tittel = "Du gikk rett i honningfella";
-      tekst = esc(k.godta);
-      klasse = "feil";
-    } else if (k.felle) {
-      delta = s.o.avslorBonus * s.mult;
-      riktig = true;
-      tittel = "Avslørt! Det var en honningfelle";
-      tekst = esc(k.avslor);
-      klasse = "riktig";
-    } else if (valg === "godta") {
-      delta = k.tilbud * s.mult;
-      riktig = true;
-      tittel = "En ærlig avtale";
-      tekst = esc(k.godta);
-      klasse = "riktig";
-    } else {
-      delta = -FALSK_ALARM;
-      s.mult = 1;
-      tittel = "Falsk alarm";
-      tekst = esc(k.avslor);
-      klasse = "feil";
+  function velgSvar(idx) {
+    if (!s || s.ferdig) return;
+    const p = s.personer[s.i];
+    const r = p.runder[s.runde];
+    const svar = r.svar[idx];
+    if (!svar) return;
+    boble("meg", esc(svar.tekst));
+    if (s.runde < p.runder.length - 1) {
+      s.samtale += svar.poeng || 0;
+      boble("dem", esc(svar.reaksjon));
+      s.runde += 1;
+      visRunde();
+      const sisteSvar = rot.querySelector(".hf-svar");
+      if (sisteSvar) sisteSvar.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      return;
     }
-    if (riktig) {
-      s.riktige += 1;
-      s.mult = Math.min(MULT_MAKS, s.mult + MULT_STEG);
-    }
-    s.skar += delta;
-    s.logg.push({ navn: k.navn, felle: k.felle, valg, delta: delta - (s.kostnad || 0), riktig });
+    avgjor(svar);
+  }
 
-    const sist = s.i === s.kort.length - 1 || s.prikker >= MAKS_PRIKKER;
-    const r = document.getElementById("hf-rapport");
-    if (r && !s.sjekket) {
-      r.innerHTML = `<span class="hf-etikett">Det bakgrunnssjekken ville vist</span><p>${esc(k.rapport)}</p>`;
-      r.hidden = false;
+  function avgjor(svar) {
+    const p = s.personer[s.i];
+    const type = svar.type || "godta";
+    const m = s.mult;
+    const tap = Math.max(MIN_FELLESTRAFF, p.tilbud);
+    let delta = 0, riktig = false, prikk = false, tittel = "", tekst = "", klasse = "noytral";
+    if (p.felle) {
+      if (type === "godta") { delta = -tap; prikk = true; tittel = "Du gikk rett i honningfella"; tekst = p.godta; klasse = "feil"; }
+      else if (type === "fristelse") { delta = -Math.round(tap * FRISTELSE_GANGER); prikk = true; tittel = "Du falt pladask for fristelsen"; tekst = p.godta; klasse = "feil"; }
+      else if (type === "avslor") { delta = s.o.avslorBonus * m; riktig = true; tittel = "Avslørt! Det var en honningfelle"; tekst = p.avslor; klasse = "riktig"; }
+      else if (type === "forsiktig") { delta = FORSIKTIG_FELLE; tittel = "Fella trakk seg"; tekst = STANDARD.forsiktig.felle; }
+      else { delta = Math.round(s.o.avslorBonus * AVVIS_FELLE_ANDEL); tittel = "Du slapp unna"; tekst = STANDARD.avvis.felle; }
+    } else {
+      if (type === "godta") { delta = p.tilbud * m; riktig = true; tittel = "En ærlig avtale"; tekst = p.godta; klasse = "riktig"; }
+      else if (type === "forsiktig") { delta = Math.round(p.tilbud * FORSIKTIG_ANDEL) * m; riktig = true; tittel = "Trygt og ærlig"; tekst = STANDARD.forsiktig.aerlig; klasse = "riktig"; }
+      else if (type === "avslor") { delta = -FALSK_ALARM; tittel = "Falsk alarm"; tekst = p.avslor; klasse = "feil"; }
+      else if (type === "fristelse") { delta = -PINLIG; tittel = "Det ble pinlig"; tekst = STANDARD.fristelse.aerlig; klasse = "feil"; }
+      else { delta = 0; tittel = "Tapt avtale"; tekst = STANDARD.avvis.aerlig; klasse = "feil"; }
     }
-    document.getElementById("hf-handlinger").innerHTML = `
+    if (svar.utfall) tekst = svar.utfall;
+    if (prikk) s.prikker += 1;
+    if (riktig) { s.riktige += 1; s.mult = Math.min(MULT_MAKS, s.mult + MULT_STEG); }
+    else if (klasse === "feil") s.mult = 1;
+    delta = Math.round(delta);
+    s.skar += s.samtale + delta;
+    s.ferdig = true;
+    const totalt = s.samtale + delta - s.kostnad;
+    s.logg.push({ navn: p.navn, felle: p.felle, type, samtale: s.samtale, totalt, riktig, klasse });
+
+    rot.querySelector("[data-sjekk]").disabled = true;
+    const rap = document.getElementById("hf-rapport");
+    if (!s.sjekket) { rap.innerHTML = `<span class="hf-etikett">Det bakgrunnssjekken ville vist</span><p>${esc(p.rapport)}</p>`; rap.hidden = false; }
+    document.getElementById("hf-runde").textContent = "Utfallet";
+    const sist = s.i === s.personer.length - 1 || s.prikker >= MAKS_PRIKKER;
+    const deler = [`Samtalen ${pluss(s.samtale)}`, `Avgjørelsen ${pluss(delta)}`];
+    if (s.kostnad) deler.push(`Bakgrunnssjekk ${pluss(-s.kostnad)}`);
+    document.getElementById("hf-valg").innerHTML = `
       <div class="hf-dom ${klasse}" role="status">
-        <p class="hf-dom-tittel">${tittel} <span class="hf-delta">${mill(delta)}</span></p>
-        <p>${tekst}</p>
-        ${klasse === "feil" && k.felle ? `<p class="hf-prikk-melding">Prikk ${s.prikker} av ${MAKS_PRIKKER}.</p>` : ""}
+        <p class="hf-sannhet">${p.felle ? "Honningfelle" : "Ærlig"}</p>
+        <p class="hf-dom-tittel">${tittel}</p>
+        <p>${esc(tekst)}</p>
+        <p class="hf-regnskap">${deler.join(" · ")} = <strong>${mill(totalt)}</strong></p>
+        ${prikk ? `<p class="hf-prikk-melding">Prikk ${s.prikker} av ${MAKS_PRIKKER}.</p>` : ""}
       </div>
-      <button class="knapp" type="button" data-neste>${sist ? (s.prikker >= MAKS_PRIKKER ? "Møt styret" : "Se resultatet") : "Neste møte"}</button>`;
-    const hudBoks = rot.querySelector(".hf-hud");
-    if (hudBoks) hudBoks.outerHTML = hud();
+      <button class="knapp" type="button" data-neste>${sist ? (s.prikker >= MAKS_PRIKKER ? "Møt styret" : "Se resultatet") : "Neste samtale"}</button>`;
+    oppdaterHud();
     const nesteKnapp = rot.querySelector("[data-neste]");
-    if (nesteKnapp) nesteKnapp.focus({ preventScroll: true });
+    if (nesteKnapp) { nesteKnapp.focus({ preventScroll: true }); nesteKnapp.scrollIntoView({ behavior: "smooth", block: "nearest" }); }
   }
 
   function neste() {
-    if (!s || !s.svart) return;
-    if (s.prikker >= MAKS_PRIKKER || s.i >= s.kort.length - 1) return avslutt();
+    if (!s || !s.ferdig) return;
+    if (s.prikker >= MAKS_PRIKKER || s.i >= s.personer.length - 1) return avslutt();
     s.i += 1;
-    visKort();
+    visPerson();
     rot.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
@@ -364,7 +387,6 @@
   }
 
   async function avslutt() {
-    stoppKlokke();
     const gransket = s.prikker >= MAKS_PRIKKER;
     if (gransket) s.skar -= GRANSKING;
     const skar = Math.round(s.skar);
@@ -376,7 +398,6 @@
     const rekord = tidligere === undefined || skar > tidligere;
     lagreLokal(s.o.id, skar);
     if (rekord) mineBeste[s.o.id] = skar;
-    const valgTekst = { godta: "Godtok", avslor: "Avslørte", tid: "Nølte" };
 
     rot.innerHTML = `
       <div class="hf-slutt">
@@ -384,13 +405,13 @@
         <h2>${esc(tittel)}</h2>
         <p class="hf-ingress">${esc(tekst)}</p>
         <p class="hf-sluttskar">${skarTekst(skar)} <span>mill. $</span></p>
-        <p class="dempet">${s.riktige} riktige av ${s.logg.length} møter · ${rekord ? "Ny personlig rekord på dette oppdraget!" : `Din beste er ${skarTekst(tidligere)}.`}</p>
+        <p class="dempet">${s.riktige} riktige avgjørelser av ${s.logg.length} · ${rekord ? "Ny personlig rekord på dette oppdraget!" : `Din beste er ${skarTekst(tidligere)}.`}</p>
         <p class="dempet" id="hf-lagret"></p>
         <div class="tabell-boks"><table class="tavle hf-logg">
-          <thead><tr><th>Hvem</th><th>Sannheten</th><th>Ditt valg</th><th>Skår</th></tr></thead>
-          <tbody>${s.logg.map((l) => `<tr class="${l.riktig ? "" : "bom"}">
+          <thead><tr><th>Hvem</th><th>Sannheten</th><th>Ditt valg</th><th>Samtalen</th><th>Totalt</th></tr></thead>
+          <tbody>${s.logg.map((l) => `<tr class="${l.klasse === "feil" ? "bom" : ""}">
             <td>${esc(l.navn)}</td><td>${l.felle ? "Honningfelle" : "Ærlig"}</td>
-            <td>${valgTekst[l.valg]}</td><td>${pluss(l.delta)}</td></tr>`).join("")}</tbody>
+            <td>${VALGNAVN[l.type] || l.type}</td><td>${pluss(l.samtale)}</td><td>${pluss(l.totalt)}</td></tr>`).join("")}</tbody>
         </table></div>
         <p class="hf-tips"><span class="hf-etikett">Fra kontraspionasjen</span> En flørt er ikke et rødt flagg i seg selv. Se etter hva de vil ha: tilgang, hemmelighold, utstyret ditt og alt som slipper unna advokatene.</p>
         <div class="hf-handlinger">
@@ -420,14 +441,12 @@
 
   // ---------- Tastatur ----------
   window.addEventListener("keydown", (e) => {
-    if (!s || ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)) return;
+    if (!s || e.ctrlKey || e.metaKey || e.altKey || ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)) return;
     const k = e.key.toLowerCase();
-    if (!s.svart) {
-      if (k === "arrowright" || k === "g") { e.preventDefault(); velg("godta"); }
-      else if (k === "arrowleft" || k === "a") { e.preventDefault(); velg("avslor"); }
+    if (!s.ferdig) {
+      if (/^[1-6]$/.test(k) && s.rekkefolge && s.rekkefolge[Number(k) - 1] !== undefined) { e.preventDefault(); velgSvar(s.rekkefolge[Number(k) - 1]); }
       else if (k === "b") { e.preventDefault(); sjekk(); }
-    } else if (k === "enter" || k === " " || k === "arrowright") {
-      if (document.activeElement && document.activeElement.matches("[data-neste]") && k !== "arrowright") return; // knappen tar seg av det
+    } else if (k === "enter" && !(document.activeElement && document.activeElement.matches("[data-neste]"))) {
       if (rot.querySelector("[data-neste]")) { e.preventDefault(); neste(); }
     }
   });
