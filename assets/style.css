@@ -402,8 +402,10 @@ input:focus, select:focus, textarea:focus, .knapp:focus-visible, a:focus-visible
 .spill-regnestykke { font-size: 16px; margin-top: 0 !important; }
 #sidesteg { --lad: 100%; background: linear-gradient(90deg, rgba(201, 162, 74, .35) var(--lad), transparent var(--lad)); }
 #sidesteg.klar { background: var(--gull); color: var(--bunn); }
-.spill-kontroller { display: none; justify-content: flex-end; margin-top: 12px; }
-@media (pointer: coarse) { .spill-kontroller { display: flex; } }
+.t-lyd.av, #spill-lyd.av { color: var(--dempet); border-color: var(--linje); }
+.spill-kontroller { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+#sidesteg { display: none; }
+@media (pointer: coarse) { #sidesteg { display: inline-flex; } }
 .tabell-boks { overflow-x: auto; }
 .tavle { width: 100%; border-collapse: collapse; font-size: 18px; }
 .tavle th { font-family: var(--display); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--gull); font-weight: 600; text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--gull); }
@@ -797,7 +799,9 @@ input:focus, select:focus, textarea:focus, .knapp:focus-visible, a:focus-visible
 
 /* 2048 */
 .t-oppsett { display: grid; grid-template-columns: minmax(0, 500px) minmax(0, 1fr); gap: 48px; align-items: start; }
-.t-hode { display: flex; gap: 12px; align-items: stretch; margin-bottom: 14px; }
+.t-hode { display: flex; gap: 12px; align-items: stretch; margin-bottom: 14px; flex-wrap: wrap; }
+.t-under { display: flex; gap: 12px; justify-content: space-between; align-items: center; margin-top: 10px; }
+.t-under .t-hjelp { margin: 0; }
 .t-tall { border: 1px solid var(--linje); padding: 6px 16px; min-width: 110px; }
 .t-tall span { display: block; font-family: var(--display); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--gull); }
 .t-tall strong { font-family: var(--display); font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; }

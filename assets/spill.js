@@ -45,10 +45,11 @@
 
   // ---------- Tilstand ----------
   let tilstand = "meny"; // meny | spiller | pause | slutt
+  let sisteTikk = 0;
   let tid, sar, kolleger, senatorer, partikler, tekster, cæsar, gytTimer, brutusKommet, sluttÅrsak, sisteTid;
 
   function nyttSpill() {
-    tid = 0; sar = 0; kolleger = 0;
+    tid = 0; sar = 0; kolleger = 0; sisteTikk = 0;
     senatorer = []; partikler = []; tekster = [];
     gytTimer = 1.2; brutusKommet = false; sluttÅrsak = null;
     cæsar = { x: arena.x, y: arena.y + arena.r * 0.15, r: 13, fart: 230, usårbar: 0, blink: 0, steg: 0, stegNed: 0, stegRetning: { x: 0, y: 0 } };
@@ -114,6 +115,7 @@
     cæsar.steg = 0.17;
     cæsar.stegNed = STEG_NED;
     cæsar.stegRetning = { x, y };
+    LYD.spill("sidesteg");
     for (let i = 0; i < 6; i++) partikkel(cæsar.x, cæsar.y, FARGE.gull, 60, 0.35, 1.5);
   }
 
@@ -187,6 +189,7 @@
       if (avstand(s, cæsar) < s.r + cæsar.r && cæsar.usårbar <= 0 && cæsar.steg <= 0) {
         if (s.brutus) return avslutt("brutus");
         sar += 1;
+        LYD.spill("stikk");
         cæsar.usårbar = 0.7;
         cæsar.blink = 0.7;
         for (let i = 0; i < 14; i++) partikkel(cæsar.x, cæsar.y, FARGE.blod, 140, 0.6, 2);
@@ -201,6 +204,7 @@
           k.ute = 0.8;
           if (!s.brutus) s.ute = 0.8;
           kolleger += 1;
+          LYD.spill("kollega");
           for (let i = 0; i < 12; i++) partikkel(k.x, k.y, FARGE.toga, 110, 0.6, 1.6);
           lagTekst(s.brutus ? "Brutus traff en kollega" : "Kollega truffet", k.x, k.y - 22, FARGE.gullLys, 1.1, 13);
           break;
@@ -237,6 +241,7 @@
       cæsar.x += r.x * cæsar.fart * skala * r.styrke * dt;
       cæsar.y += r.y * cæsar.fart * skala * r.styrke * dt;
     }
+    if (cæsar.stegNed > 0 && cæsar.stegNed - dt <= 0) LYD.spill("klar");
     cæsar.stegNed = Math.max(0, cæsar.stegNed - dt);
     cæsar.usårbar = Math.max(0, cæsar.usårbar - dt);
     cæsar.blink = Math.max(0, cæsar.blink - dt);
@@ -250,6 +255,7 @@
     if (!brutusKommet && tid >= BRUTUS_TID) {
       brutusKommet = true;
       gyt(true);
+      LYD.spill("brutus");
       lagTekst("Brutus har kommet inn", arena.x, arena.y - arena.r * 0.35, FARGE.gullLys, 2.2, 17);
     }
 
@@ -274,6 +280,9 @@
     for (const t of tekster) { t.liv -= dt; t.y -= 14 * dt; }
     tekster = tekster.filter((t) => t.liv > 0);
 
+    // Nedtelling de siste fem sekundene
+    const igjen = Math.ceil(SEIERSTID - tid);
+    if (igjen <= 5 && igjen > 0 && igjen !== sisteTikk) { sisteTikk = igjen; LYD.spill("tikk", igjen === 1); }
     if (tid >= SEIERSTID) avslutt("seier");
   }
 
@@ -492,6 +501,7 @@
     sluttÅrsak = årsak;
     const seier = årsak === "seier";
     const s = SLUTT[årsak];
+    LYD.spill(seier ? "seier" : "dod");
     try {
       const nøkkel = "tafse-spill-beste";
       const beste = Number(localStorage.getItem(nøkkel) || 0);
@@ -523,6 +533,7 @@
   }
 
   // ---------- Start ----------
+  LYD.knapp(document.getElementById("spill-lyd"));
   document.getElementById("start").addEventListener("click", nyttSpill);
   window.addEventListener("resize", () => { tilpass(); if (cæsar) iArena(cæsar); });
   tilpass();

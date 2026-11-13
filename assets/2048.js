@@ -8,7 +8,7 @@
   const rekordEl = document.getElementById("t-rekord");
   const tavle = document.getElementById("t-tavle");
 
-  let ruter, poeng, trekk, over, vunnet, fortsett, lagret, nesteId = 1, rekord = 0;
+  let ruter, poeng, trekk, over, vunnet, fortsett, lagret, nesteId = 1, rekord = 0, rekordSpilt = false, startRekord = 0;
   let fane = "uke", data = null;
 
   const tall = (n) => n.toLocaleString("nb-NO");
@@ -27,7 +27,7 @@
   }
   function nyttSpill() {
     ruter = Array.from({ length: N }, () => Array(N).fill(null));
-    poeng = 0; trekk = 0; over = false; vunnet = false; fortsett = false; lagret = false;
+    poeng = 0; trekk = 0; over = false; vunnet = false; fortsett = false; lagret = false; rekordSpilt = false; startRekord = Math.max(rekord, minRekordServer());
     leggTil(); leggTil();
     tegn();
     lagreLokalt();
@@ -97,11 +97,15 @@
     if (!endret) return;
     ruter = nye;
     poeng += p;
+    // Lyd: høyeste sammenslåing i trekket, ellers et lite skyv
+    const slatt = nye.flat().filter((c) => c && c.slatt).map((c) => c.v);
+    if (slatt.length) LYD.spill("slatt", Math.max(...slatt)); else LYD.spill("skyv");
     trekk++;
     if (poeng > rekord) rekord = poeng;
     leggTil();
-    if (!vunnet && ruter.some((rad) => rad.some((c) => c && c.v >= 2048))) vunnet = true;
-    if (!kanFlytte()) over = true;
+    if (!vunnet && ruter.some((rad) => rad.some((c) => c && c.v >= 2048))) { vunnet = true; setTimeout(() => LYD.spill("vant"), 150); }
+    if (!kanFlytte()) { over = true; setTimeout(() => LYD.spill("tapt"), 200); }
+    else if (!rekordSpilt && startRekord > 0 && poeng > startRekord) { rekordSpilt = true; setTimeout(() => LYD.spill("rekord"), 120); }
     tegn();
     lagreLokalt();
     if (over) slutt();
@@ -218,6 +222,7 @@
       data = await api("2048");
       visTavle();
       rekordEl.textContent = tall(Math.max(rekord, minRekordServer()));
+      if (!rekordSpilt) startRekord = Math.max(startRekord, minRekordServer());
     } catch (e) {
       tavle.innerHTML = `<p class="melding feil">${esc(e.message)}</p>`;
     }
@@ -255,6 +260,7 @@
   });
   document.getElementById("t-ny").addEventListener("click", avbryt);
 
-  if (hentLokalt()) tegn(); else nyttSpill();
+  LYD.knapp(document.getElementById("t-lyd"));
+  if (hentLokalt()) { startRekord = rekord; rekordSpilt = poeng >= rekord; tegn(); } else nyttSpill();
   lastTavle();
 })();
