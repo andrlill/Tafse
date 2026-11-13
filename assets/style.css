@@ -476,9 +476,15 @@ input:focus, select:focus, textarea:focus, .knapp:focus-visible, a:focus-visible
 /* Honningfella */
 .hf-ramme { border: 1px solid var(--linje); background: var(--flate); padding: 28px; scroll-margin-top: 16px; }
 .hf-etikett { display: block; font-family: var(--display); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--gull); margin-bottom: 4px; }
-.hf-ingress { font-style: italic; font-size: 21px; color: var(--dempet); max-width: 720px; margin: 0 0 18px; }
+.hf-ingress { font-style: italic; font-size: 21px; color: var(--dempet); max-width: 760px; margin: 0 0 18px; }
 .hf-meny h2, .hf-slutt h2 { margin: 0 0 12px; font-size: clamp(24px, 4vw, 34px); }
-.hf-regler { margin-bottom: 28px; }
+.hf-regeltittel { font-size: 18px; letter-spacing: .14em; text-transform: uppercase; color: var(--gull); margin: 26px 0 8px; }
+.hf-regeltabell td { white-space: normal; vertical-align: top; font-size: 17px; }
+.hf-regeltabell td strong { font-weight: 500; }
+.hf-regeltabell td .dempet { font-size: 14px; }
+.hf-regeltabell td.pluss { color: var(--gull-lys); }
+.hf-regeltabell td.minus { color: var(--rod); }
+.hf-regler { margin: 18px 0 28px; }
 .hf-oppdragsliste { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
 .hf-oppdrag { border: 1px solid var(--gull); padding: 22px 24px; display: flex; flex-direction: column; gap: 6px; background: var(--bunn); }
 .hf-oppdrag h3 { margin: 0; font-size: 24px; }
@@ -488,42 +494,55 @@ input:focus, select:focus, textarea:focus, .knapp:focus-visible, a:focus-visible
 .hf-beste { font-size: 17px; margin: 6px 0 12px !important; }
 .hf-oppdrag .knapp { margin-top: auto; }
 
-.hf-hud { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; border-bottom: 1px solid var(--linje); padding-bottom: 14px; }
+.hf-hud { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; border-bottom: 1px solid var(--linje); padding-bottom: 14px; margin-bottom: 24px; }
 .hf-hud strong { font-family: var(--display); font-size: 22px; font-weight: 600; color: var(--tekst); }
 .hf-hud strong.minus { color: var(--rod); }
 .hf-prikker { display: flex; gap: 6px; align-items: center; height: 30px; }
 .hf-prikker span { width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--rod); }
 .hf-prikker span.full { background: var(--rod); }
-.hf-klokke { height: 4px; background: var(--linje); margin: 0 0 22px; }
-.hf-klokke span { display: block; height: 100%; width: 100%; background: var(--gull); transition: width .08s linear; }
-.hf-klokke span.lite { background: var(--rod); }
 
-.hf-kort { display: grid; grid-template-columns: 220px 1fr; gap: 28px; align-items: start; }
+.hf-samtale { display: grid; grid-template-columns: 240px 1fr; gap: 32px; align-items: start; }
+.hf-person { position: sticky; top: 16px; display: flex; flex-direction: column; gap: 14px; }
 .hf-portrett { width: 100%; height: auto; display: block; }
-.hf-innhold > * { margin: 0; }
-.hf-navn { font-size: clamp(24px, 3.6vw, 32px); margin-top: 2px !important; }
-.hf-rolle { color: var(--dempet); font-style: italic; font-size: 19px; }
-.hf-replikk { margin: 16px 0 !important; padding: 4px 0 4px 18px; border-left: 2px solid var(--gull); font-size: 21px; line-height: 1.45; }
-.hf-tilbud { font-size: 19px; margin-bottom: 14px !important; }
-.hf-tilbud strong { color: var(--gull-lys); font-family: var(--display); font-weight: 600; margin-left: 6px; white-space: nowrap; }
-.hf-detaljer ul { margin: 0; padding-left: 1.1em; font-size: 18px; }
-.hf-detaljer li { margin: 2px 0; }
-.hf-rapport { margin-top: 14px !important; border: 1px dashed var(--gull); padding: 12px 16px; background: var(--flate2); }
-.hf-rapport p { margin: 0; font-size: 18px; }
+.hf-person-tekst > * { margin: 0; }
+.hf-navn { font-size: 24px; }
+.hf-rolle { color: var(--dempet); font-style: italic; font-size: 18px; margin-bottom: 10px !important; }
+.hf-tilbud { font-size: 17px; margin-bottom: 12px !important; }
+.hf-tilbud strong { display: block; color: var(--gull-lys); font-family: var(--display); font-weight: 600; font-size: 20px; }
+.hf-sjekk { width: 100%; }
+.hf-rapport { margin-top: 12px !important; border: 1px dashed var(--gull); padding: 10px 14px; background: var(--flate2); }
+.hf-rapport p { margin: 0; font-size: 17px; }
+
+.hf-chat { min-width: 0; }
+.hf-runde { margin: 0 0 12px; }
+.hf-replikker { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+.hf-boble { max-width: 86%; padding: 12px 16px; font-size: 19px; line-height: 1.45; animation: hf-inn .25s ease-out; }
+.hf-boble.dem { align-self: flex-start; background: var(--flate2); border-left: 2px solid var(--gull); }
+.hf-boble.meg { align-self: flex-end; background: var(--gull); color: var(--bunn); font-style: italic; }
+.hf-hvem { display: block; font-family: var(--display); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--gull); margin-bottom: 2px; }
+@keyframes hf-inn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .hf-boble { animation: none; } }
+
+.hf-svarliste { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.hf-svar { width: 100%; display: flex; gap: 14px; align-items: baseline; text-align: left; background: transparent; color: var(--tekst); border: 1px solid var(--linje); padding: 12px 16px; font: inherit; font-size: 18px; line-height: 1.4; cursor: pointer; }
+.hf-svar:focus-visible { outline: 2px solid var(--gull); outline-offset: 2px; }
+@media (hover: hover) { .hf-svar:hover { border-color: var(--gull); background: var(--flate2); } }
+.hf-nr { font-family: var(--display); font-size: 14px; color: var(--gull); min-width: 1em; }
+
+.hf-dom { border: 1px solid var(--linje); padding: 16px 20px; margin-bottom: 16px; background: var(--bunn); }
+.hf-dom p { margin: 0 0 6px; }
+.hf-sannhet { font-family: var(--display); font-size: 12px; letter-spacing: .24em; text-transform: uppercase; color: var(--dempet); }
+.hf-dom-tittel { font-family: var(--display); font-size: 22px; letter-spacing: .03em; }
+.hf-dom.riktig { border-color: var(--gull); }
+.hf-dom.riktig .hf-dom-tittel { color: var(--gull-lys); }
+.hf-dom.feil { border-color: var(--rod); }
+.hf-dom.feil .hf-dom-tittel { color: var(--rod); }
+.hf-regnskap { font-size: 16px; color: var(--dempet); margin-top: 10px !important; }
+.hf-regnskap strong { color: var(--tekst); white-space: nowrap; }
+.hf-prikk-melding { color: var(--rod); font-size: 16px; }
 
 .hf-handlinger { display: flex; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--linje); }
 .hf-handlinger .knapp { min-width: 190px; }
-.knapp.hf-avslor { background: transparent; color: var(--rod); border-color: var(--rod); }
-@media (hover: hover) { .knapp.hf-avslor:hover { background: var(--rod); color: var(--bunn); } }
-.hf-dom { flex: 1 1 380px; }
-.hf-dom p { margin: 0 0 4px; }
-.hf-dom-tittel { font-family: var(--display); font-size: 20px; letter-spacing: .04em; }
-.hf-dom.riktig .hf-dom-tittel { color: var(--gull-lys); }
-.hf-dom.feil .hf-dom-tittel { color: var(--rod); }
-.hf-dom.noytral .hf-dom-tittel { color: var(--dempet); }
-.hf-delta { white-space: nowrap; margin-left: 8px; }
-.hf-prikk-melding { color: var(--rod); font-size: 16px; }
-
 .hf-slutt { text-align: left; }
 .hf-sluttskar { font-family: var(--display); font-size: clamp(40px, 8vw, 64px); color: var(--gull); margin: 8px 0 4px; line-height: 1; }
 .hf-sluttskar span { font-size: .35em; color: var(--dempet); letter-spacing: .1em; }
@@ -531,14 +550,19 @@ input:focus, select:focus, textarea:focus, .knapp:focus-visible, a:focus-visible
 .hf-logg tr.bom td { color: var(--rod); }
 .hf-tips { border-left: 2px solid var(--gull); padding-left: 16px; font-size: 18px; max-width: 720px; }
 
-@media (max-width: 720px) {
-  .hf-ramme { padding: 18px 16px; }
+@media (max-width: 760px) {
+  .hf-ramme { padding: 18px 14px; }
   .hf-hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .hf-hud strong { font-size: 19px; }
-  .hf-kort { grid-template-columns: 110px 1fr; gap: 16px; }
-  .hf-replikk { font-size: 18px; margin: 10px 0 !important; padding-left: 12px; }
-  .hf-detaljer ul, .hf-rapport p, .hf-tilbud { font-size: 16px; }
+  .hf-samtale { grid-template-columns: 1fr; gap: 18px; }
+  .hf-person { position: static; flex-direction: row; gap: 14px; align-items: flex-start; }
+  .hf-bilde { flex: 0 0 96px; }
+  .hf-person-tekst { flex: 1; min-width: 0; }
+  .hf-navn { font-size: 20px; }
+  .hf-rolle, .hf-tilbud { font-size: 15px; }
+  .hf-boble { max-width: 94%; font-size: 17px; }
+  .hf-svar { font-size: 16px; padding: 12px 14px; }
   .hf-handlinger { flex-direction: column; align-items: stretch; }
-  .hf-handlinger .knapp, .hf-handlinger .liten-knapp { width: 100%; }
-  .hf-handlinger .hf-sjekk { order: 3; }
+  .hf-handlinger .knapp { width: 100%; }
+  .hf-regeltabell td { font-size: 15px; padding: 8px; }
 }
