@@ -32,6 +32,7 @@
         <li><strong>Sidesteg</strong> med mellomrom eller knappen under brettet.</li>
         <li>En senator som løfter dolken, blinker. Gå unna, så kan han treffe en kollega i stedet.</li>
         <li>Tjuetre sår, og det er over. Brutus trenger bare ett.</li>
+        <li><strong>Poeng:</strong> +1 for hvert sekund du overlever, +1 for hver kollega som blir truffet, −1 for hvert knivstikk.</li>
       </ul>
       <button class="knapp" type="button" id="start">Gå inn i senatet</button>
     </div>
@@ -58,13 +59,13 @@ window.lastToppliste = async () => {
     const { toppliste, antallSpill } = await api("spill");
     if (!toppliste.length) { boks.innerHTML = `<p class="tomt">Ingen har spilt ennå.</p>`; return; }
     boks.innerHTML = `<div class="tabell-boks"><table class="tavle">
-      <thead><tr><th>#</th><th>Bror</th><th>Utfall</th><th>Tid</th><th>Sår</th><th>Kolleger</th></tr></thead>
+      <thead><tr><th>#</th><th>Bror</th><th>Poeng</th><th>Utfall</th><th>Tid</th><th>Sår</th><th>Kolleger</th></tr></thead>
       <tbody>${toppliste.map((r, i) => `<tr${r.navn === MEG ? ' class="meg"' : ""}>
-        <td>${i + 1}</td><td>${esc(r.navn)}</td>
+        <td>${i + 1}</td><td>${esc(r.navn)}</td><td><strong>${r.poeng}</strong></td>
         <td>${r.seier ? "Overlevde" : "Falt"}</td>
         <td>${Math.floor(r.sekunder)} s</td><td>${r.sar}</td><td>${r.kolleger}</td></tr>`).join("")}</tbody>
     </table></div>
-    <p class="dempet" style="font-size:15px">Beste forsøk per bror. ${antallSpill} forsøk totalt.</p>`;
+    <p class="dempet" style="font-size:15px">Beste forsøk per bror. Poeng = sekunder + kolleger truffet − sår. ${antallSpill} forsøk totalt.</p>`;
   } catch (err) {
     boks.innerHTML = `<p class="melding feil">${esc(err.message)}</p>`;
   }

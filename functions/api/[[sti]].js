@@ -588,7 +588,7 @@ export async function onRequest({ request, env, params }) {
   // --- Spillet: Idus Martiae ---
   if (ressurs === "spill") {
     if (metode === "GET") {
-      const { results } = await db.prepare("SELECT navn, sekunder, sar, kolleger, seier, opprettet FROM spillresultater ORDER BY seier DESC, sekunder DESC, sar ASC, kolleger DESC").all();
+      const { results } = await db.prepare("SELECT navn, sekunder, sar, kolleger, seier, opprettet, CAST(sekunder AS INTEGER) + kolleger - sar AS poeng FROM spillresultater ORDER BY poeng DESC, seier DESC, sekunder DESC").all();
       const beste = [];
       const sett = new Set();
       for (const r of results) if (!sett.has(r.navn)) { sett.add(r.navn); beste.push(r); }

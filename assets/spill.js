@@ -1,6 +1,7 @@
 // IDUS MARTIAE – et lite spill om Cæsars siste dag.
 // Beveg Cæsar med piltaster/WASD (eller fingeren), sidesteg med mellomrom.
 // Overlev 60 sekunder til Marcus Antonius kommer. 23 sår eller Brutus' dolk, og det er over.
+// Poeng: +1 per sekund overlevd, +1 per kollega som blir truffet, −1 per knivstikk.
 
 (() => {
   const lerret = document.getElementById("spill");
@@ -19,6 +20,8 @@
   const MAKS_SAR = 23;
   const SEIERSTID = 60;
   const BRUTUS_TID = 32;
+  const STEG_NED = 1.6; // sekunder før sidesteget er ladet igjen
+  const poeng = () => Math.floor(Math.min(tid, SEIERSTID)) + kolleger - sar;
 
   let B = 0, H = 0, skala = 1; // logisk størrelse
   let arena = { x: 0, y: 0, r: 0 };
@@ -109,7 +112,7 @@
       else { x = 0; y = -1; }
     }
     cæsar.steg = 0.17;
-    cæsar.stegNed = 1.6;
+    cæsar.stegNed = STEG_NED;
     cæsar.stegRetning = { x, y };
     for (let i = 0; i < 6; i++) partikkel(cæsar.x, cæsar.y, FARGE.gull, 60, 0.35, 1.5);
   }
@@ -315,6 +318,18 @@
       ctx.lineTo(c.x + Math.cos(v) * (c.r + 7), c.y + Math.sin(v) * (c.r + 7));
       ctx.stroke();
     }
+    // Ladering for sidesteget: fylles rundt Cæsar til det er klart igjen
+    if (c.stegNed > 0) {
+      ctx.strokeStyle = "rgba(201,162,74,.22)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, c.r + 11, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.strokeStyle = FARGE.gullLys;
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, c.r + 11, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - c.stegNed / STEG_NED));
+      ctx.stroke();
+    }
     ctx.fillStyle = c.steg > 0 ? FARGE.gullLys : FARGE.gull;
     ctx.beginPath();
     ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
@@ -381,6 +396,12 @@
     ctx.fillStyle = FARGE.gull;
     ctx.font = `600 13px Cinzel, Georgia, serif`;
     ctx.fillText(`SÅR ${sar} / ${MAKS_SAR}`, 16, 26);
+    ctx.textAlign = "center";
+    ctx.fillStyle = FARGE.gullLys;
+    ctx.font = `700 15px Cinzel, Georgia, serif`;
+    ctx.fillText(`${poeng()} POENG`, B / 2, B < 560 ? 58 : 26);
+    ctx.font = `600 13px Cinzel, Georgia, serif`;
+    ctx.fillStyle = FARGE.gull;
     ctx.textAlign = "right";
     const igjen = Math.max(0, SEIERSTID - tid);
     ctx.fillText(`ANTONIUS OM ${Math.ceil(igjen)} S`, B - 16, 26);
@@ -389,14 +410,24 @@
     ctx.fillRect(16, 36, B - 32, 2);
     ctx.fillStyle = FARGE.gull;
     ctx.fillRect(16, 36, (B - 32) * Math.min(1, tid / SEIERSTID), 2);
-    // Sidesteg
+    // Sidesteg: ladelinje nederst til venstre
+    const lad = 1 - cæsar.stegNed / STEG_NED;
+    const lb = Math.min(150, B * 0.3);
     ctx.textAlign = "left";
     ctx.font = `500 11px Cinzel, Georgia, serif`;
     ctx.fillStyle = cæsar.stegNed > 0 ? FARGE.dempet : FARGE.gullLys;
-    ctx.fillText(cæsar.stegNed > 0 ? "SIDESTEG …" : "SIDESTEG KLAR", 16, H - 16);
+    ctx.fillText(cæsar.stegNed > 0 ? `SIDESTEG ${cæsar.stegNed.toFixed(1).replace(".", ",")} S` : "SIDESTEG KLAR", 16, H - 26);
+    ctx.fillStyle = "rgba(201,162,74,.18)";
+    ctx.fillRect(16, H - 18, lb, 5);
+    ctx.fillStyle = cæsar.stegNed > 0 ? FARGE.gull : FARGE.gullLys;
+    ctx.fillRect(16, H - 18, lb * lad, 5);
+    if (sidestegKnapp) {
+      sidestegKnapp.style.setProperty("--lad", `${Math.round(lad * 100)}%`);
+      sidestegKnapp.classList.toggle("klar", lad >= 1);
+    }
     ctx.textAlign = "right";
     ctx.fillStyle = FARGE.dempet;
-    ctx.fillText(`KOLLEGER TRUFFET ${kolleger}`, B - 16, H - 16);
+    ctx.fillText(`KOLLEGER TRUFFET ${kolleger}`, B - 16, H - 18);
   }
 
   function tegn() {
@@ -470,6 +501,8 @@
       <p class="overline">${seier ? "Victoria" : "Idus Martiae"}</p>
       <h2>${s.tittel}</h2>
       <p>${s.tekst()}</p>
+      <p class="spill-poeng">${poeng()} poeng</p>
+      <p class="dempet spill-regnestykke">${Math.floor(Math.min(tid, SEIERSTID))} sekunder + ${kolleger} kolleger truffet − ${sar} knivstikk</p>
       <p class="dempet" id="lagret"></p>
       <button class="knapp" type="button" id="igjen">Prøv igjen</button>`;
     skjerm.hidden = false;

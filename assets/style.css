@@ -398,6 +398,10 @@ input:focus, select:focus, textarea:focus, .knapp:focus-visible, a:focus-visible
 .spill-skjerm p { margin: 0; max-width: 560px; }
 .spill-regler { list-style: none; padding: 0; margin: 4px 0 8px; max-width: 560px; font-size: 17px; color: var(--dempet); display: flex; flex-direction: column; gap: 4px; }
 .spill-regler strong { color: var(--tekst); font-weight: 500; }
+.spill-poeng { font-family: var(--display); font-size: clamp(28px, 6vw, 40px); color: var(--gull); margin: 4px 0 0 !important; }
+.spill-regnestykke { font-size: 16px; margin-top: 0 !important; }
+#sidesteg { --lad: 100%; background: linear-gradient(90deg, rgba(201, 162, 74, .35) var(--lad), transparent var(--lad)); }
+#sidesteg.klar { background: var(--gull); color: var(--bunn); }
 .spill-kontroller { display: none; justify-content: flex-end; margin-top: 12px; }
 @media (pointer: coarse) { .spill-kontroller { display: flex; } }
 .tabell-boks { overflow-x: auto; }
