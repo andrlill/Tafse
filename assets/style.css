@@ -853,3 +853,23 @@ input:focus, select:focus, textarea:focus, .knapp:focus-visible, a:focus-visible
   .t-tall { min-width: 0; padding: 6px 12px; }
   .t-tall strong { font-size: 20px; }
 }
+
+/* Symposion: tagging */
+.sy-taggtekst { font-family: "Permanent Marker", "Comic Sans MS", cursive; font-size: 17px; paint-order: stroke; stroke: #14130d; stroke-width: 2.4px; stroke-linejoin: round; }
+.sy-taggen { pointer-events: none; transition: opacity .25s; }
+.sy-taggsitat { font-family: "Permanent Marker", cursive; font-size: 1.05em; }
+.sy-taggvarsel { display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; border: 1px solid var(--rod); background: #1f1310; padding: 14px 18px; margin-bottom: 16px; }
+.sy-taggvarsel p { margin: 0 0 4px; }
+.sy-taggvarsel .sy-etikett { color: var(--rod); }
+.sy-taggvarsel .knapp { min-width: 220px; }
+.knapp.skrubber { animation: sy-skrubb .25s ease-in-out; }
+@keyframes sy-skrubb { 0%, 100% { transform: none; } 25% { transform: translateX(-5px) rotate(-1deg); } 75% { transform: translateX(5px) rotate(1deg); } }
+.sy-taggboks { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--linje); }
+.sy-taggrad { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.sy-taggrad input { flex: 1 1 220px; min-width: 0; font-family: "Permanent Marker", cursive; font-size: 19px; color: #e0533d; }
+.sy-farger { display: flex; gap: 6px; }
+.sy-farge { width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
+.sy-farge.valgt { border-color: var(--tekst); box-shadow: 0 0 0 2px var(--bunn) inset; }
+.sy-farge:disabled { opacity: .4; cursor: default; }
+.sy-taggfot { font-size: 15px; margin: 8px 0 0 !important; }
+@media (max-width: 760px) { .sy-taggvarsel .knapp, .sy-taggrad .knapp { width: 100%; } }

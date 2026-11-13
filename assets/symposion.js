@@ -7,6 +7,10 @@
   let hentet = 0;      // når den kom
   let valgt = null;    // hvilket gods som er åpent i panelet
   let opptatt = false;
+  let skrubb = 0;      // hvor mange tak man har skrubbet på taggen
+  const SKRUBB = 6;
+  const FARGER = ["#e0533d", "#4fc3a1", "#f2c14e", "#b07cf0", "#5fa8f0", "#f07cb8"];
+  let taggFarge = FARGER[0];
 
   const RESS = ["oliven", "vin", "marmor"];
   const tall = (n) => Math.floor(n).toLocaleString("nb-NO");
@@ -50,6 +54,17 @@
       <path d="M-36 -36 L0 -54 L36 -36 Z" fill="${marmor}" stroke="#c9a24a" stroke-width="1.2"/><circle cx="0" cy="-42" r="3.4" fill="#c9a24a"/><path d="M0 -54 V-62 M-36 -36 V-41 M36 -36 V-41" stroke="#c9a24a" stroke-width="1.6"/><circle cx="0" cy="-63" r="2" fill="#e2c174"/>`;
   }
 
+  // Graffiti over huset, med et par renn under
+  function taggSvg(t, mitt) {
+    if (!t) return "";
+    const lengde = [...t.tekst].length;
+    const bredde = Math.min(150, 14 + lengde * 8.5);
+    const renn = [-0.32, 0.05, 0.28].map((x, i) => `<path d="M${(x * bredde).toFixed(0)} 3 v${6 + i * 3}" stroke="${t.farge}" stroke-width="1.6" stroke-linecap="round"/>`).join("");
+    const op = mitt && skrubb ? (1 - skrubb / SKRUBB).toFixed(2) : 1;
+    return `<g class="sy-taggen" transform="translate(0 -14) rotate(-7)" opacity="${op}">${renn}
+      <text text-anchor="middle" class="sy-taggtekst" fill="${t.farge}" ${lengde > 8 ? `textLength="${bredde.toFixed(0)}" lengthAdjust="spacingAndGlyphs"` : ""}>${esc(t.tekst)}</text></g>`;
+  }
+
   function tomt(sp, navn, i, n) {
     const { x, y, s } = plass(i, n);
     const mitt = T.meg && navn === T.meg.navn;
@@ -71,7 +86,7 @@
       const merke = mitt
         ? `<g class="sy-dupp sy-klar" data-klar hidden><circle cy="${hoyde - 6}" r="11" fill="#141310" stroke="#c9a24a"/><g transform="translate(-8 ${hoyde - 14})">${IKON.oliven.replace('class="sy-ikon"', 'width="16" height="16"')}</g></g>`
         : !sp.skjenket && T.meg ? `<g class="sy-dupp"><path d="M-4 ${hoyde - 12} h8 l-1 4 q4 5 0 11 h-6 q-4 -6 0 -11 z" fill="#c9a24a" stroke="#14130d" stroke-width="1"/></g>` : "";
-      inn = `<ellipse rx="64" ry="17" fill="#3b3824"/><ellipse rx="64" ry="17" class="sy-ring" fill="none"/>${stein}${tre}<g>${villa(b.villa, sp.hjemme)}</g>${vin}${merke}`;
+      inn = `<ellipse rx="64" ry="17" fill="#3b3824"/><ellipse rx="64" ry="17" class="sy-ring" fill="none"/>${stein}${tre}<g>${villa(b.villa, sp.hjemme)}</g>${vin}${taggSvg(sp.tagg, mitt)}${merke}`;
     }
     return `<g class="${klasse}" data-navn="${esc(navn)}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${s.toFixed(3)})" tabindex="0" role="button" aria-label="${esc(sp ? `${eier(navn)} gods` : `Ledig tomt: ${navn}`)}">
       <ellipse rx="70" ry="60" cy="-22" fill="transparent"/>${inn}
@@ -177,6 +192,7 @@
   function tips() {
     const m = T.meg;
     const andre = T.spillere.filter((s) => s.navn !== m.navn);
+    if (T.spillere.find((s) => s.navn === m.navn)?.tagg) return "Noen har tagget huset ditt! Skrubb det bort, ellers går det ut over avlingen.";
     if (m.kanOfre) return "Gudene venter på dagens offer. Kom innom hver dag, så vokser gaven.";
     if (lagerSum() >= 15) return "Avlingen er klar. Trykk på «Høst».";
     const rad = Object.keys(T.regler.bygg).find((id) => m.apen[id] && harRad(m.kost[id]));
@@ -213,6 +229,25 @@
     return `<article class="sy-bygg"><h4>${regel.navn} <span>${niva ? `nivå ${niva}` : ""}</span></h4>${info}${knapp}</article>`;
   }
 
+  function minTagg() {
+    const t = T.spillere.find((s) => s.navn === T.meg.navn)?.tagg;
+    if (!t) return "";
+    return `<div class="sy-taggvarsel"><div><p class="sy-etikett">Huset ditt er tagget</p>
+      <p><strong>${esc(t.fra)}</strong> sprayet <span class="sy-taggsitat" style="color:${t.farge}">${esc(t.tekst)}</span> på villaen din. Godset produserer ${Math.round(T.regler.taggStraff * 100)} % mindre til det er vasket bort.</p></div>
+      <button class="knapp" type="button" data-skrubb>${skrubb ? `Skrubb videre (${skrubb} av ${SKRUBB})` : "Skrubb det bort"}</button></div>`;
+  }
+
+  function taggSkjema(sp) {
+    const m = T.meg;
+    if (sp.tagg) return `<div class="sy-taggboks"><p class="sy-etikett">Spraybøksa</p><p>Huset er allerede tagget av <strong>${esc(sp.tagg.fra)}</strong>: <span class="sy-taggsitat" style="color:${sp.tagg.farge}">${esc(sp.tagg.tekst)}</span>. ${esc(sp.navn)} må vaske før noen kan tagge igjen.</p></div>`;
+    const tom = m.taggIgjen <= 0 || sp.tagget;
+    return `<form class="sy-taggboks" data-taggskjema="${esc(sp.navn)}"><p class="sy-etikett">Spraybøksa · ${m.taggIgjen} av ${T.regler.taggPerDag} tagger igjen i dag</p>
+      <div class="sy-taggrad"><input type="text" name="tekst" maxlength="${T.regler.taggMaks}" placeholder="Skriv noe på veggen hans" autocomplete="off" ${tom ? "disabled" : ""} required>
+      <div class="sy-farger" role="radiogroup" aria-label="Farge">${FARGER.map((f) => `<button type="button" class="sy-farge${f === taggFarge ? " valgt" : ""}" data-farge="${f}" style="background:${f}" aria-label="Farge" aria-checked="${f === taggFarge}" role="radio" ${tom ? "disabled" : ""}></button>`).join("")}</div>
+      <button class="knapp" type="submit" ${tom ? "disabled" : ""}>${sp.tagget ? "Tagget i dag" : m.taggIgjen <= 0 ? "Tom for maling" : "Tagg huset"}</button></div>
+      <p class="dempet sy-taggfot">Huset hans produserer ${Math.round(T.regler.taggStraff * 100)} % mindre til han vasker. Du får +3 ære, og han får beskjed.</p></form>`;
+  }
+
   function panel() {
     const m = T.meg;
     if (!valgt || valgt === m.navn) {
@@ -220,6 +255,7 @@
       return `<section class="sy-panel">
         <div class="sy-panelhode"><div><p class="sy-etikett">Godset ditt</p><p class="sy-fullt" data-fullt></p></div>
           <button class="knapp sy-host" type="button" data-gjor="host" data-host>Høst</button></div>
+        ${minTagg()}
         <div class="sy-byggliste">${synlige.map(byggKort).join("")}</div></section>`;
     }
     const sp = T.spillere.find((s) => s.navn === valgt);
@@ -233,7 +269,8 @@
       <div class="sy-besok">
         <button class="knapp" type="button" data-skjenk="${esc(sp.navn)}" ${sp.skjenket ? "disabled" : ""}>${sp.skjenket ? "Skjenket i dag" : "Skjenk et glass vin"}<small>${sp.skjenket ? "Kom igjen i morgen" : `Han får vin, du får +10 oliven og +5 ære`}</small></button>
         <button class="knapp sekundar" type="button" data-nask="${esc(sp.navn)}" ${sp.nasket || m.naskIgjen <= 0 || sp.bytte < 5 ? "disabled" : ""}>${nask}<small>${m.naskIgjen} av ${T.regler.naskPerDag} nask igjen i dag. Han får beskjed.</small></button>
-      </div></section>`;
+      </div>
+      ${taggSkjema(sp)}</section>`;
   }
 
   function monumentPanel() {
@@ -341,6 +378,8 @@
     else if (s.type === "skjenk") toast(`Skål, ${s.til}! +10 oliven og +5 ære.`);
     else if (s.type === "nask") toast(`Du nasket ${s.fikk.oliven} oliven fra ${s.til}. Han har fått beskjed.`);
     else if (s.type === "gi") toast(s.ferdig ? `${s.ferdig} står ferdig! Alle produserer 10 % mer.` : `Takk! +${s.aere} ære.`);
+    else if (s.type === "tagg") toast(`Huset til ${s.til} har fått ny utsmykning. +${s.aere} ære.`);
+    else if (s.type === "vask") toast(`Rent igjen. ${s.fra} får prøve seg på nytt en annen dag.`);
     else if (s.type === "flytt-inn") toast("Velkommen til byen. Godset ditt er merket med gull.");
     for (const r of Object.keys(s.fikk || {})) {
       const b = rot.querySelector(`[data-brikke="${r}"]`);
@@ -394,9 +433,30 @@
     else if (k.dataset.nask) gjor("nask", { til: k.dataset.nask });
     else if (k.dataset.gi) gjor("gi", { ressurs: k.dataset.gi, antall: Number(k.dataset.antall) });
     else if (k.dataset.hjem !== undefined) velg(T.meg.navn);
+    else if (k.dataset.farge) {
+      taggFarge = k.dataset.farge;
+      rot.querySelectorAll(".sy-farge").forEach((x) => { x.classList.toggle("valgt", x === k); x.setAttribute("aria-checked", x === k); });
+      const inp = rot.querySelector("[data-taggskjema] input");
+      if (inp) inp.style.color = taggFarge;
+    }
+    else if (k.dataset.skrubb !== undefined) {
+      skrubb += 1;
+      const tg = rot.querySelector(".sy-tomt.mitt .sy-taggen");
+      if (tg) tg.setAttribute("opacity", (1 - skrubb / SKRUBB).toFixed(2));
+      k.classList.remove("skrubber"); void k.offsetWidth; k.classList.add("skrubber");
+      if (skrubb >= SKRUBB) { skrubb = 0; gjor("vask"); }
+      else k.textContent = `Skrubb videre (${skrubb} av ${SKRUBB})`;
+    }
     else if (k.dataset.velg) { velg(k.dataset.velg); document.getElementById("sy-panel").scrollIntoView({ behavior: "smooth", block: "nearest" }); }
     else if (k.dataset.monument !== undefined) document.getElementById("sy-monument")?.scrollIntoView({ behavior: "smooth", block: "center" });
     else if (k.dataset.navn && T.meg) { velg(k.dataset.navn); document.getElementById("sy-panel").scrollIntoView({ behavior: "smooth", block: "nearest" }); }
+  });
+  rot.addEventListener("submit", (e) => {
+    const f = e.target.closest("[data-taggskjema]");
+    if (!f) return;
+    e.preventDefault();
+    const tekst = f.tekst.value.trim();
+    if (tekst) gjor("tagg", { til: f.dataset.taggskjema, tekst, farge: taggFarge });
   });
   rot.addEventListener("keydown", (e) => {
     if ((e.key === "Enter" || e.key === " ") && e.target.classList?.contains("sy-tomt") && T.meg) { e.preventDefault(); velg(e.target.dataset.navn); }
