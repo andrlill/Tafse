@@ -141,7 +141,7 @@
         el.dataset.id = c.id;
         lag.append(el);
       }
-      el.className = `t-brikke v${Math.min(c.v, 8192)}${c.v >= 1024 ? " stor" : ""}${c.v >= 100 && c.v < 1000 ? " tre" : ""}${c.ny ? " ny" : ""}${c.slatt ? " slatt" : ""}`;
+      el.className = `t-brikke v${Math.min(c.v, 8192)}${c.v >= 1024 ? " t-fire" : ""}${c.v >= 100 && c.v < 1000 ? " t-tre" : ""}${c.ny ? " ny" : ""}${c.slatt ? " slatt" : ""}`;
       el.textContent = c.v;
       plasser(el, r, k);
       behold.add(String(c.id));

@@ -208,7 +208,7 @@
              : `<p class="dempet">Gir ${r}. ${r === "vin" ? "Trengs til større bygg og til monumentet." : "Trengs til villaen og til monumentet."}</p>`
       : `<p class="sy-rate">Lageret rommer ${m.takTimer} timer</p><p class="dempet">Hvert nivå gir én time til, og et staseligere hus.</p>`;
     const knapp = k
-      ? `<button class="liten-knapp sy-utvid${harRad(k) ? " rad" : ""}" type="button" data-bygg="${id}" ${harRad(k) ? "" : "disabled"}>${niva ? "Utvid" : "Anlegg"} · ${pris(k)}</button>`
+      ? `<button class="liten-knapp sy-utvid${harRad(k) ? " sy-rad" : ""}" type="button" data-bygg="${id}" ${harRad(k) ? "" : "disabled"}>${niva ? "Utvid" : "Anlegg"} · ${pris(k)}</button>`
       : `<p class="sy-etikett">Høyeste nivå</p>`;
     return `<article class="sy-bygg"><h4>${regel.navn} <span>${niva ? `nivå ${niva}` : ""}</span></h4>${info}${knapp}</article>`;
   }
