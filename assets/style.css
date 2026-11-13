@@ -873,3 +873,26 @@ input:focus, select:focus, textarea:focus, .knapp:focus-visible, a:focus-visible
 .sy-farge:disabled { opacity: .4; cursor: default; }
 .sy-taggfot { font-size: 15px; margin: 8px 0 0 !important; }
 @media (max-width: 760px) { .sy-taggvarsel .knapp, .sy-taggrad .knapp { width: 100%; } }
+
+/* Symposion: rang og æresbutikk */
+.sy-tittel { font-family: var(--display); font-size: 10px; letter-spacing: .22em; text-transform: uppercase; fill: var(--gull); paint-order: stroke; stroke: #14130d; stroke-width: 3px; }
+.sy-statuenavn { font-family: var(--display); font-size: 8px; letter-spacing: .08em; fill: #d8cfb8; paint-order: stroke; stroke: #14130d; stroke-width: 2.5px; }
+.sy-flagg path:nth-child(2) { transform-box: fill-box; transform-origin: left center; animation: sy-vai 2.6s ease-in-out infinite; }
+@keyframes sy-vai { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(.8) skewY(4deg); } }
+.sy-rangboks { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--linje); }
+.sy-rangtopp h3 { margin: 0 0 2px; color: var(--gull-lys); }
+.sy-rangstrek { margin-top: 8px; height: 6px; }
+.sy-butikkfot { font-size: 15px; margin: -2px 0 10px !important; }
+.sy-butikk { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.sy-vare { border: 1px solid var(--linje); background: var(--bunn); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
+.sy-vare h4 { margin: 0; font-family: var(--display); font-size: 15px; letter-spacing: .04em; }
+.sy-vare p { margin: 0; font-size: 15px; color: var(--dempet); }
+.sy-varestatus { color: var(--gull) !important; font-size: 14px !important; }
+.sy-vare .liten-knapp { margin-top: auto; }
+.sy-litentittel { font-family: var(--display); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--gull); margin-left: 8px; align-self: center; }
+.sy-rang li { align-items: baseline; }
+.sy-rangpoeng { margin-left: auto; }
+.post-hode .tittel, .svar .tittel { font-family: var(--display); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--gull); margin-left: 6px; }
+.tittel:empty { display: none; }
+@media (prefers-reduced-motion: reduce) { .sy-flagg path:nth-child(2) { animation: none; } }
+@media (max-width: 760px) { .sy-butikk { grid-template-columns: 1fr 1fr; gap: 8px; } .sy-vare { padding: 10px; } }

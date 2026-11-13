@@ -82,15 +82,46 @@
       }).join("");
       const stein = Array.from({ length: b.brudd ? Math.min(3, Math.ceil(b.brudd / 3)) : 0 }, (_, k) =>
         `<rect x="${34 + k * 9}" y="${-13 - (k % 2) * 3}" width="8" height="6" fill="#ece5d3"/><rect x="${34 + k * 9}" y="${-9 - (k % 2) * 3}" width="8" height="2" fill="#a9a290"/>`).join("");
-      const hoyde = b.villa <= 2 ? -44 : b.villa <= 4 ? -52 : b.villa <= 7 ? -60 : -80;
+      const trinn = b.villa <= 2 ? 0 : b.villa <= 4 ? 1 : b.villa <= 7 ? 2 : 3;
+      const tak = [-28, -35, -43, -62][trinn];
+      const hoyde = [-44, -52, -60, -80][trinn] - (sp.rang >= 1 ? 16 : 0);
       const merke = mitt
         ? `<g class="sy-dupp sy-klar" data-klar hidden><circle cy="${hoyde - 6}" r="11" fill="#141310" stroke="#c9a24a"/><g transform="translate(-8 ${hoyde - 14})">${IKON.oliven.replace('class="sy-ikon"', 'width="16" height="16"')}</g></g>`
         : !sp.skjenket && T.meg ? `<g class="sy-dupp"><path d="M-4 ${hoyde - 12} h8 l-1 4 q4 5 0 11 h-6 q-4 -6 0 -11 z" fill="#c9a24a" stroke="#14130d" stroke-width="1"/></g>` : "";
-      inn = `<ellipse rx="64" ry="17" fill="#3b3824"/><ellipse rx="64" ry="17" class="sy-ring" fill="none"/>${stein}${tre}<g>${villa(b.villa, sp.hjemme)}</g>${vin}${taggSvg(sp.tagg, mitt)}${merke}`;
+      inn = `${sp.rang >= 4 ? `<ellipse rx="78" ry="24" fill="url(#sy-glod)"/>` : ""}<ellipse rx="64" ry="17" fill="#3b3824"/><ellipse rx="64" ry="17" class="sy-ring" fill="none"/>${stein}${tre}<g>${villa(b.villa, sp.hjemme)}</g>${vin}${pynt(sp.rang, tak)}${taggSvg(sp.tagg, mitt)}${merke}`;
     }
     return `<g class="${klasse}" data-navn="${esc(navn)}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${s.toFixed(3)})" tabindex="0" role="button" aria-label="${esc(sp ? `${eier(navn)} gods` : `Ledig tomt: ${navn}`)}">
       <ellipse rx="70" ry="60" cy="-22" fill="transparent"/>${inn}
-      <text y="34" text-anchor="middle" class="sy-navn">${esc(navn)}${mitt ? " (deg)" : ""}</text></g>`;
+      <text y="34" text-anchor="middle" class="sy-navn">${esc(navn)}${mitt ? " (deg)" : ""}</text>
+      ${sp && sp.rang ? `<text y="47" text-anchor="middle" class="sy-tittel">${esc(T.regler.ranger[sp.rang].tittel)}</text>` : ""}</g>`;
+  }
+
+  // Rangpynt: flagg (rådsmann), laurbærkrans (senator), statue (arkont), fakler (symposiark)
+  function pynt(r, tak) {
+    if (!r) return "";
+    let s = "";
+    if (r >= 1) s += `<g class="sy-flagg"><path d="M0 ${tak} v-17" stroke="#c9a24a" stroke-width="1.6"/><path d="M0.8 ${tak - 17} q7 -2 13 2 q-6 3 -13 6 z" fill="#8e2f52"/><path d="M0.8 ${tak - 17} q7 -2 13 2" fill="none" stroke="#c9a24a" stroke-width=".8"/></g>`;
+    if (r >= 2) s += [-1, 1].map((side) => `<g transform="scale(${side} 1)">${[0, 1, 2, 3, 4].map((k) => {
+      const v = (Math.PI * (0.16 + k * 0.1));
+      const x = -Math.cos(v) * 46, y = 12 + Math.sin(v) * 7 - k * 0.6;
+      return `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="4" ry="1.8" fill="#e2c174" transform="rotate(${(-30 + k * 12) * 1} ${x.toFixed(1)} ${y.toFixed(1)})"/>`;
+    }).join("")}<path d="M-47 11 Q-30 22 -6 20" fill="none" stroke="#c9a24a" stroke-width="1"/></g>`).join("");
+    if (r >= 3) s += `<g transform="translate(-62 8)"><rect x="-6" y="-4" width="12" height="6" fill="#bdb49d"/><rect x="-5" y="-6" width="10" height="2" fill="#ece5d3"/><circle cy="-21" r="3" fill="#ece5d3"/><path d="M-3 -18 h6 l1 12 h-8 z" fill="#ece5d3"/><path d="M3 -16 l5 -6" stroke="#ece5d3" stroke-width="2" stroke-linecap="round"/></g>`;
+    if (r >= 4) s += [-48, 48].map((x) => `<g transform="translate(${x} 14)"><path d="M-3 0 h6 l-1 -7 h-4 z" fill="#5a4630"/><path d="M-4 -7 h8 l-1 -2 h-6 z" fill="#c9a24a"/><path d="M0 -9 q-4 -5 0 -11 q4 6 0 11" fill="#f2c14e" class="sy-flamme"/></g>`).join("");
+    return s;
+  }
+
+  // Statuer som brødrene har kjøpt, i en ring rundt agoraen
+  function statuer() {
+    const l = T.statuer || [];
+    return l.map((navn, i) => {
+      const v = Math.PI * (1.08 + (i + 0.5) * (0.84 / Math.max(l.length, 1)));
+      const x = 500 + Math.cos(v) * 178, y = 432 + Math.sin(v) * 78;
+      return `<g transform="translate(${x.toFixed(0)} ${y.toFixed(0)})"><title>${esc(navn)}</title>
+        <rect x="-7" y="-5" width="14" height="7" fill="#bdb49d"/><rect x="-6" y="-7" width="12" height="2" fill="#ece5d3"/>
+        <circle cy="-26" r="3.6" fill="#ece5d3"/><path d="M-4 -22 h8 l1.5 15 h-11 z" fill="#ece5d3"/><path d="M-4 -22 h3 l-1 15 h-3.5 z" fill="#bdb49d"/><path d="M4 -20 l6 -7" stroke="#ece5d3" stroke-width="2.2" stroke-linecap="round"/><circle cx="10.5" cy="-27.5" r="1.8" fill="#c9a24a"/>
+        <text y="12" text-anchor="middle" class="sy-statuenavn">${esc(navn)}</text></g>`;
+    }).join("");
   }
 
   function monument(id, grad) {
@@ -119,7 +150,7 @@
     const [bx, by, bw, bh] = boks;
     return `<g class="sy-monument bygges" data-monument><g opacity="${(0.22 + grad * 0.6).toFixed(2)}">${s}</g>
       <rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="none" stroke="#c9a24a" stroke-dasharray="5 5" stroke-opacity=".7"/>
-      <text x="${bx + bw / 2}" y="${by - 7}" text-anchor="middle" class="sy-prosent">${Math.floor(grad * 100)} %</text></g>`;
+      <text x="${bx + bw / 2}" y="${by + bh / 2 + 5}" text-anchor="middle" class="sy-prosent">${Math.floor(grad * 100)} %</text></g>`;
   }
 
   function monumentGrad() {
@@ -158,6 +189,7 @@
         <linearGradient id="sy-himmel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#07080d"/><stop offset=".62" stop-color="#151a2a"/><stop offset="1" stop-color="#4a3a22"/></linearGradient>
         <linearGradient id="sy-hav" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a3138"/><stop offset=".25" stop-color="#121c22"/><stop offset="1" stop-color="#0a0f12"/></linearGradient>
         <radialGradient id="sy-land" cx=".5" cy=".42" r=".62"><stop offset="0" stop-color="#4a4830"/><stop offset=".7" stop-color="#2f2e1e"/><stop offset="1" stop-color="#23221a"/></radialGradient>
+        <radialGradient id="sy-glod" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#f2c14e" stop-opacity=".35"/><stop offset="1" stop-color="#f2c14e" stop-opacity="0"/></radialGradient>
         <radialGradient id="sy-mane" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#f2e3b4" stop-opacity=".5"/><stop offset="1" stop-color="#f2e3b4" stop-opacity="0"/></radialGradient>
       </defs>
       <rect width="${W}" height="232" fill="url(#sy-himmel)"/>
@@ -174,6 +206,7 @@
       <g class="sy-veier" fill="none" stroke="#7a6d49" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 7" opacity=".7">${veier}</g>
       ${bak}
       ${mon.map((m) => m.svg).join("")}
+      ${statuer()}
       ${foran}
     </svg>`;
   }
@@ -181,7 +214,7 @@
   // ---------- Toppen: ressurser og dagens offer ----------
   function topp() {
     const m = T.meg;
-    const brikker = [...RESS, "aere"].map((r) => `<div class="sy-brikke" data-brikke="${r}" title="${r === "aere" ? "Ære" : r}">${IKON[r]}<strong>${tall(r === "aere" ? m.aere : m.beholdning[r])}</strong><span>${r === "aere" ? "ære" : r}</span></div>`).join("");
+    const brikker = [...RESS, "aere"].map((r) => `<div class="sy-brikke" data-brikke="${r}" title="${r === "aere" ? "Ære du kan bruke i æresbutikken" : r}">${IKON[r]}<strong>${tall(r === "aere" ? m.aereIgjen : m.beholdning[r])}</strong><span>${r === "aere" ? "ære" : r}</span></div>`).join("");
     const prikker = Array.from({ length: 7 }, (_, i) => `<i class="${i < (m.kanOfre ? m.streak % 7 === 0 && m.streak ? 0 : Math.min(m.streak, 6) : m.streak) ? "full" : ""}"></i>`).join("");
     const offer = m.kanOfre
       ? `<button class="knapp sy-offer" type="button" data-gjor="offer">Ofre til gudene<small>${gave(m.nesteOffer)}</small></button>`
@@ -229,6 +262,30 @@
     return `<article class="sy-bygg"><h4>${regel.navn} <span>${niva ? `nivå ${niva}` : ""}</span></h4>${info}${knapp}</article>`;
   }
 
+  function rangOgButikk() {
+    const m = T.meg, R = T.regler.ranger;
+    const neste = R[m.rang + 1];
+    const fra = R[m.rang].fra;
+    const andel = neste ? Math.min(100, ((m.aere - fra) / (neste.fra - fra)) * 100) : 100;
+    const PYNT = { flagg: "et flagg på taket", krans: "en laurbærkrans rundt godset", statue: "en statue i hagen", fakler: "fakler og gullglød" };
+    const vare = (id) => {
+      const v = T.regler.butikk[id];
+      let status = "", sperret = m.aereIgjen < v.pris;
+      if (v.perDag) { const n = m.kjopt[id]; status = `${n} av ${v.perDag} kjøpt i dag`; if (n >= v.perDag) sperret = true; }
+      if (id === "slave" && m.slaveTil) status = `Jobber til ${new Date(m.slaveTil).toLocaleDateString("nb-NO", { weekday: "long", day: "numeric", month: "long" })}`;
+      if (id === "statue" && m.kjopt.statue) { status = "Står på agoraen"; sperret = true; }
+      return `<article class="sy-vare"><h4>${esc(v.navn)}</h4><p>${esc(v.tekst)}</p>${status ? `<p class="sy-varestatus">${esc(status)}</p>` : ""}
+        <button class="liten-knapp sy-utvid${sperret ? "" : " sy-rad"}" type="button" data-kjop="${id}" ${sperret ? "disabled" : ""}>${id === "slave" && m.slaveTil ? "Forleng" : "Kjøp"} · ${v.pris} ${IKON.aere}</button></article>`;
+    };
+    return `<div class="sy-rangboks">
+      <div class="sy-rangtopp"><div><p class="sy-etikett">Din rang</p><h3>${esc(R[m.rang].tittel)}</h3>
+        <p class="dempet">${tall(m.aere)} ære tjent totalt${neste ? ` · ${tall(neste.fra - m.aere)} til ${neste.tittel.toLowerCase()}, som gir ${PYNT[neste.pynt]}` : " · Høyeste rang i byen"}</p></div></div>
+      <div class="sy-lager sy-rangstrek"><span style="width:${andel}%"></span></div>
+      <p class="sy-etikett" style="margin-top:18px">Æresbutikken · du har ${tall(m.aereIgjen)} ${IKON.aere} å bruke</p>
+      <p class="dempet sy-butikkfot">Det du bruker her, trekkes ikke fra rangen din.</p>
+      <div class="sy-butikk">${Object.keys(T.regler.butikk).map(vare).join("")}</div></div>`;
+  }
+
   function minTagg() {
     const t = T.spillere.find((s) => s.navn === T.meg.navn)?.tagg;
     if (!t) return "";
@@ -256,7 +313,8 @@
         <div class="sy-panelhode"><div><p class="sy-etikett">Godset ditt</p><p class="sy-fullt" data-fullt></p></div>
           <button class="knapp sy-host" type="button" data-gjor="host" data-host>Høst</button></div>
         ${minTagg()}
-        <div class="sy-byggliste">${synlige.map(byggKort).join("")}</div></section>`;
+        <div class="sy-byggliste">${synlige.map(byggKort).join("")}</div>
+        ${rangOgButikk()}</section>`;
     }
     const sp = T.spillere.find((s) => s.navn === valgt);
     if (!sp) return `<section class="sy-panel"><p class="sy-etikett">Ledig tomt</p><p>${esc(valgt)} har ikke flyttet inn ennå. <a href="salongen.html">Mas på ham i Salongen.</a></p><button class="liten-knapp" type="button" data-hjem>Til godset mitt</button></section>`;
@@ -297,7 +355,7 @@
   function sidefelt() {
     const rang = T.spillere.slice().sort((a, b) => b.aere - a.aere);
     return `<section class="sy-boks"><p class="sy-etikett">Ærestavlen</p>
-        <ol class="sy-givere sy-rang">${rang.map((s, i) => `<li class="${s.navn === T.meg.navn ? "meg" : ""}"><button type="button" class="lenkeknapp" data-velg="${esc(s.navn)}">${i + 1}. ${esc(s.navn)}</button><span>${tall(s.aere)} ${IKON.aere}</span></li>`).join("")}</ol>
+        <ol class="sy-givere sy-rang">${rang.map((s, i) => `<li class="${s.navn === T.meg.navn ? "meg" : ""}"><button type="button" class="lenkeknapp" data-velg="${esc(s.navn)}">${i + 1}. ${esc(s.navn)}</button>${s.rang ? `<span class="sy-litentittel">${esc(T.regler.ranger[s.rang].tittel)}</span>` : ""}<span class="sy-rangpoeng">${tall(s.aere)} ${IKON.aere}</span></li>`).join("")}</ol>
         <p class="sy-etikett" style="margin-top:20px">Byens røst</p>
         <ul class="sy-logg">${T.logg.map((l) => `<li><strong>${esc(l.navn)}</strong> ${esc(l.tekst)} <span>${tidSiden(l.opprettet)}</span></li>`).join("") || `<li class="dempet">Stille i gatene.</li>`}</ul></section>`;
   }
@@ -380,7 +438,9 @@
     else if (s.type === "gi") toast(s.ferdig ? `${s.ferdig} står ferdig! Alle produserer 10 % mer.` : `Takk! +${s.aere} ære.`);
     else if (s.type === "tagg") toast(`Huset til ${s.til} har fått ny utsmykning. +${s.aere} ære.`);
     else if (s.type === "vask") toast(`Rent igjen. ${s.fra} får prøve seg på nytt en annen dag.`);
+    else if (s.type === "kjop") toast(s.vare === "statue" ? "Statuen din står nå på agoraen." : s.vare === "slave" ? "Vaskeslaven er ansatt. Han tar tagger etter en time." : `${s.navn} kjøpt.`);
     else if (s.type === "flytt-inn") toast("Velkommen til byen. Godset ditt er merket med gull.");
+    if (s.nyRang) setTimeout(() => toast(`Du er utnevnt til ${s.nyRang.toLowerCase()}! Se på huset ditt.`), 1800);
     for (const r of Object.keys(s.fikk || {})) {
       const b = rot.querySelector(`[data-brikke="${r}"]`);
       if (b) { b.classList.remove("blink"); void b.offsetWidth; b.classList.add("blink"); }
@@ -431,6 +491,7 @@
     else if (k.dataset.bygg) gjor("bygg", { bygg: k.dataset.bygg });
     else if (k.dataset.skjenk) gjor("skjenk", { til: k.dataset.skjenk });
     else if (k.dataset.nask) gjor("nask", { til: k.dataset.nask });
+    else if (k.dataset.kjop) gjor("kjop", { vare: k.dataset.kjop });
     else if (k.dataset.gi) gjor("gi", { ressurs: k.dataset.gi, antall: Number(k.dataset.antall) });
     else if (k.dataset.hjem !== undefined) velg(T.meg.navn);
     else if (k.dataset.farge) {

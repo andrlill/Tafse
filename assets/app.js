@@ -307,6 +307,18 @@ async function krympProfilbilde(fil, str = 640) {
 }
 
 // Rundt portrett: profilbilde hvis det finnes, ellers forbokstav i gull.
+// Titler fra Symposion (rådsmann, senator …) ved navnet i Salongen
+let TITLER = null;
+const tittelMerke = (navn) => `<span class="tittel" data-tittel="${esc(navn)}"></span>`;
+async function pyntTitler(rot) {
+  if (!TITLER) TITLER = api("symposion/titler").catch(() => ({}));
+  const t = await TITLER;
+  rot.querySelectorAll("[data-tittel]").forEach((el) => {
+    const x = t[el.dataset.tittel];
+    el.textContent = x && x !== "Borger" ? x : "";
+  });
+}
+
 function avatar(navn, bildeId, liten = false) {
   const klasse = `medaljong${liten ? " liten" : ""}${bildeId ? " med-bilde" : ""}`;
   return bildeId
@@ -404,7 +416,7 @@ async function byggStrom(boks, { mote = null, plassholder } = {}) {
     return `<article class="post" id="post-${p.id}" data-id="${p.id}">
       <div class="post-hode">
         ${avatar(p.navn, bildeAv(p.navn), true)}
-        <div><strong>${esc(p.navn)}</strong><div class="dempet post-tid">${esc(tidTekst(p.opprettet))}${merke ? " · " + merke : ""}</div></div>
+        <div><strong>${esc(p.navn)}</strong>${tittelMerke(p.navn)}<div class="dempet post-tid">${esc(tidTekst(p.opprettet))}${merke ? " · " + merke : ""}</div></div>
         ${p.navn === MEG ? `<button class="liten-knapp" style="margin-left:auto" data-slett-post="${p.id}">Slett</button>` : ""}
       </div>
       ${p.tekst ? `<p class="post-tekst">${esc(p.tekst)}</p>` : ""}
@@ -414,7 +426,7 @@ async function byggStrom(boks, { mote = null, plassholder } = {}) {
         ${p.skal.length ? `<span class="dempet" style="font-size:15px">${esc(p.skal.join(", "))}</span>` : ""}
       </div>
       <div class="svar-liste">
-        ${p.svar.map((s) => `<div class="svar"><strong>${esc(s.navn)}</strong> <span class="post-tekst">${esc(s.tekst)}</span>
+        ${p.svar.map((s) => `<div class="svar"><strong>${esc(s.navn)}</strong>${tittelMerke(s.navn)} <span class="post-tekst">${esc(s.tekst)}</span>
           <span class="dempet post-tid">${esc(tidTekst(s.opprettet))}${s.navn === MEG ? ` · <button class="lenkeknapp" data-slett-svar="${s.id}">slett</button>` : ""}</span></div>`).join("")}
         <form class="svar-skjema" data-svar="${p.id}">
           <label class="skjult" for="svar-${p.id}">Svar</label>
@@ -429,6 +441,7 @@ async function byggStrom(boks, { mote = null, plassholder } = {}) {
     strom.innerHTML = poster.length
       ? poster.map(postHtml).join("")
       : `<p class="tomt">Ingen poster ennå.</p>`;
+    pyntTitler(strom);
   }
 
   async function last(eldre = false) {

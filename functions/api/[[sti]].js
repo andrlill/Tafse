@@ -4,7 +4,7 @@
 //   - en hemmelighet (secret) TAFSE_PASSORD. Den brukes til å signere innlogginger
 //     og invitasjonslenker, og fungerer som reservepassord ved registrering.
 
-import { symposion, SKJEMA as SYMPOSION_SKJEMA } from "../../lib/symposion.js";
+import { symposion, SKJEMA as SYMPOSION_SKJEMA, MIGRERING as SYMPOSION_MIGRERING } from "../../lib/symposion.js";
 
 const MAKS_BILDE = 1_900_000; // byte, D1 tåler rundt 2 MB per rad
 const BILDETYPER = ["image/jpeg", "image/png", "image/webp"];
@@ -138,6 +138,7 @@ async function sikreSkjema(db) {
   try { await db.prepare("ALTER TABLE profiler ADD COLUMN land TEXT").run(); } catch (_) {}
   try { await db.prepare("ALTER TABLE forslag ADD COLUMN type TEXT").run(); } catch (_) {}
   try { await db.prepare("ALTER TABLE forslag ADD COLUMN mote TEXT").run(); } catch (_) {}
+  for (const sql of SYMPOSION_MIGRERING) { try { await db.prepare(sql).run(); } catch (_) {} }
   skjemaKlart = true;
 }
 
