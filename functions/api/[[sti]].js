@@ -106,6 +106,8 @@ async function sikreSkjema(db) {
       opprettet TEXT NOT NULL
     )`),
     db.prepare(`CREATE INDEX IF NOT EXISTS varsler_mottaker ON varsler (mottaker, id)`),
+    // Resultater fra første versjon av Honningfella (før samtalene). Kan fjernes når den har kjørt.
+    db.prepare("DELETE FROM honningfella WHERE oppdrag IN ('messen', 'gallaen')"),
     db.prepare(`CREATE TABLE IF NOT EXISTS profiler (
       navn TEXT PRIMARY KEY,
       tekst TEXT NOT NULL,
