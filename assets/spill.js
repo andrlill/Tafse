@@ -1,6 +1,7 @@
 // IDUS MARTIAE – et lite spill om Cæsars siste dag.
 // Beveg Cæsar med piltaster/WASD (eller fingeren), sidesteg med mellomrom.
-// Overlev 60 sekunder til Marcus Antonius kommer. 23 sår eller Brutus' dolk, og det er over.
+// Overlev fem minutter til Marcus Antonius kommer. 23 sår, Brutus' eller Cassius' dolk, og det er over.
+// Det blir stadig flere og raskere senatorer. Brutus kommer etter ett minutt, Cassius etter tre.
 // Poeng: +1 per sekund overlevd, +1 per kollega som blir truffet, −1 per knivstikk.
 
 (() => {
@@ -18,8 +19,11 @@
     blod: "#c0473a",
   };
   const MAKS_SAR = 23;
-  const SEIERSTID = 60;
-  const BRUTUS_TID = 32;
+  const SEIERSTID = 300;
+  const BRUTUS_TID = 60;
+  const CASSIUS_TID = 180;
+  // Hvor langt ut i kampen vi er, fra 0 til 1. Styrer hvor intenst det er.
+  const intensitet = () => Math.min(1, tid / SEIERSTID);
   const STEG_NED = 1.6; // sekunder før sidesteget er ladet igjen
   const poeng = () => Math.floor(Math.min(tid, SEIERSTID)) + kolleger - sar;
 
@@ -46,12 +50,12 @@
   // ---------- Tilstand ----------
   let tilstand = "meny"; // meny | spiller | pause | slutt
   let sisteTikk = 0;
-  let tid, sar, kolleger, senatorer, partikler, tekster, cæsar, gytTimer, brutusKommet, sluttÅrsak, sisteTid;
+  let tid, sar, kolleger, senatorer, partikler, tekster, cæsar, gytTimer, brutusKommet, cassiusKommet, varslet, sluttÅrsak, sisteTid;
 
   function nyttSpill() {
     tid = 0; sar = 0; kolleger = 0; sisteTikk = 0;
     senatorer = []; partikler = []; tekster = [];
-    gytTimer = 1.2; brutusKommet = false; sluttÅrsak = null;
+    gytTimer = 1.2; brutusKommet = false; cassiusKommet = false; varslet = {}; sluttÅrsak = null;
     cæsar = { x: arena.x, y: arena.y + arena.r * 0.15, r: 13, fart: 230, usårbar: 0, blink: 0, steg: 0, stegNed: 0, stegRetning: { x: 0, y: 0 } };
     tilstand = "spiller";
     skjerm.hidden = true;
@@ -140,15 +144,16 @@
   }
 
   // ---------- Senatorer ----------
-  function gyt(erBrutus = false) {
+  function gyt(erBrutus = false, navn = "Brutus") {
     const v = tilfeldig(0, Math.PI * 2);
-    const f = Math.min(1, tid / 55);
+    const f = intensitet();
     senatorer.push({
       x: arena.x + Math.cos(v) * (arena.r - 14),
       y: arena.y + Math.sin(v) * (arena.r - 14),
       r: erBrutus ? 12 : 11,
       brutus: erBrutus,
-      fart: (erBrutus ? 112 : 68 + f * 52) * tilfeldig(0.9, 1.1),
+      navn: erBrutus ? navn : null,
+      fart: (erBrutus ? 108 + f * 40 : 64 + f * 100) * tilfeldig(0.9, 1.1),
       fase: "nærmer", // nærmer | løfter | støter | henter
       t: 0,
       støtRetning: { x: 0, y: 0 },
@@ -165,7 +170,7 @@
     const dx = cæsar.x - s.x, dy = cæsar.y - s.y;
     const l = Math.hypot(dx, dy) || 1;
     s.sikte = Math.atan2(dy, dx);
-    const f = Math.min(1, tid / 55);
+    const f = intensitet();
 
     if (s.fase === "nærmer") {
       s.kurs += tilfeldig(-1, 1) * dt;
@@ -173,7 +178,7 @@
       const v = s.sikte + s.kurs;
       s.x += Math.cos(v) * s.fart * dt;
       s.y += Math.sin(v) * s.fart * dt;
-      if (l < 95 * skala && s.inn <= 0) { s.fase = "løfter"; s.t = s.brutus ? 0.42 : 0.48 - f * 0.12; }
+      if (l < 95 * skala && s.inn <= 0) { s.fase = "løfter"; s.t = s.brutus ? 0.42 - f * 0.08 : 0.5 - f * 0.2; }
     } else if (s.fase === "løfter") {
       s.t -= dt;
       s.x -= (dx / l) * 18 * dt; // tar sats bakover
@@ -181,13 +186,13 @@
       if (s.t <= 0) { s.fase = "støter"; s.t = 0.2; s.støtRetning = { x: dx / l, y: dy / l }; }
     } else if (s.fase === "støter") {
       s.t -= dt;
-      const fart = (s.brutus ? 640 : 560) * skala;
+      const fart = (s.brutus ? 640 : 560 + f * 140) * skala;
       s.x += s.støtRetning.x * fart * dt;
       s.y += s.støtRetning.y * fart * dt;
       if (Math.random() < 0.6) partikkel(s.x, s.y, FARGE.dempet, 20, 0.25, 1.2);
       // Treffer Cæsar?
       if (avstand(s, cæsar) < s.r + cæsar.r && cæsar.usårbar <= 0 && cæsar.steg <= 0) {
-        if (s.brutus) return avslutt("brutus");
+        if (s.brutus) return avslutt(s.navn === "Cassius" ? "cassius" : "brutus");
         sar += 1;
         LYD.spill("stikk");
         cæsar.usårbar = 0.7;
@@ -250,8 +255,19 @@
     // Nye senatorer
     gytTimer -= dt;
     const aktive = senatorer.filter((s) => !s.ute).length;
-    const intervall = Math.max(0.55, 2.0 - tid * 0.028);
-    if (gytTimer <= 0 && aktive < 4 + Math.floor(tid / 9)) { gyt(); gytTimer = intervall; }
+    const f = intensitet();
+    const intervall = Math.max(0.35, 2.0 - f * 1.7);
+    if (gytTimer <= 0 && aktive < 4 + Math.floor(f * 12)) { gyt(); gytTimer = intervall; }
+    if (!cassiusKommet && tid >= CASSIUS_TID) {
+      cassiusKommet = true;
+      gyt(true, "Cassius");
+      LYD.spill("brutus");
+      lagTekst("Cassius har kommet inn", arena.x, arena.y - arena.r * 0.35, FARGE.gullLys, 2.2, 17);
+    }
+    // Underveismeldinger
+    for (const [t, tekst] of [[120, "Senatet koker"], [240, "Siste minutt. Antonius er nær"]]) {
+      if (tid >= t && !varslet[t]) { varslet[t] = true; LYD.spill("klar"); lagTekst(tekst, arena.x, arena.y + arena.r * 0.35, FARGE.gull, 2.4, 16); }
+    }
     if (!brutusKommet && tid >= BRUTUS_TID) {
       brutusKommet = true;
       gyt(true);
@@ -395,7 +411,7 @@
       ctx.fillStyle = FARGE.gullLys;
       ctx.font = `600 10px Cinzel, Georgia, serif`;
       ctx.textAlign = "center";
-      ctx.fillText("BRUTUS", s.x, s.y - s.r - 9);
+      ctx.fillText((s.navn || "Brutus").toUpperCase(), s.x, s.y - s.r - 9);
     }
     ctx.globalAlpha = 1;
   }
@@ -413,7 +429,8 @@
     ctx.fillStyle = FARGE.gull;
     ctx.textAlign = "right";
     const igjen = Math.max(0, SEIERSTID - tid);
-    ctx.fillText(`ANTONIUS OM ${Math.ceil(igjen)} S`, B - 16, 26);
+    const sek = Math.ceil(igjen);
+    ctx.fillText(`ANTONIUS OM ${Math.floor(sek / 60)}:${String(sek % 60).padStart(2, "0")}`, B - 16, 26);
     // Fremdriftslinje
     ctx.fillStyle = "rgba(201,162,74,.18)";
     ctx.fillRect(16, 36, B - 32, 2);
@@ -488,6 +505,10 @@
     brutus: {
       tittel: "Et tu, Brute?",
       tekst: () => `Brutus' dolk avgjorde saken etter ${Math.floor(tid)} sekunder og ${sar} sår. Ifølge Suetonius sa du heller «kai sy, teknon?», og du, mitt barn?`,
+    },
+    cassius: {
+      tittel: "Cassius slo til",
+      tekst: () => `Gaius Cassius Longinus, mannen bak hele sammensvergelsen, fikk siste ord etter ${Math.floor(tid)} sekunder og ${sar} sår. Han ble aldri tilgitt for det.`,
     },
     seier: {
       tittel: "Du overlevde marsidene",

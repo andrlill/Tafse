@@ -596,10 +596,10 @@ export async function onRequest({ request, env, params }) {
     }
     if (metode === "POST") {
       const b = await lesJson(request);
-      const sek = Math.max(0, Math.min(60, Number(b.sekunder) || 0));
+      const sek = Math.max(0, Math.min(300, Number(b.sekunder) || 0));
       const sar = Math.max(0, Math.min(23, Math.round(Number(b.sar) || 0)));
-      const kol = Math.max(0, Math.min(60, Math.round(Number(b.kolleger) || 0)));
-      const seier = b.seier && sek >= 60 && sar < 23 ? 1 : 0;
+      const kol = Math.max(0, Math.min(500, Math.round(Number(b.kolleger) || 0)));
+      const seier = b.seier && sek >= 300 && sar < 23 ? 1 : 0;
       await db.prepare("INSERT INTO spillresultater (navn, sekunder, sar, kolleger, seier, opprettet) VALUES (?, ?, ?, ?, ?, ?)").bind(meg, sek, sar, kol, seier, naa()).run();
       return json({ ok: true }, 201);
     }
