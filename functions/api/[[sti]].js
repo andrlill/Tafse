@@ -530,15 +530,15 @@ export async function onRequest({ request, env, params }) {
   // --- Aktivitetsskår for brødrene ---
   if (ressurs === "aktivitet" && metode === "GET") {
     // Poeng per handling. Endres her.
-    const VEKT = { poster: 3, bilder: 2, svar: 1, saker: 5, vedtatt: 5, stemmer: 1, skalMottatt: 1, profil: 3, seier: 5 };
+    const VEKT = { poster: 1, bilder: 2, svar: 1, saker: 5, stemmer: 1, skalMottatt: 1, profil: 3, seier: 5 };
     const telling = (sql) => db.prepare(sql);
-    const [poster, bilder, svar, sakskom, saker, vedtatt, stemmer, skal, profil, seier] = (await db.batch([
+    const [poster, bilder, svar, sakskom, saker, stemmer, skal, profil, seier] = (await db.batch([
       telling("SELECT navn, COUNT(*) AS n FROM poster GROUP BY navn"),
-      telling("SELECT navn, COUNT(*) AS n FROM bilder WHERE mote != 'profil' GROUP BY navn"),
+      // Bilder gir poeng én gang per møte, uansett hvor mange som er lastet opp
+      telling("SELECT navn, COUNT(DISTINCT mote) AS n FROM bilder WHERE mote NOT IN ('profil', 'salongen') GROUP BY navn"),
       telling("SELECT navn, COUNT(*) AS n FROM svar GROUP BY navn"),
       telling("SELECT navn, COUNT(*) AS n FROM sakskommentarer GROUP BY navn"),
       telling("SELECT navn, COUNT(*) AS n FROM forslag WHERE status != 'trukket' GROUP BY navn"),
-      telling("SELECT navn, COUNT(*) AS n FROM forslag WHERE status IN ('vedtatt', 'oppfolging') GROUP BY navn"),
       telling("SELECT navn, COUNT(*) AS n FROM stemmer GROUP BY navn"),
       telling("SELECT p.navn AS navn, COUNT(*) AS n FROM skal s JOIN poster p ON p.id = s.post_id WHERE s.navn != p.navn GROUP BY p.navn"),
       telling("SELECT navn, 1 AS n FROM profiler WHERE COALESCE(tekst, '') != '' OR COALESCE(tafse, '') != ''"),
@@ -551,7 +551,6 @@ export async function onRequest({ request, env, params }) {
         bilder: bilder[navn] || 0,
         svar: (svar[navn] || 0) + (sakskom[navn] || 0),
         saker: saker[navn] || 0,
-        vedtatt: vedtatt[navn] || 0,
         stemmer: stemmer[navn] || 0,
         skalMottatt: skal[navn] || 0,
         profil: profil[navn] || 0,
