@@ -28,44 +28,7 @@
   let profiler = {};
   let aktivitet = null;
   let sortering = "skar";
-  const RANGER = [
-    [0, "Tiro", "rekrutt"],
-    [10, "Kvestor", ""],
-    [25, "Ædil", ""],
-    [50, "Pretor", ""],
-    [80, "Konsul", ""],
-    [130, "Pater Patriae", "fedrelandets far"],
-  ];
-  const HANDLINGER = {
-    poster: ["Post i Salongen", "poster"],
-    bilder: ["Bilder fra et møte (per møte)", "møter med bilder"],
-    svar: ["Svar eller kommentar", "svar"],
-    saker: ["Sak meldt inn", "saker"],
-    stemmer: ["Stemme avgitt", "stemmer"],
-    skalMottatt: ["Skål fra en annen bror", "skåler"],
-    profil: ["Presentasjon skrevet (én gang)", "presentasjon"],
-    seier: ["Overlevde Idus Martiae (én gang)", "seier"],
-  };
-  function rang(skar) {
-    let i = 0;
-    while (i + 1 < RANGER.length && skar >= RANGER[i + 1][0]) i++;
-    const neste = RANGER[i + 1];
-    const fra = RANGER[i][0];
-    return { navn: RANGER[i][1], neste, andel: neste ? (skar - fra) / (neste[0] - fra) : 1 };
-  }
-  function skarHtml(n) {
-    const a = aktivitet && aktivitet.brodre[n];
-    if (!a) return "";
-    const r = rang(a.skar);
-    const deler = Object.entries(a.detaljer).filter(([, v]) => v > 0)
-      .map(([k, v]) => `<li><span>${HANDLINGER[k][0]}</span><span>${v} × ${aktivitet.vekt[k]} = ${v * aktivitet.vekt[k]}</span></li>`).join("");
-    return `<div class="skar">
-      <div class="skar-topp"><span class="skar-tall">${a.skar}</span><span class="skar-rang">${esc(r.navn)}</span></div>
-      <div class="skar-stolpe" role="img" aria-label="${r.neste ? `${r.neste[0] - a.skar} poeng til ${r.neste[1]}` : "Høyeste rang"}"><span style="width:${Math.round(r.andel * 100)}%"></span></div>
-      <p class="skar-neste">${r.neste ? `${r.neste[0] - a.skar} poeng til ${esc(r.neste[1])}` : "Høyeste rang er nådd"}</p>
-      ${deler ? `<details class="skar-detaljer"><summary>Slik er skåren regnet ut</summary><ul>${deler}</ul></details>` : ""}
-    </div>`;
-  }
+  const skarFor = (n) => aktivitet && skarHtml(aktivitet.brodre[n], aktivitet.vekt);
   const harBruker = new Set(await api("brukere").catch(() => []));
   await hvemErJeg();
 
@@ -103,12 +66,14 @@
       else if (!p.tekst && !p.tafse) tekst = `<p class="tom">${harBruker.has(n) ? `${esc(n)} har ikke skrevet noe ennå.` : `${esc(n)} har ikke laget bruker ennå.`}</p>`;
       else tekst = `<div class="bror-tekst" id="tekst-${esc(n)}">${p.tekst ? `<h4>Om meg</h4><p>${esc(p.tekst)}</p>` : ""}${p.tafse ? `<h4>Hva TAFSE betyr for meg</h4><p>${esc(p.tafse)}</p>` : ""}</div>
         <button class="se-mer" type="button" aria-expanded="false" aria-controls="tekst-${esc(n)}" hidden>Se mer</button>`;
+      const profil = `bror.html?navn=${encodeURIComponent(n)}`;
       return `<article class="bror">
-        ${avatar(n, MEG ? p.bilde_id : null)}
-        <h3>${esc(n)}${n === MEG ? ' <span class="merkelapp">Deg</span>' : ""}</h3>
+        <a class="bror-bilde" href="${profil}" aria-label="Profilen til ${esc(n)}">${avatar(n, MEG ? p.bilde_id : null)}</a>
+        <h3><a class="bror-navn" href="${profil}">${esc(n)}</a>${n === MEG ? ' <span class="merkelapp">Deg</span>' : ""}</h3>
         <span class="verv">${vervTekst}</span>
-        ${skarHtml(n)}
+        ${skarFor(n) || ""}
         ${tekst}
+        <a class="se-profil" href="${profil}">Se profilen →</a>
       </article>`;
     }).join("");
     visSeMer();

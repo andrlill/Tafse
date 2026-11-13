@@ -109,6 +109,8 @@ async function sikreSkjema(db) {
   // Eldre databaser mangler kolonnen tafse
   try { await db.prepare("ALTER TABLE profiler ADD COLUMN tafse TEXT").run(); } catch (_) {}
   try { await db.prepare("ALTER TABLE profiler ADD COLUMN bilde_id INTEGER").run(); } catch (_) {}
+  try { await db.prepare("ALTER TABLE profiler ADD COLUMN info TEXT").run(); } catch (_) {}
+  try { await db.prepare("ALTER TABLE profiler ADD COLUMN partner TEXT").run(); } catch (_) {}
   try { await db.prepare("ALTER TABLE forslag ADD COLUMN type TEXT").run(); } catch (_) {}
   try { await db.prepare("ALTER TABLE forslag ADD COLUMN mote TEXT").run(); } catch (_) {}
   skjemaKlart = true;
@@ -401,11 +403,14 @@ export async function onRequest({ request, env, params }) {
   if (ressurs === "poster") {
     if (!id && metode === "GET") {
       const mote = url.searchParams.get("mote");
+      const forfatter = tekst(url.searchParams.get("navn"), 60);
       if (mote && !gyldigMote(mote)) return feil(400, "Ugyldig møte.");
       const for_ = Number(url.searchParams.get("for")) || 2 ** 31;
       const { results: poster } = mote
         ? await db.prepare("SELECT * FROM poster WHERE mote = ? AND id < ? ORDER BY id DESC LIMIT 30").bind(mote, for_).all()
-        : await db.prepare("SELECT * FROM poster WHERE id < ? ORDER BY id DESC LIMIT 30").bind(for_).all();
+        : forfatter
+          ? await db.prepare("SELECT * FROM poster WHERE navn = ? AND id < ? ORDER BY id DESC LIMIT 30").bind(forfatter, for_).all()
+          : await db.prepare("SELECT * FROM poster WHERE id < ? ORDER BY id DESC LIMIT 30").bind(for_).all();
       if (!poster.length) return json([]);
       const ider = poster.map((p) => p.id);
       const plass = ider.map(() => "?").join(",");
@@ -597,15 +602,32 @@ export async function onRequest({ request, env, params }) {
   // --- Presentasjoner av brødrene ---
   if (ressurs === "profiler") {
     if (!id && metode === "GET") {
-      const { results } = await db.prepare("SELECT navn, tekst, tafse, bilde_id, oppdatert FROM profiler").all();
-      return json(results);
+      const { results } = await db.prepare("SELECT navn, tekst, tafse, bilde_id, info, partner, oppdatert FROM profiler").all();
+      const tolk = (v) => { try { return v ? JSON.parse(v) : null; } catch (_) { return null; } };
+      return json(results.map((r) => ({ ...r, info: tolk(r.info), partner: tolk(r.partner) })));
     }
     if (id && metode === "PUT") {
+      // Oppdaterer bare feltene som er med, så de ulike skjemaene ikke overskriver hverandre
       const b = await lesJson(request);
-      const t = tekst(b.tekst, 3000), betyr = tekst(b.tafse, 3000);
+      const gml = (await db.prepare("SELECT tekst, tafse, info, partner FROM profiler WHERE navn = ?").bind(meg).first()) || {};
+      const somJson = (v, maks) => {
+        if (v === null) return null;
+        const s = JSON.stringify(v);
+        if (!v || typeof v !== "object" || Array.isArray(v) || s.length > maks) throw new Error("ugyldig");
+        return s;
+      };
+      let info, partner;
+      try {
+        info = "info" in b ? somJson(b.info, 4000) : gml.info ?? null;
+        partner = "partner" in b ? somJson(b.partner, 4000) : gml.partner ?? null;
+      } catch (_) {
+        return feil(400, "Ugyldige profildata.");
+      }
+      const t = "tekst" in b ? tekst(b.tekst, 3000) : gml.tekst || "";
+      const betyr = "tafse" in b ? tekst(b.tafse, 3000) : gml.tafse ?? null;
       await db
-        .prepare("INSERT INTO profiler (navn, tekst, tafse, oppdatert) VALUES (?, ?, ?, ?) ON CONFLICT(navn) DO UPDATE SET tekst = excluded.tekst, tafse = excluded.tafse, oppdatert = excluded.oppdatert")
-        .bind(meg, t, betyr, naa())
+        .prepare("INSERT INTO profiler (navn, tekst, tafse, info, partner, oppdatert) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(navn) DO UPDATE SET tekst = excluded.tekst, tafse = excluded.tafse, info = excluded.info, partner = excluded.partner, oppdatert = excluded.oppdatert")
+        .bind(meg, t, betyr, info, partner, naa())
         .run();
       return json({ ok: true });
     }

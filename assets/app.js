@@ -40,7 +40,7 @@ function byggRamme() {
   const her = (location.pathname.split("/").pop() || "index").replace(/\.html$/, "");
   const meny = SIDER.map(([fil, navn]) => {
     const stamme = fil.replace(/\.html$/, "");
-    const aktiv = stamme === her || (her === "mote" && stamme === "moter") || (her === "honningfella" && stamme === "spill");
+    const aktiv = stamme === her || (her === "mote" && stamme === "moter") || (her === "honningfella" && stamme === "spill") || (her === "bror" && stamme === "medlemmer");
     return `<a href="${fil}"${aktiv ? ' class="aktiv" aria-current="page"' : ""}>${navn}</a>`;
   }).join("");
   const topp = document.createElement("header");
@@ -422,6 +422,46 @@ async function byggStrom(boks, { mote = null, plassholder } = {}) {
 
   flere.addEventListener("click", () => last(true));
   await last();
+}
+
+// ---------- Aktivitetsskår og rang ----------
+
+const RANGER = [
+  [0, "Tiro", "rekrutt"],
+  [10, "Kvestor", ""],
+  [25, "Ædil", ""],
+  [50, "Pretor", ""],
+  [80, "Konsul", ""],
+  [130, "Pater Patriae", "fedrelandets far"],
+];
+const HANDLINGER = {
+  poster: ["Post i Salongen", "poster"],
+  bilder: ["Bilder fra et møte (per møte)", "møter med bilder"],
+  svar: ["Svar eller kommentar", "svar"],
+  saker: ["Sak meldt inn", "saker"],
+  stemmer: ["Stemme avgitt", "stemmer"],
+  skalMottatt: ["Skål fra en annen bror", "skåler"],
+  profil: ["Presentasjon skrevet (én gang)", "presentasjon"],
+  seier: ["Overlevde Idus Martiae (én gang)", "seier"],
+};
+function rang(skar) {
+  let i = 0;
+  while (i + 1 < RANGER.length && skar >= RANGER[i + 1][0]) i++;
+  const neste = RANGER[i + 1];
+  const fra = RANGER[i][0];
+  return { navn: RANGER[i][1], neste, andel: neste ? (skar - fra) / (neste[0] - fra) : 1 };
+}
+function skarHtml(a, vekt) {
+  if (!a) return "";
+  const r = rang(a.skar);
+  const deler = Object.entries(a.detaljer).filter(([, v]) => v > 0)
+    .map(([k, v]) => `<li><span>${HANDLINGER[k][0]}</span><span>${v} × ${vekt[k]} = ${v * vekt[k]}</span></li>`).join("");
+  return `<div class="skar">
+    <div class="skar-topp"><span class="skar-tall">${a.skar}</span><span class="skar-rang">${esc(r.navn)}</span></div>
+    <div class="skar-stolpe" role="img" aria-label="${r.neste ? `${r.neste[0] - a.skar} poeng til ${r.neste[1]}` : "Høyeste rang"}"><span style="width:${Math.round(r.andel * 100)}%"></span></div>
+    <p class="skar-neste">${r.neste ? `${r.neste[0] - a.skar} poeng til ${esc(r.neste[1])}` : "Høyeste rang er nådd"}</p>
+    ${deler ? `<details class="skar-detaljer"><summary>Slik er skåren regnet ut</summary><ul>${deler}</ul></details>` : ""}
+  </div>`;
 }
 
 byggRamme();

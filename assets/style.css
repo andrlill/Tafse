@@ -542,3 +542,65 @@ input:focus, select:focus, textarea:focus, .knapp:focus-visible, a:focus-visible
   .hf-handlinger .knapp, .hf-handlinger .liten-knapp { width: 100%; }
   .hf-handlinger .hf-sjekk { order: 3; }
 }
+
+/* Profilsiden */
+.bror-navn { color: inherit; text-decoration: none; }
+.bror-navn:hover { color: var(--gull-lys); text-decoration: underline; }
+.bror-bilde { display: inline-block; border-radius: 50%; }
+.bror-bilde:hover .medaljong { box-shadow: 0 0 0 3px rgba(201, 162, 74, .35); }
+.se-profil { font-family: var(--display); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; text-decoration: none; margin-top: 4px; }
+.profil-topp { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 36px; align-items: start; }
+.profil-topp > .medaljong { width: 180px; height: 180px; font-size: 64px; }
+.profil-hode { display: flex; flex-direction: column; gap: 10px; max-width: 520px; }
+.profil-hode .verv { font-family: var(--display); font-size: 13px; letter-spacing: .16em; text-transform: uppercase; color: var(--gull); }
+@media (max-width: 640px) {
+  .profil-topp { grid-template-columns: 1fr; gap: 18px; }
+  .profil-topp > .medaljong { width: 140px; height: 140px; font-size: 50px; }
+}
+.profil-tekst { max-width: 760px; }
+.profil-tekst h2 { font-size: 18px; letter-spacing: .16em; text-transform: uppercase; color: var(--gull); margin: 0 0 10px; }
+.profil-tekst p { white-space: pre-line; margin: 0 0 28px; }
+.seksjon-hode { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.seksjon-hode h2 { margin: 0; font-size: 22px; color: var(--gull); letter-spacing: .12em; }
+.tom-tekst { color: var(--dempet); font-style: italic; }
+.partner-visning { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 32px; align-items: start; }
+@media (max-width: 640px) { .partner-visning { grid-template-columns: 1fr; } }
+.partner-ramme { border: 1px solid var(--gull); padding: 6px; background: var(--bunn); line-height: 0; max-width: 254px; }
+.partner-figur { display: block; width: 100%; height: auto; }
+.partner-navn { font-size: 30px; margin: 6px 0 16px; }
+.mini-poster { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.mini-post { border: 1px solid var(--linje); background: var(--flate); padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; }
+.mini-post img { width: 100%; max-height: 220px; object-fit: cover; border: 1px solid var(--linje); }
+
+/* Partnereditor */
+.pe { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 28px; align-items: start; }
+@media (max-width: 760px) { .pe { grid-template-columns: 1fr; } }
+.pe-forhånd { position: sticky; top: 16px; display: flex; flex-direction: column; gap: 12px; }
+@media (max-width: 760px) { .pe-forhånd { position: static; align-items: center; } }
+#pe-figur { border: 1px solid var(--gull); padding: 6px; background: var(--bunn); line-height: 0; }
+#pe-figur svg { width: 100%; max-width: 260px; height: auto; }
+.pe-knapper { display: flex; gap: 10px; flex-wrap: wrap; }
+.pe-kontroller { display: flex; flex-direction: column; gap: 10px; }
+.pe-seksjon { border: 1px solid var(--linje); background: var(--flate); padding: 0 18px; }
+.pe-seksjon > summary { cursor: pointer; font-family: var(--display); font-size: 14px; letter-spacing: .16em; text-transform: uppercase; color: var(--gull); padding: 14px 0; min-height: 48px; }
+.pe-seksjon[open] { padding-bottom: 16px; }
+.pe-felt { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.pe-etikett { font-family: var(--display); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--dempet); }
+.pe-valg { display: flex; flex-wrap: wrap; gap: 6px; }
+.pe-valg button { background: transparent; color: var(--tekst); border: 1px solid var(--linje); padding: 8px 12px; min-height: 40px; font: inherit; font-size: 16px; cursor: pointer; }
+.pe-valg button:hover { border-color: var(--gull); }
+.pe-valg button[aria-pressed="true"] { background: var(--gull); color: var(--bunn); border-color: var(--gull); }
+.pe-farger { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.pe-prikk { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--linje); cursor: pointer; padding: 0; }
+.pe-prikk[aria-pressed="true"] { border-color: var(--gull-lys); box-shadow: 0 0 0 2px var(--bunn), 0 0 0 4px var(--gull); }
+.pe-egen { display: inline-flex; align-items: center; gap: 6px; font-size: 15px; color: var(--dempet); cursor: pointer; }
+.pe-egen input { width: 40px; height: 36px; min-height: 0; padding: 0; border: 1px solid var(--linje); background: none; cursor: pointer; }
+.pe-glider { display: flex; align-items: center; gap: 10px; font-size: 15px; color: var(--dempet); }
+.pe-glider input { flex: 1; min-height: 0; padding: 0; accent-color: var(--gull); border: 0; background: none; }
+@media (max-width: 760px) {
+  .pe-forhånd { position: sticky; top: 0; z-index: 5; background: var(--bunn); flex-direction: row; align-items: center; justify-content: center; gap: 14px; padding: 8px 0; border-bottom: 1px solid var(--linje); }
+  #pe-figur { width: 128px; }
+  .pe-knapper { flex-direction: column; }
+  .pe-knapper .knapp { min-width: 130px; }
+  #pe-melding { position: absolute; bottom: -2px; right: 0; font-size: 14px; }
+}
