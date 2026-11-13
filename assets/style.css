@@ -563,47 +563,70 @@ input:focus, select:focus, textarea:focus, .knapp:focus-visible, a:focus-visible
 .seksjon-hode { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
 .seksjon-hode h2 { margin: 0; font-size: 22px; color: var(--gull); letter-spacing: .12em; }
 .tom-tekst { color: var(--dempet); font-style: italic; }
-.partner-visning { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 32px; align-items: start; }
-@media (max-width: 640px) { .partner-visning { grid-template-columns: 1fr; } }
-.partner-ramme { border: 1px solid var(--gull); padding: 6px; background: var(--bunn); line-height: 0; max-width: 254px; }
-.partner-figur { display: block; width: 100%; height: auto; }
-.partner-navn { font-size: 30px; margin: 6px 0 16px; }
 .mini-poster { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
 .mini-post { border: 1px solid var(--linje); background: var(--flate); padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; }
 .mini-post img { width: 100%; max-height: 220px; object-fit: cover; border: 1px solid var(--linje); }
 
-/* Partnereditor */
-.pe { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 28px; align-items: start; }
-@media (max-width: 760px) { .pe { grid-template-columns: 1fr; } }
-.pe-forhånd { position: sticky; top: 16px; display: flex; flex-direction: column; gap: 12px; }
-@media (max-width: 760px) { .pe-forhånd { position: static; align-items: center; } }
-#pe-figur { border: 1px solid var(--gull); padding: 6px; background: var(--bunn); line-height: 0; }
-#pe-figur svg { width: 100%; max-width: 260px; height: auto; }
-.pe-knapper { display: flex; gap: 10px; flex-wrap: wrap; }
-.pe-kontroller { display: flex; flex-direction: column; gap: 10px; }
-.pe-seksjon { border: 1px solid var(--linje); background: var(--flate); padding: 0 18px; }
-.pe-seksjon > summary { cursor: pointer; font-family: var(--display); font-size: 14px; letter-spacing: .16em; text-transform: uppercase; color: var(--gull); padding: 14px 0; min-height: 48px; }
-.pe-seksjon[open] { padding-bottom: 16px; }
-.pe-felt { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+/* Valgknapper (brukes av veiviseren) */
 .pe-etikett { font-family: var(--display); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--dempet); }
 .pe-valg { display: flex; flex-wrap: wrap; gap: 6px; }
-.pe-valg button { background: transparent; color: var(--tekst); border: 1px solid var(--linje); padding: 8px 12px; min-height: 40px; font: inherit; font-size: 16px; cursor: pointer; }
+.pe-valg button { background: transparent; color: var(--tekst); border: 1px solid var(--linje); padding: 8px 12px; min-height: 40px; font: inherit; font-size: 16px; cursor: pointer; text-align: left; }
 .pe-valg button:hover { border-color: var(--gull); }
 .pe-valg button[aria-pressed="true"] { background: var(--gull); color: var(--bunn); border-color: var(--gull); }
 .pe-farger { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .pe-prikk { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--linje); cursor: pointer; padding: 0; }
 .pe-prikk[aria-pressed="true"] { border-color: var(--gull-lys); box-shadow: 0 0 0 2px var(--bunn), 0 0 0 4px var(--gull); }
-.pe-egen { display: inline-flex; align-items: center; gap: 6px; font-size: 15px; color: var(--dempet); cursor: pointer; }
-.pe-egen input { width: 40px; height: 36px; min-height: 0; padding: 0; border: 1px solid var(--linje); background: none; cursor: pointer; }
-.pe-glider { display: flex; align-items: center; gap: 10px; font-size: 15px; color: var(--dempet); }
-.pe-glider input { flex: 1; min-height: 0; padding: 0; accent-color: var(--gull); border: 0; background: none; }
-@media (max-width: 760px) {
-  .pe-forhånd { position: sticky; top: 0; z-index: 5; background: var(--bunn); flex-direction: row; align-items: center; justify-content: center; gap: 14px; padding: 8px 0; border-bottom: 1px solid var(--linje); }
-  #pe-figur { width: 128px; }
-  .pe-knapper { flex-direction: column; }
-  .pe-knapper .knapp { min-width: 130px; }
-  #pe-melding { position: absolute; bottom: -2px; right: 0; font-size: 14px; }
-}
+
+/* Drømmelandet: kortet */
+.land-kort { display: flex; flex-direction: column; gap: 22px; }
+.land-hode { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+.land-hode .flagg { display: block; height: auto; box-shadow: 0 6px 18px rgba(0, 0, 0, .5); }
+.land-navn { font-size: 34px; margin: 4px 0 0; letter-spacing: .06em; }
+.land-motto { margin: 4px 0 0; font-style: italic; color: var(--dempet); }
+.land-kart-ramme { border: 1px solid var(--gull); padding: 6px; background: var(--bunn); line-height: 0; max-width: 834px; }
+.land-kart { display: block; width: 100%; height: auto; }
+.land-paragraf { max-width: 760px; margin: 0; font-size: 19px; }
+.land-paragraf span { font-family: var(--display); color: var(--gull); margin-right: 6px; }
+.land-fakta { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+@media (max-width: 640px) { .land-fakta { grid-template-columns: 1fr 1fr; } .land-hode .flagg { width: 110px; } .land-navn { font-size: 28px; } }
+.land-analyse { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 32px; align-items: start; }
+@media (max-width: 760px) { .land-analyse { grid-template-columns: 1fr; } }
+.land-analyse h4, .le-innsikt h4 { font-family: var(--display); font-size: 13px; letter-spacing: .16em; text-transform: uppercase; color: var(--gull); margin: 0 0 12px; font-weight: 600; }
+.land-lijphart .lijphart { width: 100%; max-width: 240px; height: auto; display: block; margin-bottom: 8px; }
+.land-merknader { list-style: none; margin: 0 0 22px; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.land-merknader li { border-left: 2px solid var(--linje); padding-left: 14px; line-height: 1.5; }
+.land-merknader li.advarsel { border-left-color: var(--rod); }
+.land-merknader li.ok { border-left-color: var(--gull); }
+.land-kilder { border-top: 1px solid var(--linje); padding-top: 12px; }
+.land-kilder summary { cursor: pointer; font-family: var(--display); font-size: 13px; letter-spacing: .16em; text-transform: uppercase; color: var(--gull); min-height: 40px; display: flex; align-items: center; }
+.land-kilder ul { margin: 8px 0 0; padding-left: 18px; font-size: 15px; color: var(--dempet); display: flex; flex-direction: column; gap: 6px; }
+
+/* Drømmelandet: veiviseren */
+.le { display: flex; flex-direction: column; gap: 22px; scroll-margin-top: 16px; }
+.le-steg { list-style: none; margin: 0; padding: 0 0 4px; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: thin; }
+.le-steg button { display: flex; align-items: center; gap: 8px; white-space: nowrap; background: transparent; color: var(--dempet); border: 1px solid var(--linje); padding: 8px 12px; min-height: 40px; font-family: var(--display); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
+.le-steg button span { display: inline-flex; width: 22px; height: 22px; border-radius: 50%; border: 1px solid currentColor; align-items: center; justify-content: center; font-size: 11px; }
+.le-steg button.ferdig { color: var(--tekst); }
+.le-steg button[aria-current="step"] { color: var(--bunn); background: var(--gull); border-color: var(--gull); }
+.le-innhold { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 28px; align-items: start; }
+@media (max-width: 860px) { .le-innhold { grid-template-columns: 1fr; } }
+.le-skjema h3 { margin: 0 0 6px; font-size: 24px; }
+.le-skjema > p { margin: 0 0 20px; }
+.le-felt { display: flex; flex-direction: column; gap: 8px; margin-bottom: 22px; }
+.le-felt input[type="range"] { width: 100%; min-height: 0; padding: 0; accent-color: var(--gull); border: 0; background: none; }
+.le-verdi { color: var(--tekst); letter-spacing: .04em; text-transform: none; font-family: var(--brod); font-size: 17px; }
+.le-fag { border-left: 2px solid var(--gull); padding: 2px 0 2px 14px; font-size: 16px; color: var(--dempet); line-height: 1.5; }
+.le-fag p { margin: 0 0 6px; }
+.le-fag p:last-child { margin: 0; }
+.le-fargenr { width: 18px; font-family: var(--display); font-size: 12px; color: var(--dempet); }
+.le-innsikt { position: sticky; top: 16px; border: 1px solid var(--gull); background: var(--flate); padding: 18px 20px; }
+.le-innsikt p { margin: 0 0 10px; line-height: 1.5; }
+.le-innsikt p:last-child { margin: 0; }
+.le-innsikt .land-merknader { margin: 0; font-size: 16px; }
+.land-flaggvisning { margin-bottom: 12px; line-height: 0; }
+.land-flaggvisning .flagg { width: 100%; max-width: 240px; height: auto; box-shadow: 0 6px 18px rgba(0, 0, 0, .5); }
+@media (max-width: 860px) { .le-innsikt { position: static; } }
+.le-knapper { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--linje); padding-top: 18px; }
 
 /* Varsler */
 .meny { margin-left: auto; }

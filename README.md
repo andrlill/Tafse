@@ -12,7 +12,8 @@ Nettsiden til Taffelakademiet for Samvær og Etegilder.
 | `salongen.html` | Salongen: poster, bilder, svar og skåler (krever innlogging) |
 | `saker.html` | Saker til behandling: innmelding, veiledende avstemning og kommentarer (krever innlogging) |
 | `medlemmer.html` | Brødrene, med profilbilde, presentasjon og bytte av passord |
-| `bror.html`, `assets/partner.js` | Profilsiden til hver bror: presentasjon, fakta, skår, siste poster og drømmepartneren (tegnes i nettleseren) |
+| `bror.html` | Profilsiden til hver bror: presentasjon, fakta, skår, siste poster og drømmelandet |
+| `assets/land-modell.js`, `assets/land-kart.js`, `assets/land-editor.js` | Drømmelandet: fagmodellen (klima, geologi, valgordning, vetospillere, Lijphart, ressursforbannelse), kart og flagg, og veiviseren i åtte steg |
 | `velkommen.html` | Registrering fra den personlige invitasjonslenken |
 | `invitasjoner.html` | Oversikt over invitasjonslenker (kun administratorer) |
 | `moter.html`, `mote.html` | Møtene: kommende og avholdte møter, kalenderfil, og egen side per møte med bilder og poster |

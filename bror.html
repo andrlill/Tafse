@@ -16,7 +16,9 @@
   <div id="profil"><p class="dempet">Laster …</p></div>
 </main>
 <script src="assets/app.js"></script>
-<script src="assets/partner.js"></script>
+<script src="assets/land-modell.js"></script>
+<script src="assets/land-kart.js"></script>
+<script src="assets/land-editor.js"></script>
 <script>
 const FAKTA = [
   ["yrke", "Yrke"],
@@ -49,7 +51,7 @@ const FAKTA = [
     ]);
     let p = profiler.find((x) => x.navn === navn) || {};
     let info = p.info || {};
-    let partner = p.partner || null;
+    let land = p.land || null;
 
     function faktaHtml() {
       const fylt = FAKTA.filter(([k]) => info[k]);
@@ -57,17 +59,11 @@ const FAKTA = [
       return `<dl class="fakta">${fylt.map(([k, t]) => `<div><dt>${t}</dt><dd>${esc(info[k])}</dd></div>`).join("")}</dl>`;
     }
 
-    function partnerHtml() {
-      if (!partner) return `<p class="tom-tekst">${egen ? "Du har ikke skapt drømmepartneren din ennå." : `${esc(navn)} har ikke skapt drømmepartneren sin ennå.`}</p>`;
-      const felt = [["yrke", "Yrke"], ["interesser", "Interesser"], ["kjennetegn", "Må tåle"]].filter(([k]) => partner[k]);
-      return `<div class="partner-visning">
-        <div class="partner-ramme">${tegnPartner(partner, { bredde: 240 })}</div>
-        <div>
-          <p class="overline" style="margin:0">Drømmepartneren til ${esc(navn)}</p>
-          <h3 class="partner-navn">${esc(partner.navn || "Navnløs skjønnhet")}</h3>
-          ${felt.length ? `<dl class="fakta" style="grid-template-columns:1fr">${felt.map(([k, t]) => `<div><dt>${t}</dt><dd>${esc(partner[k])}</dd></div>`).join("")}</dl>` : ""}
-        </div>
-      </div>`;
+    function landHtml() {
+      if (land) return landKortHtml(land);
+      return `<p class="tom-tekst">${egen
+        ? "Du har ikke grunnlagt drømmelandet ditt ennå. Velg geografi, geologi, folk, styresett, valgordning og økonomi, så tegnes landet med kart, flagg og en faglig vurdering."
+        : `${esc(navn)} har ikke grunnlagt drømmelandet sitt ennå.`}</p>`;
     }
 
     const postHtml = (x) => `<article class="mini-post">
@@ -100,8 +96,8 @@ const FAKTA = [
         </section>
 
         <section class="seksjon">
-          <div class="seksjon-hode"><h2>Drømmepartneren</h2>${egen ? `<button class="liten-knapp" type="button" id="rediger-partner">${partner ? "Endre" : "Skap drømmepartneren"}</button>` : ""}</div>
-          <div id="partner">${partnerHtml()}</div>
+          <div class="seksjon-hode"><h2>Drømmelandet</h2>${egen ? `<button class="liten-knapp" type="button" id="rediger-land">${land ? "Endre grunnloven" : "Grunnlegg et land"}</button>` : ""}</div>
+          <div id="land">${landHtml()}</div>
         </section>
 
         <section class="seksjon">
@@ -109,6 +105,7 @@ const FAKTA = [
           ${poster.length ? `<div class="mini-poster">${poster.slice(0, 6).map(postHtml).join("")}</div>` : `<p class="tom-tekst">Ingen poster ennå.</p>`}
         </section>`;
 
+      if (land) tegnLandKartI(document.getElementById("land"), land);
       if (!egen) return;
 
       document.getElementById("rediger-fakta").addEventListener("click", () => {
@@ -133,15 +130,15 @@ const FAKTA = [
         });
       });
 
-      document.getElementById("rediger-partner").addEventListener("click", (e) => {
+      document.getElementById("rediger-land").addEventListener("click", (e) => {
         e.currentTarget.hidden = true;
-        const pb = document.getElementById("partner");
-        byggPartnerEditor(pb, partner, async (ny) => {
-          await api(`profiler/${encodeURIComponent(MEG)}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ partner: ny }) });
-          partner = ny;
+        const lb = document.getElementById("land");
+        byggLandEditor(lb, land, async (ny) => {
+          await api(`profiler/${encodeURIComponent(MEG)}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ land: ny }) });
+          land = ny;
+          setTimeout(() => { tegn(); document.getElementById("land").scrollIntoView({ block: "start" }); }, 900);
         });
-        pb.insertAdjacentHTML("beforeend", `<p style="margin-top:16px"><button class="knapp sekundar" type="button" id="ferdig-partner">Ferdig</button></p>`);
-        document.getElementById("ferdig-partner").addEventListener("click", () => tegn());
+        lb.scrollIntoView({ block: "start", behavior: "smooth" });
       });
     }
 

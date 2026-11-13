@@ -122,6 +122,7 @@ async function sikreSkjema(db) {
   try { await db.prepare("ALTER TABLE profiler ADD COLUMN bilde_id INTEGER").run(); } catch (_) {}
   try { await db.prepare("ALTER TABLE profiler ADD COLUMN info TEXT").run(); } catch (_) {}
   try { await db.prepare("ALTER TABLE profiler ADD COLUMN partner TEXT").run(); } catch (_) {}
+  try { await db.prepare("ALTER TABLE profiler ADD COLUMN land TEXT").run(); } catch (_) {}
   try { await db.prepare("ALTER TABLE forslag ADD COLUMN type TEXT").run(); } catch (_) {}
   try { await db.prepare("ALTER TABLE forslag ADD COLUMN mote TEXT").run(); } catch (_) {}
   skjemaKlart = true;
@@ -669,32 +670,33 @@ export async function onRequest({ request, env, params }) {
   // --- Presentasjoner av brødrene ---
   if (ressurs === "profiler") {
     if (!id && metode === "GET") {
-      const { results } = await db.prepare("SELECT navn, tekst, tafse, bilde_id, info, partner, oppdatert FROM profiler").all();
+      const { results } = await db.prepare("SELECT navn, tekst, tafse, bilde_id, info, partner, land, oppdatert FROM profiler").all();
       const tolk = (v) => { try { return v ? JSON.parse(v) : null; } catch (_) { return null; } };
-      return json(results.map((r) => ({ ...r, info: tolk(r.info), partner: tolk(r.partner) })));
+      return json(results.map((r) => ({ ...r, info: tolk(r.info), partner: tolk(r.partner), land: tolk(r.land) })));
     }
     if (id && metode === "PUT") {
       // Oppdaterer bare feltene som er med, så de ulike skjemaene ikke overskriver hverandre
       const b = await lesJson(request);
-      const gml = (await db.prepare("SELECT tekst, tafse, info, partner FROM profiler WHERE navn = ?").bind(meg).first()) || {};
+      const gml = (await db.prepare("SELECT tekst, tafse, info, partner, land FROM profiler WHERE navn = ?").bind(meg).first()) || {};
       const somJson = (v, maks) => {
         if (v === null) return null;
         const s = JSON.stringify(v);
         if (!v || typeof v !== "object" || Array.isArray(v) || s.length > maks) throw new Error("ugyldig");
         return s;
       };
-      let info, partner;
+      let info, partner, land;
       try {
         info = "info" in b ? somJson(b.info, 4000) : gml.info ?? null;
         partner = "partner" in b ? somJson(b.partner, 4000) : gml.partner ?? null;
+        land = "land" in b ? somJson(b.land, 4000) : gml.land ?? null;
       } catch (_) {
         return feil(400, "Ugyldige profildata.");
       }
       const t = "tekst" in b ? tekst(b.tekst, 3000) : gml.tekst || "";
       const betyr = "tafse" in b ? tekst(b.tafse, 3000) : gml.tafse ?? null;
       await db
-        .prepare("INSERT INTO profiler (navn, tekst, tafse, info, partner, oppdatert) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(navn) DO UPDATE SET tekst = excluded.tekst, tafse = excluded.tafse, info = excluded.info, partner = excluded.partner, oppdatert = excluded.oppdatert")
-        .bind(meg, t, betyr, info, partner, naa())
+        .prepare("INSERT INTO profiler (navn, tekst, tafse, info, partner, land, oppdatert) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(navn) DO UPDATE SET tekst = excluded.tekst, tafse = excluded.tafse, info = excluded.info, partner = excluded.partner, land = excluded.land, oppdatert = excluded.oppdatert")
+        .bind(meg, t, betyr, info, partner, land, naa())
         .run();
       return json({ ok: true });
     }
