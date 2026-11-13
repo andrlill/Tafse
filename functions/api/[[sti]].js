@@ -95,6 +95,8 @@ async function sikreSkjema(db) {
       fullfort INTEGER NOT NULL,
       opprettet TEXT NOT NULL
     )`),
+    // Resultater fra første versjon av Honningfella (før samtalene). Kan fjernes når den har kjørt.
+    db.prepare("DELETE FROM honningfella WHERE oppdrag IN ('messen', 'gallaen')"),
     db.prepare(`CREATE TABLE IF NOT EXISTS profiler (
       navn TEXT PRIMARY KEY,
       tekst TEXT NOT NULL,
