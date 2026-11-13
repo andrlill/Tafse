@@ -40,7 +40,7 @@ function byggRamme() {
   const her = (location.pathname.split("/").pop() || "index").replace(/\.html$/, "");
   const meny = SIDER.map(([fil, navn]) => {
     const stamme = fil.replace(/\.html$/, "");
-    const aktiv = stamme === her || (her === "mote" && stamme === "moter");
+    const aktiv = stamme === her || (her === "mote" && stamme === "moter") || (her === "honningfella" && stamme === "spill");
     return `<a href="${fil}"${aktiv ? ' class="aktiv" aria-current="page"' : ""}>${navn}</a>`;
   }).join("");
   const topp = document.createElement("header");

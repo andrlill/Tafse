@@ -84,6 +84,17 @@ async function sikreSkjema(db) {
       seier INTEGER NOT NULL,
       opprettet TEXT NOT NULL
     )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS honningfella (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      navn TEXT NOT NULL,
+      oppdrag TEXT NOT NULL,
+      skar INTEGER NOT NULL,
+      riktige INTEGER NOT NULL,
+      moter INTEGER NOT NULL,
+      prikker INTEGER NOT NULL,
+      fullfort INTEGER NOT NULL,
+      opprettet TEXT NOT NULL
+    )`),
     db.prepare(`CREATE TABLE IF NOT EXISTS profiler (
       navn TEXT PRIMARY KEY,
       tekst TEXT NOT NULL,
@@ -523,6 +534,28 @@ export async function onRequest({ request, env, params }) {
       const kol = Math.max(0, Math.min(60, Math.round(Number(b.kolleger) || 0)));
       const seier = b.seier && sek >= 60 && sar < 23 ? 1 : 0;
       await db.prepare("INSERT INTO spillresultater (navn, sekunder, sar, kolleger, seier, opprettet) VALUES (?, ?, ?, ?, ?, ?)").bind(meg, sek, sar, kol, seier, naa()).run();
+      return json({ ok: true }, 201);
+    }
+  }
+
+  // --- Spillet: Honningfella ---
+  // Alle forsøk lagres for alltid. Tavlen viser beste skår per bror og oppdrag.
+  if (ressurs === "honningfella") {
+    if (metode === "GET") {
+      const { results } = await db.prepare("SELECT navn, oppdrag, MAX(skar) AS beste, COUNT(*) AS forsok FROM honningfella GROUP BY navn, oppdrag").all();
+      const totalt = await db.prepare("SELECT COUNT(*) AS n FROM honningfella").first();
+      return json({ resultater: results, antallSpill: totalt ? totalt.n : 0 });
+    }
+    if (metode === "POST") {
+      const b = await lesJson(request);
+      const oppdrag = typeof b.oppdrag === "string" && /^[a-z0-9-]{1,40}$/.test(b.oppdrag) ? b.oppdrag : null;
+      if (!oppdrag) return feil(400, "Ukjent oppdrag.");
+      const heltall = (v, min, maks) => Math.max(min, Math.min(maks, Math.round(Number(v) || 0)));
+      const moter = heltall(b.moter, 0, 50);
+      await db
+        .prepare("INSERT INTO honningfella (navn, oppdrag, skar, riktige, moter, prikker, fullfort, opprettet) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+        .bind(meg, oppdrag, heltall(b.skar, -100000, 200000), heltall(b.riktige, 0, moter), moter, heltall(b.prikker, 0, 3), b.fullfort ? 1 : 0, naa())
+        .run();
       return json({ ok: true }, 201);
     }
   }

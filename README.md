@@ -17,6 +17,7 @@ Nettsiden til Taffelakademiet for Samvær og Etegilder.
 | `moter.html`, `mote.html` | Møtene: kommende og avholdte møter, kalenderfil, og egen side per møte med bilder og poster |
 | `fortellingen.html` | Nettversjonen av lanseringspresentasjonen |
 | `spill.html`, `assets/spill.js` | Spillet Idus Martiae, med tavle for brødrene |
+| `honningfella.html`, `assets/honningfella.js` | Spillet Honningfella. Oppdragene ligger i `data/honningfella/oppdrag.json`, se `data/honningfella/OPPSKRIFT.md` |
 | `verden.html`, `data/steder/` | «Hva skjer?»: ukens tilfeldige sted, med arkiv. Se `data/steder/OPPSKRIFT.md` |
 | `data/moter.json` | **Møtedatoer, Tafsemestere og medlemsliste. Endre her.** |
 | `assets/style.css` | Farger og utseende |
