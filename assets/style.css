@@ -847,6 +847,12 @@ input:focus, select:focus, textarea:focus, .knapp:focus-visible, a:focus-visible
 .t-mini { display: inline-block; min-width: 46px; padding: 1px 6px; text-align: center; font-family: var(--display); font-size: 14px; font-weight: 700; border-width: 1px; border-style: solid; }
 .t-mini.v2, .t-mini.v4 { border-color: var(--linje); }
 .t-fot { font-size: 15px; margin-top: 8px; }
+.t-kroner { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px; }
+.t-krone { border: 1px solid var(--gull); padding: 12px 16px; display: flex; flex-direction: column; }
+.t-krone span { font-family: var(--display); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--gull); }
+.t-krone strong { font-family: var(--display); font-size: 28px; font-weight: 700; color: var(--gull-lys); font-variant-numeric: tabular-nums; line-height: 1.2; }
+.t-krone em { font-style: normal; font-size: 18px; }
+.t-undertittel { font-size: 15px; letter-spacing: .16em; text-transform: uppercase; color: var(--gull); margin: 26px 0 4px; }
 @media (max-width: 860px) {
   .t-oppsett { grid-template-columns: 1fr; gap: 32px; }
   .t-brett { --g: 8px; }

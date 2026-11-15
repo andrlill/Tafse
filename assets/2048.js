@@ -9,7 +9,7 @@
   const tavle = document.getElementById("t-tavle");
 
   let ruter, poeng, trekk, over, vunnet, fortsett, lagret, nesteId = 1, rekord = 0, rekordSpilt = false, startRekord = 0;
-  let fane = "uke", data = null;
+  let data = null;
 
   const tall = (n) => n.toLocaleString("nb-NO");
 
@@ -204,14 +204,27 @@
     const r = data.alle.find((x) => x.navn === MEG);
     return r ? r.poeng : 0;
   }
+  function liste(rader, tom) {
+    return rader.length
+      ? `<table class="tavle t-tavle"><thead><tr><th>#</th><th>Bror</th><th>Poeng</th><th>Brikke</th></tr></thead><tbody>${rader.map((r, i) =>
+          `<tr${r.navn === MEG ? ' class="meg"' : ""}><td>${i + 1}</td><td>${esc(r.navn)}</td><td>${tall(r.poeng)}</td><td><span class="t-mini v${Math.min(r.brikke, 8192)}">${r.brikke}</span></td></tr>`).join("")}</tbody></table>`
+      : `<p class="tomt">${tom}</p>`;
+  }
   function visTavle() {
     if (!data) return;
-    const rader = data[fane];
-    tavle.innerHTML = rader.length
-      ? `<table class="tavle t-tavle"><thead><tr><th>#</th><th>Bror</th><th>Poeng</th><th>Brikke</th></tr></thead><tbody>${rader.map((r, i) =>
-          `<tr${r.navn === MEG ? ' class="meg"' : ""}><td>${i + 1}</td><td>${esc(r.navn)}</td><td>${tall(r.poeng)}</td><td><span class="t-mini v${Math.min(r.brikke, 8192)}">${r.brikke}</span></td></tr>`).join("")}</tbody></table>
-         <p class="dempet t-fot">${fane === "uke" ? "Uka starter mandag." : `${tall(data.antall)} spill totalt.`}</p>`
-      : `<p class="tomt">${fane === "uke" ? "Ingen har spilt denne uka. Ledig førsteplass." : "Ingen har spilt ennå."}</p>`;
+    const rekord = data.alle[0];
+    const leder = data.uke[0];
+    tavle.innerHTML = `
+      <div class="t-kroner">
+        <div class="t-krone"><span>Rekorden</span>${rekord ? `<strong>${tall(rekord.poeng)}</strong><em>${esc(rekord.navn)}</em>` : `<strong>·</strong><em>Ledig</em>`}</div>
+        <div class="t-krone"><span>Ukens leder</span>${leder ? `<strong>${tall(leder.poeng)}</strong><em>${esc(leder.navn)}</em>` : `<strong>·</strong><em>Ledig</em>`}</div>
+      </div>
+      <h3 class="t-undertittel">Denne uka</h3>
+      ${liste(data.uke, "Ingen har spilt denne uka. Ledig førsteplass.")}
+      <p class="dempet t-fot">Uka starter mandag.</p>
+      <h3 class="t-undertittel">Alle tider</h3>
+      ${liste(data.alle, "Ingen har spilt ennå.")}
+      <p class="dempet t-fot">${tall(data.antall)} spill totalt.</p>`;
   }
   async function lastTavle() {
     if (!(await hvemErJeg())) {
@@ -227,12 +240,6 @@
       tavle.innerHTML = `<p class="melding feil">${esc(e.message)}</p>`;
     }
   }
-  document.querySelectorAll(".t-fane").forEach((b) => b.addEventListener("click", () => {
-    fane = b.dataset.fane;
-    document.querySelectorAll(".t-fane").forEach((x) => { x.classList.toggle("aktiv", x === b); x.setAttribute("aria-selected", x === b); });
-    visTavle();
-  }));
-
   // ---------- Styring ----------
   const TASTER = { ArrowLeft: "venstre", ArrowRight: "hoyre", ArrowUp: "opp", ArrowDown: "ned", a: "venstre", d: "hoyre", w: "opp", s: "ned" };
   window.addEventListener("keydown", (e) => {
