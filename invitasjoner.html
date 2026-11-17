@@ -70,13 +70,32 @@ kreverInnlogging(boks, async () => {
             <a class="liten-knapp" style="text-decoration:none; display:inline-flex; align-items:center" href="sms:?&body=${encodeURIComponent(melding(i.navn, lenke(i)))}">Send som SMS</a>
           </div>`}
         </article>`).join("")}
-    </div>`;
+    </div>
+    <h2 style="font-size:22px; color:var(--gull); letter-spacing:.1em; margin-top:40px">Gjester i spillhallen</h2>
+    <p>Gjester har bare tilgang til spillene. Hver bror finner sin egen gjestelenke på <a href="gjest.html">gjestesiden</a>. Fjerner du en gjest, kan han ikke logge inn igjen, men resultatene blir stående på tavlene.</p>
+    <div id="gjester"><p class="dempet">Laster …</p></div>`;
+  const gjesteboks = document.getElementById("gjester");
+  async function visGjester() {
+    try {
+      const g = await api("gjester");
+      gjesteboks.innerHTML = g.length
+        ? g.map((x) => `<div class="gjest-rad"><span><strong>${esc(x.navn)}</strong> <span class="dempet">invitert av ${esc(x.invitert_av || "ukjent")}, ${esc(tidTekst(x.opprettet))}</span></span><button class="liten-knapp" type="button" data-fjern="${esc(x.navn)}">Fjern</button></div>`).join("")
+        : `<p class="tom-tekst">Ingen gjester ennå.</p>`;
+    } catch (err) {
+      gjesteboks.innerHTML = `<p class="melding feil">${esc(err.message)}</p>`;
+    }
+  }
+  visGjester();
 
   boks.addEventListener("click", (e) => {
     const b = e.target.closest("button");
     if (!b) return;
     if (b.dataset.melding) { const i = liste[b.dataset.melding]; kopier(melding(i.navn, lenke(i)), b); }
     if (b.dataset.lenke) kopier(lenke(liste[b.dataset.lenke]), b);
+    if (b.dataset.fjern) {
+      b.disabled = true;
+      api(`gjester/${encodeURIComponent(b.dataset.fjern)}`, { method: "DELETE" }).then(visGjester).catch((err) => { b.disabled = false; b.textContent = err.message; });
+    }
   });
 });
 </script>

@@ -956,3 +956,8 @@ a.liten-knapp { text-decoration: none; display: inline-flex; align-items: center
 .h-vare .liten-knapp { margin-top: auto; }
 .h-vare .liten-knapp:disabled { opacity: .45; cursor: default; }
 @media (max-width: 760px) { .h-innsjekk { grid-template-columns: 1fr; justify-items: center; padding: 18px; gap: 18px; } .h-innsjekk canvas { width: 180px; height: 240px; } .h-butikk { grid-template-columns: 1fr 1fr; } }
+/* Gjester i spillhallen */
+.gjest-spill { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0 24px; }
+.gjest-spill .knapp { text-decoration: none; }
+.gjest-rad { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--linje); flex-wrap: wrap; }
+.gjest-handlinger { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0; }

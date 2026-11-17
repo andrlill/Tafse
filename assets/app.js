@@ -40,7 +40,7 @@ function byggRamme() {
   const her = (location.pathname.split("/").pop() || "index").replace(/\.html$/, "");
   const meny = SIDER.map(([fil, navn]) => {
     const stamme = fil.replace(/\.html$/, "");
-    const aktiv = stamme === her || (her === "mote" && stamme === "moter") || (["spill", "honningfella", "2048", "murbrekker", "hotell"].includes(her) && stamme === "symposion") || (her === "bror" && stamme === "medlemmer");
+    const aktiv = stamme === her || (her === "mote" && stamme === "moter") || (["spill", "honningfella", "2048", "murbrekker", "hotell", "gjest"].includes(her) && stamme === "symposion") || (her === "bror" && stamme === "medlemmer");
     return `<a href="${fil}"${aktiv ? ' class="aktiv" aria-current="page"' : ""}>${navn}</a>`;
   }).join("");
   const topp = document.createElement("header");
@@ -126,6 +126,9 @@ function mesterTekst(m) {
 
 let MEG = null; // navnet til den som er logget inn
 let ADMIN = false;
+let GJEST = false; // gjester er bare innlogget på spillsidene, som «Navn (gjest)»
+const GJESTESPILL = [["spill", "Idus Martiae"], ["2048", "2048"], ["murbrekker", "Murbrekker"], ["honningfella", "Honningfella"], ["hotell", "Tafse Hotell"]];
+const paaGjesteside = () => GJESTESPILL.some(([s]) => s === (location.pathname.split("/").pop() || "").replace(/\.html$/, ""));
 
 async function api(sti, valg = {}) {
   const r = await fetch(`/api/${sti}`, { credentials: "same-origin", ...valg });
@@ -142,9 +145,10 @@ async function api(sti, valg = {}) {
 async function hvemErJeg() {
   try {
     const m = await api("meg");
-    MEG = m.innlogget ? m.navn : null;
+    GJEST = !m.innlogget && !!m.gjest && paaGjesteside();
+    MEG = m.innlogget || GJEST ? m.navn : null;
     ADMIN = !!m.admin;
-  } catch (_) { MEG = null; ADMIN = false; }
+  } catch (_) { MEG = null; ADMIN = false; GJEST = false; }
   visInnloggetLinje();
   return MEG;
 }
@@ -224,12 +228,14 @@ function fremhevAnker() {
 window.addEventListener("hashchange", () => fremhevAnker());
 
 function visInnloggetLinje() {
-  if (MEG) startVarsler();
+  if (MEG && !GJEST) startVarsler();
   const p = document.querySelector(".bunn-status");
   if (!p) return;
-  p.innerHTML = MEG
-    ? `Innlogget som <strong>${esc(MEG)}</strong>${ADMIN ? ` · <a href="invitasjoner.html">Invitasjoner</a>` : ""} · <a href="#" id="loggut">Logg ut</a>`
-    : "";
+  p.innerHTML = GJEST
+    ? `Spiller som <strong>${esc(MEG)}</strong> · <a href="gjest.html">Spillene</a> · <a href="#" id="loggut">Logg ut</a>`
+    : MEG
+    ? `Innlogget som <strong>${esc(MEG)}</strong>${paaGjesteside() ? ` · <a href="gjest.html">Inviter en gjest</a>` : ""}${ADMIN ? ` · <a href="invitasjoner.html">Invitasjoner</a>` : ""} · <a href="#" id="loggut">Logg ut</a>`
+    : paaGjesteside() ? `Gjest? <a href="gjest.html">Logg inn som gjest</a>` : "";
   const l = document.getElementById("loggut");
   if (l) l.addEventListener("click", async (e) => {
     e.preventDefault();

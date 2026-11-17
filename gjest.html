@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gjest i spillhallen · TAFSE</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main class="side smal">
+  <p class="overline">Spillhallen</p>
+  <h1 class="side-tittel">Gjester</h1>
+  <div id="innhold"><p class="dempet">Laster …</p></div>
+</main>
+<script src="assets/app.js"></script>
+<script>
+const boks = document.getElementById("innhold");
+const q = new URLSearchParams(location.search);
+const json = (data) => ({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+
+const spilliste = () => `<div class="gjest-spill">${GJESTESPILL.map(([s, n]) => `<a class="knapp sekundar" href="${s}.html">${esc(n)}</a>`).join("")}</div>`;
+
+async function kopier(tekst, knapp) {
+  try { await navigator.clipboard.writeText(tekst); }
+  catch (_) { const t = document.createElement("textarea"); t.value = tekst; document.body.append(t); t.select(); document.execCommand("copy"); t.remove(); }
+  const før = knapp.textContent;
+  knapp.textContent = "Kopiert";
+  setTimeout(() => (knapp.textContent = før), 1500);
+}
+
+function loggUtKnapp() {
+  boks.querySelector("#gjest-ut").addEventListener("click", async () => { await api("loggut", { method: "POST" }); location.href = "gjest.html"; });
+}
+
+function visInnloggetGjest(navn, ny) {
+  boks.innerHTML = `
+    <p>${ny ? "Velkommen! " : ""}Du spiller som <strong>${esc(navn)}</strong>. Resultatene dine havner på tavlene sammen med brødrenes.</p>
+    ${spilliste()}
+    <p class="dempet">Som gjest har du bare tilgang til spillene. Salongen, sakene og resten av siden er forbeholdt Tafsebrødrene.</p>
+    <p><button class="liten-knapp" type="button" id="gjest-ut">Logg ut</button></p>`;
+  loggUtKnapp();
+}
+
+async function visBror(navn) {
+  const { fra, kode } = await api("gjestelenke");
+  const lenke = `${location.origin}/gjest.html?fra=${encodeURIComponent(fra)}&kode=${kode}`;
+  const melding = `Hei! Du er invitert som gjest i spillhallen til TAFSE. Lag deg en bruker her, så kan du spille og komme på tavlene:\n\n${lenke}`;
+  boks.innerHTML = `
+    <p>Gjester kan spille ${GJESTESPILL.map(([, n]) => n).join(", ").replace(/, ([^,]*)$/, " og $1")}, og kommer på tavlene med «(gjest)» bak navnet. De ser ikke noe annet på siden.</p>
+    <h2 style="font-size:20px; color:var(--gull); letter-spacing:.1em; margin:28px 0 8px">Din gjestelenke</h2>
+    <p class="dempet" style="word-break:break-all">${esc(lenke)}</p>
+    <div class="gjest-handlinger">
+      <button class="liten-knapp" type="button" id="kopier-melding">Kopier melding</button>
+      <button class="liten-knapp" type="button" id="kopier-lenke">Kopier bare lenken</button>
+      <a class="liten-knapp" style="text-decoration:none; display:inline-flex; align-items:center" href="sms:?&body=${encodeURIComponent(melding)}">Send som SMS</a>
+    </div>
+    <p class="dempet" style="font-size:15px">Lenken kan brukes av flere. Gjestene registreres som invitert av deg.</p>`;
+  boks.querySelector("#kopier-melding").addEventListener("click", (e) => kopier(melding, e.currentTarget));
+  boks.querySelector("#kopier-lenke").addEventListener("click", (e) => kopier(lenke, e.currentTarget));
+}
+
+function visRegistrering(fra, kode) {
+  boks.innerHTML = `
+    <p><strong>${esc(fra)}</strong> har invitert deg som gjest i spillhallen til TAFSE, Taffelakademiet for Samvær og Etegilder. Velg et navn og et passord, så kan du spille og komme på tavlene.</p>
+    <form class="skjema" id="gjest-reg">
+      <div class="felt"><label for="g-navn">Navnet ditt</label><input id="g-navn" maxlength="24" autocomplete="nickname" required></div>
+      <div class="felt"><label for="g-pass">Passord (minst seks tegn)</label><input id="g-pass" type="password" minlength="6" autocomplete="new-password" required></div>
+      <div class="felt"><label for="g-pass2">Gjenta passordet</label><input id="g-pass2" type="password" minlength="6" autocomplete="new-password" required></div>
+      <button class="knapp" type="submit">Lag gjestebruker</button>
+      <div id="g-melding" role="status"></div>
+    </form>
+    <p class="dempet" style="font-size:15px">Har du allerede en gjestebruker? <a href="gjest.html">Logg inn</a>.</p>`;
+  boks.querySelector("#gjest-reg").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const m = boks.querySelector("#g-melding");
+    const passord = boks.querySelector("#g-pass").value;
+    if (passord !== boks.querySelector("#g-pass2").value) { m.innerHTML = `<p class="melding feil">Passordene er ikke like.</p>`; return; }
+    const knapp = e.submitter || boks.querySelector("button[type=submit]");
+    knapp.disabled = true;
+    try {
+      const svar = await api("gjest/registrer", json({ fra, kode, navn: boks.querySelector("#g-navn").value, passord }));
+      history.replaceState(null, "", "gjest.html");
+      visInnloggetGjest(svar.navn, true);
+    } catch (err) {
+      m.innerHTML = `<p class="melding feil">${esc(err.message)}</p>`;
+      knapp.disabled = false;
+    }
+  });
+}
+
+function visInnlogging() {
+  boks.innerHTML = `
+    <p>Har du fått en gjestelenke fra en Tafsebror, åpner du den for å lage bruker. Har du allerede en gjestebruker, logger du inn her.</p>
+    <form class="skjema" id="gjest-inn">
+      <div class="felt"><label for="g-navn">Navnet ditt</label><input id="g-navn" maxlength="24" autocomplete="username" required></div>
+      <div class="felt"><label for="g-pass">Passord</label><input id="g-pass" type="password" autocomplete="current-password" required></div>
+      <button class="knapp" type="submit">Logg inn som gjest</button>
+      <div id="g-melding" role="status"></div>
+    </form>
+    <p class="dempet" style="font-size:15px">Er du Tafsebror? <a href="salongen.html">Logg inn i Salongen</a>.</p>`;
+  boks.querySelector("#gjest-inn").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const knapp = boks.querySelector("button[type=submit]");
+    knapp.disabled = true;
+    try {
+      const svar = await api("gjest/logginn", json({ navn: boks.querySelector("#g-navn").value, passord: boks.querySelector("#g-pass").value }));
+      visInnloggetGjest(svar.navn, false);
+    } catch (err) {
+      boks.querySelector("#g-melding").innerHTML = `<p class="melding feil">${esc(err.message)}</p>`;
+      knapp.disabled = false;
+    }
+  });
+}
+
+(async () => {
+  let m = {};
+  try { m = await api("meg"); } catch (_) {}
+  try {
+    if (m.innlogget) { MEG = m.navn; ADMIN = !!m.admin; visInnloggetLinje(); return await visBror(m.navn); }
+    const fra = q.get("fra"), kode = q.get("kode");
+    if (fra && kode) {
+      const inv = await api(`gjest/invitasjon?fra=${encodeURIComponent(fra)}&kode=${encodeURIComponent(kode)}`);
+      if (inv.gyldig) return m.gjest ? visInnloggetGjest(m.navn, false) : visRegistrering(inv.fra, kode);
+      boks.innerHTML = `<p class="melding feil">Gjestelenken er ugyldig. Be broren som inviterte deg om en ny.</p>`;
+      return;
+    }
+    if (m.gjest) return visInnloggetGjest(m.navn, false);
+    visInnlogging();
+  } catch (err) {
+    boks.innerHTML = `<p class="melding feil">${esc(err.message)}</p>`;
+  }
+})();
+</script>
+</body>
+</html>

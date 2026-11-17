@@ -14,6 +14,7 @@ Nettsiden til Taffelakademiet for Samvær og Etegilder.
 | `medlemmer.html` | Brødrene, med profilbilde, presentasjon og bytte av passord |
 | `bror.html` | Profilsiden til hver bror: presentasjon, fakta, skår, siste poster og drømmelandet |
 | `assets/land-modell.js`, `assets/land-kart.js`, `assets/land-editor.js` | Drømmelandet: fagmodellen (klima, geologi, valgordning, vetospillere, Lijphart, ressursforbannelse), kart og flagg, og veiviseren i åtte steg |
+| `gjest.html` | Gjester i spillhallen: brødrenes gjestelenker, registrering og innlogging for gjester |
 | `velkommen.html` | Registrering fra den personlige invitasjonslenken |
 | `invitasjoner.html` | Oversikt over invitasjonslenker (kun administratorer) |
 | `moter.html`, `mote.html` | Møtene: kommende og avholdte møter, kalenderfil, og egen side per møte med bilder og poster |
@@ -70,6 +71,14 @@ Profil og innhold blir liggende.
 **Nytt medlem?** Legg navnet til i `medlemmer` i `data/moter.json`. Lenken dukker opp under Invitasjoner.
 
 **Bytter dere akademipassordet**, blir alle logget ut og alle gamle invitasjonslenker slutter å virke.
+
+## Gjester i spillhallen
+
+Hver bror har en egen gjestelenke på `gjest.html` (lenken «Inviter en gjest» nederst på spillsidene).
+Den som åpner lenken, velger navn og passord og kan spille Idus Martiae, 2048, Murbrekker, Honningfella
+og Tafse Hotell. Gjester står på tavlene som «Navn (gjest)». De har egen tabell (`gjester`) og egen
+innloggingskapsel, og serveren avviser dem overalt ellers. Hvilke spill de slipper inn i, styres av
+`GJESTESPILL` i `functions/api/` og `assets/app.js`. Administratorer ser og fjerner gjester under Invitasjoner.
 
 ## Saker til behandling
 

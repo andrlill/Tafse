@@ -13,6 +13,9 @@ const STATUSER = ["innmeldt", "oppfolging", "vedtatt", "forkastet", "trukket"];
 const SAKSTYPER = ["Vedtektsendring", "Medlemsopptak", "Møtested", "Annen sak"];
 const STEMMER = ["for", "mot", "avstar"];
 const OKT_DAGER = 365;
+// Spillene gjester kan spille (Symposion er brødrenes egen by og holdes utenfor)
+const GJESTESPILL = ["spill", "honningfella", "2048", "murbrekker", "hotell"];
+const MAKS_GJESTER = 500;
 
 let skjemaKlart = false;
 
@@ -23,6 +26,13 @@ async function sikreSkjema(db) {
       navn TEXT PRIMARY KEY,
       salt TEXT NOT NULL,
       hash TEXT NOT NULL,
+      opprettet TEXT NOT NULL
+    )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS gjester (
+      navn TEXT PRIMARY KEY COLLATE NOCASE,
+      salt TEXT NOT NULL,
+      hash TEXT NOT NULL,
+      invitert_av TEXT,
       opprettet TEXT NOT NULL
     )`),
     db.prepare(`CREATE TABLE IF NOT EXISTS forslag (
@@ -192,9 +202,9 @@ async function hashPassord(passord, saltHex) {
 const b64 = (s) => btoa(String.fromCharCode(...enc.encode(s))).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
 const unb64 = (s) => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0)));
 
-function lesCookie(request) {
+function lesCookie(request, navn = "tafse") {
   const c = request.headers.get("Cookie") || "";
-  const m = c.match(/(?:^|;\s*)tafse=([^;]+)/);
+  const m = c.match(new RegExp(`(?:^|;\\s*)${navn}=([^;]+)`));
   return m ? m[1] : null;
 }
 
@@ -204,6 +214,27 @@ async function lagOkt(env, bruker, url) {
   const verdi = `${b64(bruker.navn)}.${utloper}.${sig}`;
   const sikker = url.protocol === "https:" ? "; Secure" : "";
   return `tafse=${verdi}; Path=/; Max-Age=${OKT_DAGER * 86400}; HttpOnly; SameSite=Lax${sikker}`;
+}
+
+// Gjester har egen informasjonskapsel og egen tabell, så de aldri slipper inn på brødrenes sider.
+async function lagGjesteokt(env, gjest, url) {
+  const utloper = Date.now() + OKT_DAGER * 86400000;
+  const sig = await hmac(env.TAFSE_PASSORD, `gjest|${gjest.navn}|${utloper}|${gjest.hash.slice(0, 16)}`);
+  const sikker = url.protocol === "https:" ? "; Secure" : "";
+  return `tafsegjest=${b64(gjest.navn)}.${utloper}.${sig}; Path=/; Max-Age=${OKT_DAGER * 86400}; HttpOnly; SameSite=Lax${sikker}`;
+}
+
+async function hvemErGjest(request, env, db) {
+  const c = lesCookie(request, "tafsegjest");
+  if (!c) return null;
+  const [n64, utloper, sig] = c.split(".");
+  if (!n64 || !utloper || !sig || Number(utloper) < Date.now()) return null;
+  let navn;
+  try { navn = unb64(n64); } catch (_) { return null; }
+  const gjest = await db.prepare("SELECT navn, hash FROM gjester WHERE navn = ?").bind(navn).first();
+  if (!gjest || gjest.navn !== navn) return null;
+  const forventet = await hmac(env.TAFSE_PASSORD, `gjest|${navn}|${utloper}|${gjest.hash.slice(0, 16)}`);
+  return likt(sig, forventet) ? navn : null;
 }
 
 // Returnerer navnet til den innloggede, eller null.
@@ -255,6 +286,10 @@ async function varsle(db, mottakere, { avsender, type, tekst: t, lenke }) {
 const utdrag = (t, n = 80) => (t.length > n ? t.slice(0, n - 1).trimEnd() + "…" : t);
 const postLenke = (post) => (post.mote && post.mote !== "salongen" ? `mote.html?id=${encodeURIComponent(post.mote)}#post-${post.id}` : `salongen.html#post-${post.id}`);
 
+// Gjestelenken til en bror, avledet av brorens navn og akademipassordet
+const gjestekode = async (env, bror) => (await hmac(env.TAFSE_PASSORD, `gjest|${bror}`)).slice(0, 20);
+const gjesteNavn = (navn) => `${navn} (gjest)`;
+
 // Personlig invitasjonskode, avledet av navnet og akademipassordet
 const invitasjonskode = async (env, navn) => (await hmac(env.TAFSE_PASSORD, `invitasjon|${navn}`)).slice(0, 20);
 
@@ -291,7 +326,48 @@ export async function onRequest({ request, env, params }) {
   }
   if (ressurs === "meg" && metode === "GET") {
     const navn = await hvemErInnlogget(request, env, db);
+    if (!navn) {
+      const gjest = await hvemErGjest(request, env, db);
+      if (gjest) return json({ innlogget: false, gjest: true, navn: gjesteNavn(gjest) });
+    }
     return json({ innlogget: !!navn, navn, admin: !!navn && (await erAdmin(env, url, navn)) });
+  }
+
+  // --- Gjester (bare spillene) ---
+  if (ressurs === "gjest" && id === "invitasjon" && metode === "GET") {
+    const fra = tekst(url.searchParams.get("fra"), 60);
+    const kode = String(url.searchParams.get("kode") || "");
+    const gyldig = (await medlemsliste(env, url)).includes(fra) && likt(kode, await gjestekode(env, fra));
+    if (!gyldig) await vent(400);
+    return json({ gyldig, fra: gyldig ? fra : null });
+  }
+  if (ressurs === "gjest" && id === "registrer" && metode === "POST") {
+    const b = await lesJson(request);
+    const fra = tekst(b.fra, 60);
+    if (!(await medlemsliste(env, url)).includes(fra) || !likt(String(b.kode || ""), await gjestekode(env, fra))) {
+      await vent(600);
+      return feil(401, "Gjestelenken er ugyldig. Be broren som inviterte deg om en ny.");
+    }
+    const navn = tekst(b.navn, 24).replace(/\s+/g, " ");
+    if (!/^[\p{L}\p{N}][\p{L}\p{N} .'-]{1,23}$/u.test(navn)) return feil(400, "Navnet må ha 2 til 24 tegn: bokstaver, tall, mellomrom, punktum, bindestrek eller apostrof.");
+    if ((await medlemsliste(env, url)).some((m) => m.toLowerCase() === navn.toLowerCase())) return feil(409, "Det navnet tilhører en Tafsebror. Velg et annet.");
+    if (typeof b.passord !== "string" || b.passord.length < 6) return feil(400, "Passordet må ha minst seks tegn.");
+    if (await db.prepare("SELECT 1 FROM gjester WHERE navn = ?").bind(navn).first()) return feil(409, "Navnet er tatt. Velg et annet, eller logg inn hvis det er deg.");
+    const antall = await db.prepare("SELECT COUNT(*) AS n FROM gjester").first();
+    if (antall && antall.n >= MAKS_GJESTER) return feil(403, "Gjestelisten er full.");
+    const salt = hex(crypto.getRandomValues(new Uint8Array(16)));
+    const hash = await hashPassord(b.passord, salt);
+    await db.prepare("INSERT INTO gjester (navn, salt, hash, invitert_av, opprettet) VALUES (?, ?, ?, ?, ?)").bind(navn, salt, hash, fra, naa()).run();
+    return json({ navn: gjesteNavn(navn) }, 201, { "Set-Cookie": await lagGjesteokt(env, { navn, hash }, url) });
+  }
+  if (ressurs === "gjest" && id === "logginn" && metode === "POST") {
+    const b = await lesJson(request);
+    const gjest = await db.prepare("SELECT navn, salt, hash FROM gjester WHERE navn = ?").bind(tekst(b.navn, 24)).first();
+    if (!gjest || !likt(await hashPassord(String(b.passord || ""), gjest.salt), gjest.hash)) {
+      await vent(600);
+      return feil(401, "Feil navn eller passord.");
+    }
+    return json({ navn: gjesteNavn(gjest.navn) }, 200, { "Set-Cookie": await lagGjesteokt(env, gjest, url) });
   }
   if (ressurs === "invitasjon" && metode === "GET") {
     const navn = tekst(url.searchParams.get("navn"), 60);
@@ -336,12 +412,37 @@ export async function onRequest({ request, env, params }) {
     return json({ innlogget: true, navn: bruker.navn }, 200, { "Set-Cookie": await lagOkt(env, bruker, url) });
   }
   if (ressurs === "loggut" && metode === "POST") {
-    return json({ innlogget: false }, 200, { "Set-Cookie": "tafse=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax" });
+    const h = new Headers({ "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+    h.append("Set-Cookie", "tafse=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax");
+    h.append("Set-Cookie", "tafsegjest=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax");
+    return new Response(JSON.stringify({ innlogget: false }), { status: 200, headers: h });
   }
 
   // Alt under krever innlogging
-  const meg = await hvemErInnlogget(request, env, db);
+  // Gjester slipper bare inn til spillene, og spiller under navnet «Navn (gjest)»
+  let meg = await hvemErInnlogget(request, env, db);
+  if (!meg && GJESTESPILL.includes(ressurs)) {
+    const gjest = await hvemErGjest(request, env, db);
+    if (gjest) meg = gjesteNavn(gjest);
+  }
   if (!meg) return feil(401, "Ikke innlogget");
+  const erGjest = meg.endsWith(" (gjest)");
+  if (erGjest && !GJESTESPILL.includes(ressurs)) return feil(403, "Gjester har bare tilgang til spillene.");
+
+  if (ressurs === "gjestelenke" && metode === "GET") {
+    return json({ fra: meg, kode: await gjestekode(env, meg) });
+  }
+  if (ressurs === "gjester") {
+    if (!(await erAdmin(env, url, meg))) return feil(403, "Bare administratorer kan se gjestene.");
+    if (!id && metode === "GET") {
+      const { results } = await db.prepare("SELECT navn, invitert_av, opprettet FROM gjester ORDER BY opprettet DESC").all();
+      return json(results);
+    }
+    if (id && metode === "DELETE") {
+      await db.prepare("DELETE FROM gjester WHERE navn = ?").bind(decodeURIComponent(id)).run();
+      return json({ ok: true });
+    }
+  }
 
   if (ressurs === "invitasjoner" && metode === "GET") {
     if (!(await erAdmin(env, url, meg))) return feil(403, "Bare administratorer kan se invitasjonene.");
