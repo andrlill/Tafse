@@ -33,7 +33,7 @@ async function kopier(tekst, knapp) {
 }
 
 function loggUtKnapp() {
-  boks.querySelector("#gjest-ut").addEventListener("click", async () => { await api("loggut", { method: "POST" }); location.href = "gjest.html"; });
+  boks.querySelector("#gjest-ut").addEventListener("click", async () => { await api("loggut", { method: "POST" }); settGjestemerke(false); location.href = "gjest.html"; });
 }
 
 function visInnloggetGjest(navn, ny) {
@@ -84,6 +84,7 @@ function visRegistrering(fra, kode) {
     try {
       const svar = await api("gjest/registrer", json({ fra, kode, navn: boks.querySelector("#g-navn").value, passord }));
       history.replaceState(null, "", "gjest.html");
+      settGjestemerke(true); oppdaterMeny();
       visInnloggetGjest(svar.navn, true);
     } catch (err) {
       m.innerHTML = `<p class="melding feil">${esc(err.message)}</p>`;
@@ -108,6 +109,7 @@ function visInnlogging() {
     knapp.disabled = true;
     try {
       const svar = await api("gjest/logginn", json({ navn: boks.querySelector("#g-navn").value, passord: boks.querySelector("#g-pass").value }));
+      settGjestemerke(true); oppdaterMeny();
       visInnloggetGjest(svar.navn, false);
     } catch (err) {
       boks.querySelector("#g-melding").innerHTML = `<p class="melding feil">${esc(err.message)}</p>`;
