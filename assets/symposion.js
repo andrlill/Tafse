@@ -237,7 +237,48 @@
     const offer = m.kanOfre
       ? `<button class="knapp sy-offer" type="button" data-gjor="offer">Ofre til gudene<small>${gave(m.nesteOffer)}</small></button>`
       : `<div class="sy-ofret"><span class="sy-etikett">Ofret i dag · dag ${m.streak} av 7</span><span class="sy-prikker">${prikker}</span><small>I morgen: ${gave(m.nesteOffer)}</small></div>`;
-    return `<div class="sy-topp"><div class="sy-brikker">${brikker}</div>${offer}</div>`;
+    return `<div class="sy-topp"><div class="sy-brikker">${brikker}</div><div class="sy-toppvenstre"><button class="liten-knapp sy-infoknapp" type="button" data-info>Slik spiller du</button>${offer}</div></div>`;
+  }
+
+  // ---------- «Slik spiller du» ----------
+  function info() {
+    const R = T.regler, b = R.bygg;
+    const kreves = (id) => `${b[b[id].krever[0]].navn.toLowerCase()} på nivå ${b[id].krever[1]}`;
+    const rader = (l) => l.map((c) => `<tr>${c.map((x) => `<td>${x}</td>`).join("")}</tr>`).join("");
+    return `
+      <p>Symposion er en felles by på en øy. Hver bror og hver gjest har et gods som produserer oliven, vin og marmor, også når man er borte. Med det bygger man ut godset, reiser byens monumenter og innreder rommet sitt i Tafse Hotell.</p>
+      <h3>Høsting</h3>
+      <p>Godset produserer hele tiden, men lageret rommer bare noen timer (3 timer pluss villanivået). Trykk «Høst» før det blir fullt, ellers går resten tapt. Gullringen på kartet viser hvor godset ditt ligger, og en olivenboble dukker opp over det når det er noe å høste.</p>
+      <h3>Bygging</h3>
+      <ul>
+        <li><strong>${b.lund.navn}</strong> gir oliven.</li>
+        <li><strong>${b.vingard.navn}</strong> gir vin. Krever ${kreves("vingard")}.</li>
+        <li><strong>${b.brudd.navn}</strong> gir marmor. Krever ${kreves("brudd")}.</li>
+        <li><strong>${b.villa.navn}</strong> gjør lageret større og huset staseligere. Fra nivå 2 koster den vin, fra nivå 3 også marmor.</li>
+      </ul>
+      <p>Hvert nivå koster 65 % mer enn det forrige. Høyeste nivå er ${R.maksNiva}.</p>
+      <h3>Villaen og rommet ditt</h3>
+      <table class="tavle"><thead><tr><th>Villanivå</th><th>På kartet</th><th>Rommet i Tafse Hotell</th></tr></thead><tbody>
+        ${rader([["1–2", "Hytte", "5 × 5, tregulv"], ["3–4", "Hus med tegltak", "6 × 6, terrakotta"], ["5–7", "Villa med søyler", "7 × 7, marmor"], ["8–10", "Palass", "8 × 8, marmor med gull"]])}
+      </tbody></table>
+      <p>Møblene til rommet kjøpes for oliven, vin og marmor herfra. Trykk «Gå inn i huset» for å komme dit.</p>
+      <h3>Daglig offer</h3>
+      <p>Trykk «Ofre til gudene» én gang om dagen. Det koster ingenting, og gaven blir større for hver dag på rad, opp til sju dager. Fra dag tre får du vin, fra dag fem marmor, og dag sju gir dobbelt. Hopper du over en dag, starter rekken på nytt. Dagen skifter ved midnatt.</p>
+      <h3>Felles byggverk</h3>
+      <p>Midt i byen reiser alle sammen ${R.monumenter.map((m) => m.navn).join(", ").replace(/, ([^,]*)$/, " og $1")}, ett om gangen. Gi oliven, vin eller marmor under «Felles byggverk». Hvert ferdige byggverk gir alle 10 % mer produksjon, og hver gave gir deg ære.</p>
+      <h3>Naboene</h3>
+      <ul>
+        <li><strong>Skjenk:</strong> én gang om dagen per nabo. Han får vin, du får oliven og ære.</li>
+        <li><strong>Nask:</strong> ta litt av en nabos uhøstede oliven, ${R.naskPerDag} ganger om dagen. Han får beskjed.</li>
+        <li><strong>Tagg:</strong> spray en tekst på en nabos hus, ${R.taggPerDag} ganger om dagen. Huset produserer ${Math.round(R.taggStraff * 100)} % mindre til eieren har skrubbet det bort.</li>
+      </ul>
+      <p>Trykk på et gods på kartet eller et navn på ærestavlen for å besøke.</p>
+      <h3>Ære og rang</h3>
+      <p>Du får ære for å bygge, ofre, skjenke, tagge og gi til byggverkene. All ære du har tjent, gir rang og pynt på godset:</p>
+      <table class="tavle"><thead><tr><th>Rang</th><th>Ære</th><th>Pynt</th></tr></thead><tbody>
+        ${rader(R.ranger.map((r) => [r.tittel, r.fra.toLocaleString("nb-NO"), { flagg: "Flagg på taket", krans: "Laurbærkrans", statue: "Statue i hagen", fakler: "Fakler og gullglød" }[r.pynt] || "·"]))}
+      </tbody></table>
+      <p>Ære kan også brukes i æresbutikken under godset ditt: ${Object.values(R.butikk).map((v) => `${v.navn.toLowerCase()} (${v.pris})`).join(", ")}. Det du bruker der, trekkes ikke fra rangen.</p>`;
   }
 
   function tips() {
@@ -385,7 +426,7 @@
     if (!T.meg) {
       rot.innerHTML = `<div class="sy-kartboks">${kart()}<div class="sy-velkommen"><p class="overline">En ny by reiser seg</p><h2>Brødrene bygger Symposion</h2>
         <p>Flytt inn, så får du et lite gods med en olivenlund på øya. Høst, bygg ut og hjelp de andre. Sammen reiser dere byens monumenter.</p>
-        <button class="knapp" type="button" data-gjor="flytt-inn">Flytt inn</button>
+        <div class="sy-velkomstknapper"><button class="knapp" type="button" data-gjor="flytt-inn">Flytt inn</button><button class="liten-knapp" type="button" data-info>Slik spiller du</button></div>
         <p class="dempet">${T.spillere.length ? `${T.spillere.length} har flyttet inn så langt.` : "Bli første mann i byen."}</p></div></div>`;
       return;
     }
@@ -508,7 +549,8 @@
   rot.addEventListener("click", (e) => {
     const k = e.target.closest("button, .sy-tomt, [data-monument]");
     if (!k || k.disabled) return;
-    if (k.dataset.gjor) gjor(k.dataset.gjor);
+    if (k.dataset.info !== undefined) visInfo("Slik spiller du Symposion", info());
+    else if (k.dataset.gjor) gjor(k.dataset.gjor);
     else if (k.dataset.bygg) gjor("bygg", { bygg: k.dataset.bygg });
     else if (k.dataset.skjenk) gjor("skjenk", { til: k.dataset.skjenk });
     else if (k.dataset.nask) gjor("nask", { til: k.dataset.nask });

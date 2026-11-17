@@ -61,6 +61,28 @@
     },
   };
 
+  const INFO = `
+    <p>Tafse Hotell er et sted der brødrene og gjestene deres kan møtes, prate og vise frem rommene sine. Hver figur styres av den som eier den.</p>
+    <h3>Gå og sitte</h3>
+    <p>Trykk på gulvet, så går figuren dit og finner veien rundt møblene selv. Trykk på en sofa, krakk, seng eller solseng for å sette deg. Gå gjennom en dør, eller bruk knappene over rommet, for å bytte rom.</p>
+    <h3>Prat</h3>
+    <p>Det du skriver, kommer som en snakkeboble over hodet ditt og i praten under rommet. Du kan også vinke, skåle og danse. Portieren og Dionysos svarer når du trykker på dem. Det tar et par sekunder før de andre ser det du gjør.</p>
+    <h3>Rommene</h3>
+    <ul>
+      <li><strong>Lobbyen</strong>, <strong>baren</strong> med dansegulv og <strong>terrassen</strong> med basseng er felles for alle.</li>
+      <li><strong>Rommet mitt</strong> er ditt eget. Tallet på knappene viser hvor mange som er inne.</li>
+      <li><strong>Besøk noen</strong> tar deg til rommet til en bror eller en gjest.</li>
+    </ul>
+    <h3>Rommet ditt</h3>
+    <p>Størrelsen og stilen følger villaen din i Symposion. Uten gods er rommet 4 × 4 fliser, og en villa på høyeste nivå gir 8 × 8 med marmor og gullkant. Bygg ut villaen i <a href="symposion.html">Symposion</a> for å få større rom.</p>
+    <table class="tavle"><thead><tr><th>Villanivå</th><th>Rommet</th></tr></thead><tbody>
+      <tr><td>Ikke flyttet inn</td><td>4 × 4</td></tr><tr><td>1–2</td><td>5 × 5, tregulv</td></tr><tr><td>3–4</td><td>6 × 6, terrakotta</td></tr><tr><td>5–7</td><td>7 × 7, marmor</td></tr><tr><td>8–10</td><td>8 × 8, marmor med gull</td></tr>
+    </tbody></table>
+    <h3>Møbler</h3>
+    <p>I rommet ditt finner du møbelbutikken. Møblene betales med oliven, vin og marmor fra Symposion. Trykk «Innred rommet», velg et møbel og trykk på en ledig flis for å sette det ut. Trykk på et møbel i rommet for å ta det ned igjen. Døra kan ikke sperres, og du kan ha opptil 40 møbler.</p>
+    <h3>Garderoben</h3>
+    <p>Under rommet kan du når som helst bytte toga, hudfarge, hår og skjegg.</p>`;
+
   // ---------- Tilstand ----------
   let rom = "lobbyen", R = ROM[rom], ruter = [], mobler = [];
   let figurer = new Map();   // navn → figur (brødre og hotellets egne)
@@ -633,7 +655,8 @@
   rot.addEventListener("click", (e) => {
     const k = e.target.closest("button");
     if (!k || k.disabled) return;
-    if (k.dataset.gest) send("gest", k.dataset.gest);
+    if (k.dataset.info !== undefined) visInfo("Slik fungerer Tafse Hotell", INFO);
+    else if (k.dataset.gest) send("gest", k.dataset.gest);
     else if (k.dataset.rom && k.dataset.rom !== rom) gaTil(k.dataset.rom, null);
     else if (k.dataset.felt && look) {
       look = { ...look, [k.dataset.felt]: k.dataset.verdi };
@@ -650,7 +673,7 @@
 
   function bygg() {
     rot.innerHTML = `
-      <div class="h-rom" id="h-rom"></div>
+      <div class="h-topplinje"><div class="h-rom" id="h-rom"></div><button class="liten-knapp" type="button" data-info>Slik fungerer hotellet</button></div>
       <div class="h-ramme"><canvas id="h-lerret" aria-label="Rommet. Trykk på gulvet for å gå."></canvas></div>
       <form class="h-prat" id="h-prat">
         <input id="h-tekst" maxlength="140" placeholder="Si noe til rommet …" autocomplete="off" aria-label="Si noe">

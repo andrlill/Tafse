@@ -961,3 +961,22 @@ a.liten-knapp { text-decoration: none; display: inline-flex; align-items: center
 .gjest-spill .knapp { text-decoration: none; }
 .gjest-rad { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--linje); flex-wrap: wrap; }
 .gjest-handlinger { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0; }
+
+/* Infoboks: «Slik spiller du» */
+.infoboks { border: 1px solid var(--gull); background: var(--flate); color: var(--tekst); padding: 0; width: min(720px, calc(100vw - 24px)); max-height: min(86vh, 900px); }
+.infoboks::backdrop { background: rgba(5, 5, 4, .78); }
+.infoboks-innhold { padding: 24px 28px 28px; overflow-y: auto; max-height: min(86vh, 900px); box-sizing: border-box; }
+.infoboks-hode { display: flex; justify-content: space-between; align-items: center; gap: 16px; position: sticky; top: -24px; background: var(--flate); padding: 24px 0 12px; margin: -24px 0 4px; border-bottom: 1px solid var(--linje); z-index: 1; }
+.infoboks-hode h2 { margin: 0; font-size: clamp(20px, 3.4vw, 26px); }
+.infoboks h3 { font-size: 13px; letter-spacing: .18em; text-transform: uppercase; color: var(--gull); margin: 22px 0 6px; }
+.infoboks p, .infoboks li { font-size: 18px; line-height: 1.5; }
+.infoboks p { margin: 0 0 8px; }
+.infoboks ul { margin: 0 0 8px; padding-left: 1.1em; }
+.infoboks .tavle { margin: 6px 0 10px; }
+.infoboks .tavle td { font-size: 16px; }
+.sy-toppvenstre { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }
+.sy-infoknapp { align-self: center; }
+.sy-velkomstknapper { display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
+.h-topplinje { display: flex; gap: 12px; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; margin-bottom: 12px; }
+.h-topplinje .h-rom { margin-bottom: 0; }
+@media (max-width: 760px) { .infoboks-innhold { padding: 18px 16px 22px; } .infoboks-hode { top: -18px; padding-top: 18px; margin-top: -18px; } .infoboks p, .infoboks li { font-size: 16px; } .sy-toppvenstre { width: 100%; } .sy-toppvenstre .sy-offer, .sy-toppvenstre .sy-ofret { flex: 1; } }

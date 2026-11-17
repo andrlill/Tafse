@@ -596,3 +596,19 @@ function skarHtml(a, vekt) {
 if (erGjestemerke() && !gjestTillatt()) location.replace("gjest.html");
 byggRamme();
 hvemErJeg();
+
+// ---------- Infoboks: «Slik spiller du» ----------
+// Viser en forklaring over siden. Lukkes med knappen, Escape eller ved å trykke utenfor.
+function visInfo(tittel, innhold) {
+  let d = document.getElementById("infoboks");
+  if (!d) {
+    d = document.createElement("dialog");
+    d.id = "infoboks";
+    d.className = "infoboks";
+    d.addEventListener("click", (e) => { if (e.target === d || e.target.closest("[data-lukk]")) d.close(); });
+    document.body.append(d);
+  }
+  d.innerHTML = `<div class="infoboks-innhold"><div class="infoboks-hode"><h2>${esc(tittel)}</h2><button class="liten-knapp" type="button" data-lukk>Lukk</button></div>${innhold}</div>`;
+  d.showModal();
+  d.querySelector(".infoboks-innhold").scrollTop = 0;
+}
