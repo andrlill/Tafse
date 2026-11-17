@@ -4,6 +4,7 @@
 //   - en hemmelighet (secret) TAFSE_PASSORD. Den brukes til å signere innlogginger
 //     og invitasjonslenker, og fungerer som reservepassord ved registrering.
 
+import { tartaros, SKJEMA as TARTAROS_SKJEMA } from "../../lib/tartaros.js";
 import { hotell, SKJEMA as HOTELL_SKJEMA } from "../../lib/hotell.js";
 import { symposion, SKJEMA as SYMPOSION_SKJEMA, MIGRERING as SYMPOSION_MIGRERING } from "../../lib/symposion.js";
 
@@ -14,7 +15,7 @@ const SAKSTYPER = ["Vedtektsendring", "Medlemsopptak", "Møtested", "Annen sak"]
 const STEMMER = ["for", "mot", "avstar"];
 const OKT_DAGER = 365;
 // Spillene gjester kan spille
-const GJESTESPILL = ["spill", "2048", "murbrekker", "tetris", "snake", "hotell", "symposion"];
+const GJESTESPILL = ["tartaros", "spill", "2048", "murbrekker", "tetris", "snake", "hotell", "symposion"];
 const MAKS_GJESTER = 500;
 
 let skjemaKlart = false;
@@ -133,6 +134,7 @@ async function sikreSkjema(db) {
     db.prepare(`CREATE INDEX IF NOT EXISTS svar_post ON svar (post_id)`),
     ...SYMPOSION_SKJEMA.map((sql) => db.prepare(sql)),
     ...HOTELL_SKJEMA.map((sql) => db.prepare(sql)),
+    ...TARTAROS_SKJEMA.map((sql) => db.prepare(sql)),
     db.prepare(`CREATE TABLE IF NOT EXISTS tall2048 (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       navn TEXT NOT NULL,
@@ -751,6 +753,11 @@ export async function onRequest({ request, env, params }) {
         .run();
       return json({ ok: true }, 201);
     }
+  }
+
+  // --- Spillet: Tartaros. Logikken ligger i lib/tartaros.js ---
+  if (ressurs === "tartaros" && (metode === "GET" || metode === "POST")) {
+    return tartaros({ db, meg, metode, handling: id, request, json, feil, lesJson });
   }
 
   // --- Tafse Hotell. Logikken ligger i lib/hotell.js ---

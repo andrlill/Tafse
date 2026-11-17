@@ -990,3 +990,62 @@ a.liten-knapp { text-decoration: none; display: inline-flex; align-items: center
 .h-topplinje { display: flex; gap: 12px; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; margin-bottom: 12px; }
 .h-topplinje .h-rom { margin-bottom: 0; }
 @media (max-width: 760px) { .infoboks-innhold { padding: 18px 16px 22px; } .infoboks-hode { top: -18px; padding-top: 18px; margin-top: -18px; } .infoboks p, .infoboks li { font-size: 16px; } .sy-toppvenstre { width: 100%; } .sy-toppvenstre .sy-offer, .sy-toppvenstre .sy-ofret { flex: 1; } }
+
+/* ---------- Tartaros ---------- */
+.ta-ramme { position: relative; border: 1px solid var(--linje); background: #0b0a08; margin-top: 1.2rem; overflow: hidden; }
+#ta-lerret { display: block; width: 100%; height: auto; touch-action: none; outline: none; cursor: crosshair; user-select: none; -webkit-user-select: none; }
+.ta-lag { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .7rem; padding: 1rem; text-align: center; background: rgba(8,7,10,.78); overflow-y: auto; }
+.ta-lag[hidden] { display: none; }
+.ta-lag h2 { font-family: var(--display); color: var(--gull-lys); font-size: clamp(1.5rem, 4.5vw, 2.6rem); letter-spacing: .08em; margin: 0; }
+.ta-lag .overline { margin: 0; }
+.ta-ingress { color: var(--tekst); margin: 0; max-width: 34rem; }
+.ta-helter { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .6rem; width: min(100%, 46rem); }
+.ta-helt { background: var(--flate); border: 1px solid var(--linje); border-top: 3px solid var(--farge); color: var(--tekst); padding: .7rem .5rem; cursor: pointer; display: flex; flex-direction: column; gap: .25rem; font-family: var(--brod); font-size: .95rem; }
+.ta-helt strong { font-family: var(--display); letter-spacing: .06em; color: var(--gull-lys); }
+.ta-helt span { color: var(--dempet); font-size: .88rem; }
+.ta-helt em { font-style: normal; color: var(--gull); font-size: .85rem; }
+.ta-helt.valgt { border-color: var(--gull); background: var(--flate2); }
+.ta-helt.last { opacity: .75; }
+.ta-start { margin-top: .4rem; }
+.ta-kortliste { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .8rem; width: min(100%, 50rem); }
+.ta-kort { position: relative; background: var(--flate); border: 1px solid var(--linje); color: var(--tekst); padding: 1.1rem .8rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: .6rem; font-family: var(--brod); font-size: 1rem; transition: border-color .12s, transform .12s; }
+.ta-kort:hover, .ta-kort:focus-visible { border-color: var(--gull); transform: translateY(-2px); }
+.ta-nr { position: absolute; top: .35rem; left: .55rem; color: var(--dempet); font-family: var(--display); font-size: .8rem; }
+.ta-korttekst { display: flex; flex-direction: column; gap: .2rem; }
+.ta-korttekst strong { font-family: var(--display); color: var(--gull-lys); letter-spacing: .05em; }
+.ta-korttekst em { font-style: normal; color: var(--gull); font-size: .82rem; text-transform: uppercase; letter-spacing: .1em; }
+.ta-merke { display: inline-flex; align-items: center; justify-content: center; width: 3rem; height: 3rem; border: 2px solid; border-radius: 50%; font-family: var(--display); font-weight: 700; font-size: 1.4rem; background: rgba(0,0,0,.4); flex: none; }
+.ta-merke.liten { width: 1.5rem; height: 1.5rem; font-size: .75rem; border-width: 1.5px; }
+.ta-poeng { font-family: var(--display); font-size: clamp(2rem, 7vw, 3.4rem); color: var(--gull-lys); margin: 0; line-height: 1; }
+.ta-poeng span { font-size: .9rem; color: var(--dempet); letter-spacing: .15em; text-transform: uppercase; }
+.ta-tall { margin: 0; color: var(--tekst); }
+.ta-tall strong { color: var(--gull-lys); }
+.ta-bygging { display: flex; flex-wrap: wrap; justify-content: center; gap: .35rem .9rem; max-width: 44rem; color: var(--dempet); font-size: .92rem; }
+.ta-bygging span { display: inline-flex; align-items: center; gap: .35rem; }
+.ta-rad { display: flex; flex-wrap: wrap; gap: .7rem; justify-content: center; margin-top: .3rem; }
+.ta-under { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .6rem; margin-top: .6rem; }
+.ta-under .t-hjelp { margin: 0; }
+.ta-knapper { display: flex; gap: .5rem; }
+.ta-to { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2rem; margin-top: 2.2rem; align-items: start; }
+.ta-leirhode { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+.ta-saldo { margin: 0; color: var(--dempet); }
+.ta-saldo strong { font-family: var(--display); font-size: 1.5rem; color: var(--gull-lys); }
+.ta-leirtekst { margin: .2rem 0 1rem; }
+.ta-gunst { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; }
+.ta-vare { border: 1px solid var(--linje); background: var(--flate); padding: .8rem; display: flex; flex-direction: column; gap: .35rem; }
+.ta-vare h4 { margin: 0; font-family: var(--display); font-size: .95rem; letter-spacing: .05em; color: var(--gull-lys); }
+.ta-vare p { margin: 0; color: var(--dempet); font-size: .92rem; }
+.ta-vare .liten-knapp { margin-top: auto; align-self: flex-start; }
+.ta-pips { display: flex; gap: .25rem; }
+.ta-pips i { width: .7rem; height: .7rem; border: 1px solid var(--gull); transform: rotate(45deg); margin: .2rem .15rem; }
+.ta-pips i.full { background: var(--gull); }
+.t-tavle tr.meg td { color: var(--gull-lys); }
+@media (max-width: 760px) {
+  .ta-to { grid-template-columns: 1fr; }
+  .ta-helter { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ta-kortliste { grid-template-columns: 1fr; gap: .5rem; }
+  .ta-kort { flex-direction: row; text-align: left; padding: .7rem .8rem .7rem 1.6rem; }
+  .ta-merke { width: 2.4rem; height: 2.4rem; font-size: 1.1rem; }
+  .ta-lag { justify-content: flex-start; padding-top: 1.4rem; }
+  .ta-lag.ta-valg, .ta-lag.ta-pausen { justify-content: center; }
+}

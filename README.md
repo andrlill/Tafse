@@ -22,6 +22,7 @@ Nettsiden til Taffelakademiet for Samvær og Etegilder.
 | `spill.html`, `assets/spill.js` | Spillet Idus Martiae, med tavle for brødrene |
 | `symposion.html`, `assets/symposion.js`, `lib/symposion.js` | Spillet Symposion, den felles byen. Regler og serverlogikk ligger i `lib/symposion.js` |
 | `hotell.html`, `assets/hotell.js`, `lib/hotell.js` | Tafse Hotell: rom der brødrene styrer hver sin figur og prater. Hver bror har et eget rom som vokser med villaen i Symposion og innredes med møbler kjøpt for oliven, vin og marmor (katalogen ligger i `lib/hotell.js`). Rommene tegnes i `assets/hotell.js`, serverlogikken ligger i `lib/hotell.js` |
+| `tartaros.html`, `assets/tartaros.js`, `lib/tartaros.js` | Spillet Tartaros: overlev ti minutter i underverdenen. Våpen, fiender og tall ligger øverst i `assets/tartaros.js`, drakmer, gunst og tavle i `lib/tartaros.js` |
 | `murbrekker.html`, `assets/murbrekker.js` | Spillet Murbrekker (Breakout), med toppliste for uka og for alle tider |
 | `2048.html`, `assets/2048.js` | Spillet 2048, med toppliste for uka og for alle tider |
 | `tetris.html`, `assets/tetris.js` | Spillet Tetris, med toppliste for uka og for alle tider |

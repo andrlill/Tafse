@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tartaros · TAFSE</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main class="side">
+  <p class="overline">Spill</p>
+  <h1 class="side-tittel">Tartaros</h1>
+  <nav class="spillhall" aria-label="Spillene">
+    <a href="tartaros.html" class="aktiv" aria-current="page">Tartaros</a>
+    <a href="hotell.html">Tafse Hotell</a>
+    <a href="symposion.html">Symposion</a>
+    <a href="2048.html">2048</a>
+    <a href="murbrekker.html">Murbrekker</a>
+    <a href="tetris.html">Tetris</a>
+    <a href="snake.html">Snake</a>
+    <a href="spill.html">Idus Martiae</a>
+  </nav>
+
+  <div class="ta-ramme" id="ta-ramme">
+    <canvas id="ta-lerret" tabindex="0" aria-label="Spillet. Styr helten med WASD, piltaster eller ved å dra."></canvas>
+    <div class="ta-lag" id="ta-lag" hidden></div>
+  </div>
+  <div class="ta-under">
+    <p class="t-hjelp">WASD, piltaster eller dra med fingeren. Våpnene skyter selv. P for pause.</p>
+    <div class="ta-knapper"><button class="liten-knapp" type="button" id="ta-info">Slik spiller du</button><button class="liten-knapp t-lyd" type="button" id="ta-lyd">Lyd på</button></div>
+  </div>
+
+  <div class="ta-to">
+    <section class="ta-boks" id="ta-leir"></section>
+    <section class="ta-boks">
+      <h2 class="t-tittel">Tavlen</h2>
+      <div id="ta-tavle"><p class="dempet">Laster …</p></div>
+    </section>
+  </div>
+</main>
+<script src="assets/app.js"></script>
+<script src="assets/lyd.js"></script>
+<script src="assets/tartaros.js"></script>
+</body>
+</html>

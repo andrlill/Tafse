@@ -77,6 +77,14 @@ window.LYD = (() => {
     marmor: () => { tone({ f: 1400, type: "square", varighet: 0.04, volum: 0.04 }); sus({ varighet: 0.06, volum: 0.1, f: 3200, q: 2 }); },
     mistet: () => tone({ f: 300, til: 80, type: "triangle", varighet: 0.45, volum: 0.18 }),
     niva: () => [523, 659, 784, 1047].forEach((f, i) => tone({ f, start: i * 0.08, varighet: 0.2, volum: 0.13, type: "triangle" })),
+    // Tartaros
+    perle: (n = 0) => tone({ f: 620 * Math.pow(2, (n % 14) / 12), type: "sine", varighet: 0.07, volum: 0.06 }),
+    felt: () => sus({ varighet: 0.07, volum: 0.07, filter: "lowpass", f: 900 }),
+    lyn: () => { sus({ varighet: 0.16, volum: 0.2, filter: "highpass", f: 1800 }); tone({ f: 240, til: 60, type: "sawtooth", varighet: 0.22, volum: 0.1 }); },
+    puls: () => tone({ f: 196, til: 294, type: "triangle", varighet: 0.22, volum: 0.1 }),
+    ild: () => sus({ varighet: 0.3, volum: 0.12, filter: "bandpass", f: 500, til: 1400, q: 0.8 }),
+    mynt: () => { tone({ f: 1319, type: "square", varighet: 0.05, volum: 0.04 }); tone({ f: 1760, start: 0.05, varighet: 0.12, volum: 0.05 }); },
+    kiste: () => [659, 784, 988, 1319].forEach((f, i) => tone({ f, start: i * 0.07, varighet: 0.22, volum: 0.11, type: "triangle" })),
     // Idus Martiae
     stikk: () => {
       sus({ varighet: 0.09, volum: 0.35, filter: "highpass", f: 2500, q: 0.7 });
