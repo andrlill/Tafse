@@ -65,7 +65,7 @@
     magnet: { navn: "Sjelefanger", tekst: "+10 % rekkevidde på sjeler per nivå" },
     rustning: { navn: "Hefaistos' rustning", tekst: "Du tar 4 % mindre skade per nivå" },
     midas: { navn: "Midas' berøring", tekst: "+10 % drakmer fra hvert tokt per nivå" },
-    orakel: { navn: "Orakelet i Delfi", tekst: "Ett omkast per nivå: trekk tre nye kort når du ikke liker valget" },
+    orakel: { navn: "Orakelet i Delfi", tekst: "Når du får velge gave og ikke liker kortene, kan du bytte dem ut med tre nye. Du får ett bytte per tokt for hvert nivå du har kjøpt" },
     arsenal: { navn: "Våpenbærer", tekst: "Du starter hvert tokt med ett tilfeldig våpen i tillegg" },
     fjaer: { navn: "Føniksfjær", tekst: "Du reiser deg én gang per tokt" },
   };
