@@ -99,6 +99,16 @@ window.LYD = (() => {
     },
     tikk: (siste = false) => tone({ f: siste ? 1047 : 784, type: "square", varighet: 0.05, volum: 0.04 }),
     dod: () => { tone({ f: 220, til: 55, type: "sawtooth", varighet: 1.1, volum: 0.13 }); sus({ varighet: 0.5, volum: 0.15, filter: "lowpass", f: 400 }); },
+    // Snake
+    spis: (n = 1) => { const f = 440 * Math.pow(2, ((n - 1) % 12) / 12); tone({ f, type: "triangle", varighet: 0.08, volum: 0.16 }); tone({ f: f * 1.5, start: 0.04, varighet: 0.08, volum: 0.08 }); },
+    bonus: () => [880, 1109, 1319, 1760].forEach((f, i) => tone({ f, start: i * 0.045, varighet: 0.12, volum: 0.08, type: "square" })),
+    // Tetris
+    roter: () => tone({ f: 620, til: 760, type: "triangle", varighet: 0.05, volum: 0.07 }),
+    land: () => { tone({ f: 120, til: 70, type: "sine", varighet: 0.1, volum: 0.22 }); sus({ varighet: 0.05, volum: 0.06, filter: "lowpass", f: 900 }); },
+    fall: () => { sus({ varighet: 0.12, volum: 0.14, f: 2400, til: 300, q: 0.9 }); tone({ f: 140, til: 55, type: "sine", start: 0.06, varighet: 0.16, volum: 0.3 }); },
+    hold: () => { tone({ f: 523, type: "sine", varighet: 0.08, volum: 0.08 }); tone({ f: 392, type: "sine", start: 0.06, varighet: 0.1, volum: 0.08 }); },
+    linje: (n = 1) => [523, 659, 784].slice(0, n).forEach((f, i) => tone({ f, start: i * 0.06, varighet: 0.18, volum: 0.13, type: "triangle" })),
+    tetris: () => { [523, 659, 784, 1047, 1319].forEach((f, i) => tone({ f, start: i * 0.06, varighet: 0.22, volum: 0.12, type: "triangle" })); akkord([523, 784, 1047], 0.32, 0.7, 0.06); },
     seier: () => {
       [392, 392, 523, 659, 784].forEach((f, i) => tone({ f, type: "sawtooth", start: [0, 0.12, 0.24, 0.42, 0.6][i], varighet: i === 4 ? 0.7 : 0.14, volum: 0.08 }));
       akkord([523, 659, 784], 0.6, 0.9, 0.06);

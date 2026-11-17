@@ -51,7 +51,7 @@ function menyHtml() {
   const sider = erGjestemerke() ? [["gjest.html", "Spillhallen"], ...GJESTESPILL.map(([s, n]) => [`${s}.html`, n])] : SIDER;
   return sider.map(([fil, navn]) => {
     const stamme = fil.replace(/\.html$/, "");
-    const aktiv = stamme === her || (!erGjestemerke() && ((her === "mote" && stamme === "moter") || (["spill", "honningfella", "2048", "murbrekker", "hotell", "gjest"].includes(her) && stamme === "symposion") || (her === "bror" && stamme === "medlemmer")));
+    const aktiv = stamme === her || (!erGjestemerke() && ((her === "mote" && stamme === "moter") || (["spill", "honningfella", "2048", "murbrekker", "tetris", "snake", "hotell", "gjest"].includes(her) && stamme === "symposion") || (her === "bror" && stamme === "medlemmer")));
     return `<a href="${fil}"${aktiv ? ' class="aktiv" aria-current="page"' : ""}>${navn}</a>`;
   }).join("");
 }
@@ -151,7 +151,7 @@ function mesterTekst(m) {
 let MEG = null; // navnet til den som er logget inn
 let ADMIN = false;
 let GJEST = false; // gjester er bare innlogget på spillsidene, som «Navn (gjest)»
-const GJESTESPILL = [["symposion", "Symposion"], ["spill", "Idus Martiae"], ["2048", "2048"], ["murbrekker", "Murbrekker"], ["honningfella", "Honningfella"], ["hotell", "Tafse Hotell"]];
+const GJESTESPILL = [["symposion", "Symposion"], ["spill", "Idus Martiae"], ["2048", "2048"], ["murbrekker", "Murbrekker"], ["tetris", "Tetris"], ["snake", "Snake"], ["honningfella", "Honningfella"], ["hotell", "Tafse Hotell"]];
 const paaGjesteside = () => GJESTESPILL.some(([s]) => s === (location.pathname.split("/").pop() || "").replace(/\.html$/, ""));
 
 async function api(sti, valg = {}) {

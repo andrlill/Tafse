@@ -14,7 +14,7 @@ const SAKSTYPER = ["Vedtektsendring", "Medlemsopptak", "Møtested", "Annen sak"]
 const STEMMER = ["for", "mot", "avstar"];
 const OKT_DAGER = 365;
 // Spillene gjester kan spille
-const GJESTESPILL = ["spill", "honningfella", "2048", "murbrekker", "hotell", "symposion"];
+const GJESTESPILL = ["spill", "honningfella", "2048", "murbrekker", "tetris", "snake", "hotell", "symposion"];
 const MAKS_GJESTER = 500;
 
 let skjemaKlart = false;
@@ -146,6 +146,21 @@ async function sikreSkjema(db) {
       navn TEXT NOT NULL,
       poeng INTEGER NOT NULL,
       niva INTEGER NOT NULL,
+      opprettet TEXT NOT NULL
+    )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS tetris (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      navn TEXT NOT NULL,
+      poeng INTEGER NOT NULL,
+      linjer INTEGER NOT NULL,
+      niva INTEGER NOT NULL,
+      opprettet TEXT NOT NULL
+    )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS snake (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      navn TEXT NOT NULL,
+      poeng INTEGER NOT NULL,
+      lengde INTEGER NOT NULL,
       opprettet TEXT NOT NULL
     )`),
   ]);
@@ -793,6 +808,36 @@ export async function onRequest({ request, env, params }) {
       const heltall = (v, min, maks) => Math.max(min, Math.min(maks, Math.round(Number(v) || 0)));
       await db.prepare("INSERT INTO murbrekker (navn, poeng, niva, opprettet) VALUES (?, ?, ?, ?)")
         .bind(meg, heltall(b.poeng, 0, 2000000), heltall(b.niva, 1, 999), naa()).run();
+      return json({ ok: true }, 201);
+    }
+  }
+
+  // --- Spillene Tetris og Snake. Tavlen viser beste resultat per bror, denne uka og for alle tider ---
+  const ENKLE_SPILL = {
+    tetris: { felt: ["linjer", "niva"], min: { linjer: 0, niva: 1 }, maks: { poeng: 20000000, linjer: 100000, niva: 999 } },
+    snake: { felt: ["lengde"], min: { lengde: 1 }, maks: { poeng: 200000, lengde: 400 } },
+  };
+  if (ENKLE_SPILL[ressurs]) {
+    const { felt, min, maks } = ENKLE_SPILL[ressurs];
+    const tabell = ressurs;
+    if (metode === "GET") {
+      const n = new Date(Date.now() + 3600000);
+      const mandag = new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate() - ((n.getUTCDay() + 6) % 7)) - 3600000).toISOString();
+      const kol = felt.map((f) => `t.${f}`).join(", ");
+      const beste = (hvor) => `SELECT t.navn, t.poeng, ${kol} FROM ${tabell} t JOIN (SELECT navn, MAX(poeng) AS p FROM ${tabell} ${hvor} GROUP BY navn) m ON m.navn = t.navn AND m.p = t.poeng ${hvor ? "AND t.opprettet >= ?" : ""} GROUP BY t.navn ORDER BY t.poeng DESC`;
+      const [alle, uke, antall] = await db.batch([
+        db.prepare(beste("")),
+        db.prepare(beste("WHERE opprettet >= ?")).bind(mandag, mandag),
+        db.prepare(`SELECT COUNT(*) AS n FROM ${tabell}`),
+      ]);
+      return json({ alle: alle.results, uke: uke.results, antall: antall.results[0].n });
+    }
+    if (metode === "POST") {
+      const b = await lesJson(request);
+      const heltall = (v, min, mx) => Math.max(min, Math.min(mx, Math.round(Number(v) || 0)));
+      const verdier = felt.map((f) => heltall(b[f], min[f], maks[f]));
+      await db.prepare(`INSERT INTO ${tabell} (navn, poeng, ${felt.join(", ")}, opprettet) VALUES (?, ?, ${felt.map(() => "?").join(", ")}, ?)`)
+        .bind(meg, heltall(b.poeng, 0, maks.poeng), ...verdier, naa()).run();
       return json({ ok: true }, 201);
     }
   }
