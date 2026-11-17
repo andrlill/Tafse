@@ -75,8 +75,8 @@ Profil og innhold blir liggende.
 ## Gjester i spillhallen
 
 Hver bror har en egen gjestelenke på `gjest.html` (lenken «Inviter en gjest» nederst på spillsidene).
-Den som åpner lenken, velger navn og passord og kan spille Idus Martiae, 2048, Murbrekker, Honningfella
-og Tafse Hotell. Gjester står på tavlene som «Navn (gjest)». De har egen tabell (`gjester`) og egen
+Den som åpner lenken, velger navn og passord og kan spille Symposion, Idus Martiae, 2048, Murbrekker,
+Honningfella og Tafse Hotell. I Symposion har ingen fast tomt: man får plass på øya når man flytter inn. Gjester står på tavlene som «Navn (gjest)». De har egen tabell (`gjester`) og egen
 innloggingskapsel, og serveren avviser dem overalt ellers. Hvilke spill de slipper inn i, styres av
 `GJESTESPILL` i `functions/api/` og `assets/app.js`. Administratorer ser og fjerner gjester under Invitasjoner.
 

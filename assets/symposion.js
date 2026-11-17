@@ -23,6 +23,7 @@
   const pris = (k) => Object.entries(k).map(([r, n]) => `<span class="sy-pris">${tall(n)}${IKON[r]}</span>`).join(" ");
   const gave = (k) => Object.entries(k).map(([r, n]) => `+${tall(n)} ${r}`).join(", ");
   const eier = (navn) => (/[sxz]$/i.test(navn) ? `${navn}'` : `${navn}s`);
+  const godsNavn = (navn) => (navn.endsWith(")") ? `Godset til ${navn}` : `${eier(navn)} gods`);
 
   // Lageret fylles mellom hver gang vi spør serveren
   function lager(r) {
@@ -34,11 +35,26 @@
 
   // ---------- Bykartet ----------
   const W = 1000, H = 640, TOPP = 44;
-  function plass(i, n) {
-    const v = ((-90 + ((i + 0.5) * 360) / n) * Math.PI) / 180;
-    const x = 500 + Math.cos(v) * 388, y = 404 + Math.sin(v) * 150;
-    return { x, y, s: 1.0 + (0.36 * (y - 250)) / 304 };
+  // Godsene ligger i ringer rundt agoraen, i den rekkefølgen folk flyttet inn. Ingen har fast tomt.
+  // Opptil tolv gods får plass i én ring. Blir det flere, legges de i flere ringer utenfor hverandre.
+  const RING = (r, flere) => ({ plass: flere ? 8 + 6 * r : 12, rx: 388 + 190 * r, ry: 150 + 95 * r });
+  function plasser() {
+    const navn = T.spillere.map((s) => s.navn), ut = new Map();
+    let i = 0, r = 0;
+    while (i < navn.length) {
+      const ring = RING(r, navn.length > 12), antall = Math.min(ring.plass, navn.length - i);
+      for (let j = 0; j < antall; j++) {
+        const v = ((-90 + r * 17 + ((j + 0.5) * 360) / antall) * Math.PI) / 180;
+        const x = 500 + Math.cos(v) * ring.rx, y = 404 + Math.sin(v) * ring.ry;
+        ut.set(navn[i + j], { x, y, s: 1.0 + (0.36 * (y - 250)) / 304 });
+      }
+      i += antall; r += 1;
+    }
+    ut.krymp = 388 / RING(Math.max(0, r - 1), true).rx; // byen krympes så alle ringene får plass på øya
+    return ut;
   }
+  // Fra byens koordinater til kartets, etter krympingen
+  const paKart = (p, k) => ({ x: 500 + (p.x - 500) * k, y: 404 + (p.y - 404) * k });
 
   function villa(niva, lys) {
     const vindu = lys ? "#f2c14e" : "#191610";
@@ -65,8 +81,8 @@
       <text text-anchor="middle" class="sy-taggtekst" fill="${t.farge}" ${lengde > 8 ? `textLength="${bredde.toFixed(0)}" lengthAdjust="spacingAndGlyphs"` : ""}>${esc(t.tekst)}</text></g>`;
   }
 
-  function tomt(sp, navn, i, n) {
-    const { x, y, s } = plass(i, n);
+  function tomt(sp, pos) {
+    const { x, y, s } = pos, navn = sp.navn;
     const mitt = T.meg && navn === T.meg.navn;
     const klasse = `sy-tomt${mitt ? " mitt" : ""}${valgt === navn ? " valgt" : ""}${sp ? "" : " ledig"}`;
     let inn = "";
@@ -90,7 +106,7 @@
         : !sp.skjenket && T.meg ? `<g class="sy-dupp"><path d="M-4 ${hoyde - 12} h8 l-1 4 q4 5 0 11 h-6 q-4 -6 0 -11 z" fill="#c9a24a" stroke="#14130d" stroke-width="1"/></g>` : "";
       inn = `${sp.rang >= 4 ? `<ellipse rx="78" ry="24" fill="url(#sy-glod)"/>` : ""}<ellipse rx="64" ry="17" fill="#3b3824"/><ellipse rx="64" ry="17" class="sy-ring" fill="none"/>${stein}${tre}<g>${villa(b.villa, sp.hjemme)}</g>${vin}${pynt(sp.rang, tak)}${taggSvg(sp.tagg, mitt)}${merke}`;
     }
-    return `<g class="${klasse}" data-navn="${esc(navn)}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${s.toFixed(3)})" tabindex="0" role="button" aria-label="${esc(sp ? `${eier(navn)} gods` : `Ledig tomt: ${navn}`)}">
+    return `<g class="${klasse}" data-navn="${esc(navn)}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${s.toFixed(3)})" tabindex="0" role="button" aria-label="${esc(godsNavn(navn))}">
       <ellipse rx="70" ry="60" cy="-22" fill="transparent"/>${inn}
       <text y="34" text-anchor="middle" class="sy-navn">${esc(navn)}${mitt ? " (deg)" : ""}</text>
       ${sp && sp.rang ? `<text y="47" text-anchor="middle" class="sy-tittel">${esc(T.regler.ranger[sp.rang].tittel)}</text>` : ""}</g>`;
@@ -175,9 +191,9 @@
     };
     const kystlinje = kyst(488, 204);
     const bat = (x, y, s) => `<g transform="translate(${x} ${y}) scale(${s})" class="sy-bat"><path d="M-16 0 Q0 9 16 0 L12 5 H-12 Z" fill="#3a2a18"/><path d="M0 0 V-20" stroke="#3a2a18" stroke-width="1.6"/><path d="M1 -19 Q12 -12 1 -4 Z" fill="#ece5d3"/></g>`;
-    const n = T.medlemmer.length;
-    const tomter = T.medlemmer.map((navn, i) => ({ y: plass(i, n).y, svg: tomt(T.spillere.find((s) => s.navn === navn), navn, i, n) }));
-    const veier = T.medlemmer.map((_, i) => { const p = plass(i, n); return `<path d="M500 418 Q${((500 + p.x) / 2).toFixed(0)} ${((418 + p.y) / 2 + 14).toFixed(0)} ${p.x.toFixed(0)} ${p.y.toFixed(0)}"/>`; }).join("");
+    const pl = plasser();
+    const tomter = T.spillere.map((sp) => ({ y: pl.get(sp.navn).y, svg: tomt(sp, pl.get(sp.navn)) }));
+    const veier = T.spillere.map((sp) => { const p = pl.get(sp.navn); return `<path d="M500 418 Q${((500 + p.x) / 2).toFixed(0)} ${((418 + p.y) / 2 + 14).toFixed(0)} ${p.x.toFixed(0)} ${p.y.toFixed(0)}"/>`; }).join("");
     const grad = monumentGrad();
     const mon = T.regler.monumenter.map(({ id }) => ({ id, svg: monument(id, T.ferdige.includes(id) ? 1 : T.monument && T.monument.id === id ? grad : null) }));
     const rekke = { tempel: 0, agora: 1, teater: 2, koloss: 3 };
@@ -203,11 +219,13 @@
       <path d="${kystlinje}" fill="#1c2a30" transform="translate(0 7)" opacity=".8"/>
       <path d="${kystlinje}" fill="#9a8552"/>
       <path d="${kystlinje}" fill="url(#sy-land)" transform="translate(500 412) scale(.975 .955) translate(-500 -412)"/>
+      <g transform="translate(500 404) scale(${pl.krymp.toFixed(3)}) translate(-500 -404)">
       <g class="sy-veier" fill="none" stroke="#7a6d49" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 7" opacity=".7">${veier}</g>
       ${bak}
       ${mon.map((m) => m.svg).join("")}
       ${statuer()}
       ${foran}
+      </g>
     </svg>`;
   }
 
@@ -311,7 +329,7 @@
       const synlige = ["lund", "vingard", ...(m.bygg.vingard ? ["brudd"] : []), "villa"];
       return `<section class="sy-panel">
         <div class="sy-panelhode"><div><p class="sy-etikett">Godset ditt</p><p class="sy-fullt" data-fullt></p></div>
-          <div class="sy-hodeknapper"><a class="liten-knapp" href="hotell.html?rom=${encodeURIComponent(`hjem:${m.navn}`)}">Gå inn i huset</a>
+          <div class="sy-hodeknapper">${GJEST ? "" : `<a class="liten-knapp" href="hotell.html?rom=${encodeURIComponent(`hjem:${m.navn}`)}">Gå inn i huset</a>`}
           <button class="knapp sy-host" type="button" data-gjor="host" data-host>Høst</button></div></div>
         ${minTagg()}
         <div class="sy-byggliste">${synlige.map(byggKort).join("")}</div>
@@ -322,9 +340,9 @@
     const b = sp.bygg;
     const nask = sp.nasket ? "Nasket i dag" : m.naskIgjen <= 0 ? "Ikke flere nask i dag" : sp.bytte < 5 ? "Nyhøstet, ingenting å naske" : `Nask ca. ${tall(sp.bytte)} oliven`;
     return `<section class="sy-panel">
-      <div class="sy-panelhode"><div><p class="sy-etikett">På besøk</p><h3>${esc(eier(sp.navn))} gods</h3>
+      <div class="sy-panelhode"><div><p class="sy-etikett">På besøk</p><h3>${esc(godsNavn(sp.navn))}</h3>
         <p class="dempet">Villa nivå ${b.villa} · olivenlund ${b.lund}${b.vingard ? ` · vingård ${b.vingard}` : ""}${b.brudd ? ` · marmorbrudd ${b.brudd}` : ""} · ${tall(sp.aere)} ære${sp.hjemme ? "" : " · ikke hjemme på en stund"}</p></div>
-        <div class="sy-hodeknapper"><a class="liten-knapp" href="hotell.html?rom=${encodeURIComponent(`hjem:${sp.navn}`)}">Gå inn i huset</a>
+        <div class="sy-hodeknapper">${sp.navn.endsWith(" (gjest)") ? "" : `<a class="liten-knapp" href="hotell.html?rom=${encodeURIComponent(`hjem:${sp.navn}`)}">Gå inn i huset</a>`}
         <button class="liten-knapp" type="button" data-hjem>Til godset mitt</button></div></div>
       <div class="sy-besok">
         <button class="knapp" type="button" data-skjenk="${esc(sp.navn)}" ${sp.skjenket ? "disabled" : ""}>${sp.skjenket ? "Skjenket i dag" : "Skjenk et glass vin"}<small>${sp.skjenket ? "Kom igjen i morgen" : `Han får vin, du får +10 oliven og +5 ære`}</small></button>
@@ -366,9 +384,9 @@
   function tegn() {
     if (!T.meg) {
       rot.innerHTML = `<div class="sy-kartboks">${kart()}<div class="sy-velkommen"><p class="overline">En ny by reiser seg</p><h2>Brødrene bygger Symposion</h2>
-        <p>Du får et lite gods med en olivenlund. Høst, bygg ut og hjelp de andre. Sammen reiser dere byens monumenter.</p>
+        <p>Flytt inn, så får du et lite gods med en olivenlund på øya. Høst, bygg ut og hjelp de andre. Sammen reiser dere byens monumenter.</p>
         <button class="knapp" type="button" data-gjor="flytt-inn">Flytt inn</button>
-        <p class="dempet">${T.spillere.length ? `${T.spillere.length} av ${T.medlemmer.length} brødre har flyttet inn.` : "Bli første mann i byen."}</p></div></div>`;
+        <p class="dempet">${T.spillere.length ? `${T.spillere.length} har flyttet inn så langt.` : "Bli første mann i byen."}</p></div></div>`;
       return;
     }
     rot.innerHTML = `${topp()}
@@ -417,9 +435,9 @@
 
   function sprett(tekst) {
     const boks = rot.querySelector(".sy-kartrull");
-    const i = T.medlemmer.indexOf(T.meg.navn);
-    if (!boks || i < 0) return;
-    const p = plass(i, T.medlemmer.length);
+    const pl = plasser();
+    if (!boks || !pl.has(T.meg.navn)) return;
+    const p = paKart(pl.get(T.meg.navn), pl.krymp);
     const d = document.createElement("div");
     d.className = "sy-sprett";
     d.textContent = tekst;
@@ -456,7 +474,8 @@
     tegn();
     if (forste && T.meg) {
       const rull = rot.querySelector(".sy-kartrull");
-      const p = plass(T.medlemmer.indexOf(T.meg.navn), T.medlemmer.length);
+      const pl = plasser();
+      const p = paKart(pl.get(T.meg.navn) || { x: 500, y: 404 }, pl.krymp);
       if (rull && rull.scrollWidth > rull.clientWidth) rull.scrollLeft = (p.x / W) * rull.scrollWidth - rull.clientWidth / 2;
     }
   }
@@ -542,7 +561,7 @@
 
   (async () => {
     if (!(await hvemErJeg())) {
-      rot.innerHTML = `<p class="tomt">Byen er bare for brødrene. <a href="salongen.html">Logg inn</a> for å flytte inn.</p>`;
+      rot.innerHTML = `<p class="tomt">Byen er for brødrene og gjestene deres. <a href="salongen.html">Logg inn</a> for å flytte inn, eller <a href="gjest.html">logg inn som gjest</a>.</p>`;
       return;
     }
     await hent();

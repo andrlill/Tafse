@@ -13,8 +13,8 @@ const STATUSER = ["innmeldt", "oppfolging", "vedtatt", "forkastet", "trukket"];
 const SAKSTYPER = ["Vedtektsendring", "Medlemsopptak", "Møtested", "Annen sak"];
 const STEMMER = ["for", "mot", "avstar"];
 const OKT_DAGER = 365;
-// Spillene gjester kan spille (Symposion er brødrenes egen by og holdes utenfor)
-const GJESTESPILL = ["spill", "honningfella", "2048", "murbrekker", "hotell"];
+// Spillene gjester kan spille
+const GJESTESPILL = ["spill", "honningfella", "2048", "murbrekker", "hotell", "symposion"];
 const MAKS_GJESTER = 500;
 
 let skjemaKlart = false;
@@ -745,7 +745,9 @@ export async function onRequest({ request, env, params }) {
 
   // --- Spillet: Symposion (den felles byen). Logikken ligger i lib/symposion.js ---
   if (ressurs === "symposion" && (metode === "GET" || metode === "POST")) {
-    return symposion({ db, meg, metode, handling: id, request, medlemmer: await medlemsliste(env, url), json, feil, lesJson, varsle });
+    // Gjester har ingen varselbjelle, så varsler til dem sendes ikke
+    const varsleBrodre = (d, mottakere, v) => varsle(d, mottakere.filter((n) => !n.endsWith(" (gjest)")), v);
+    return symposion({ db, meg, metode, handling: id, request, json, feil, lesJson, varsle: varsleBrodre });
   }
 
   // --- Spillet: 2048. Tavlen viser beste resultat per bror, denne uka og for alle tider ---
