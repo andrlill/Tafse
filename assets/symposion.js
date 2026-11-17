@@ -311,7 +311,8 @@
       const synlige = ["lund", "vingard", ...(m.bygg.vingard ? ["brudd"] : []), "villa"];
       return `<section class="sy-panel">
         <div class="sy-panelhode"><div><p class="sy-etikett">Godset ditt</p><p class="sy-fullt" data-fullt></p></div>
-          <button class="knapp sy-host" type="button" data-gjor="host" data-host>Høst</button></div>
+          <div class="sy-hodeknapper"><a class="liten-knapp" href="hotell.html?rom=${encodeURIComponent(`hjem:${m.navn}`)}">Gå inn i huset</a>
+          <button class="knapp sy-host" type="button" data-gjor="host" data-host>Høst</button></div></div>
         ${minTagg()}
         <div class="sy-byggliste">${synlige.map(byggKort).join("")}</div>
         ${rangOgButikk()}</section>`;
@@ -323,7 +324,8 @@
     return `<section class="sy-panel">
       <div class="sy-panelhode"><div><p class="sy-etikett">På besøk</p><h3>${esc(eier(sp.navn))} gods</h3>
         <p class="dempet">Villa nivå ${b.villa} · olivenlund ${b.lund}${b.vingard ? ` · vingård ${b.vingard}` : ""}${b.brudd ? ` · marmorbrudd ${b.brudd}` : ""} · ${tall(sp.aere)} ære${sp.hjemme ? "" : " · ikke hjemme på en stund"}</p></div>
-        <button class="liten-knapp" type="button" data-hjem>Til godset mitt</button></div>
+        <div class="sy-hodeknapper"><a class="liten-knapp" href="hotell.html?rom=${encodeURIComponent(`hjem:${sp.navn}`)}">Gå inn i huset</a>
+        <button class="liten-knapp" type="button" data-hjem>Til godset mitt</button></div></div>
       <div class="sy-besok">
         <button class="knapp" type="button" data-skjenk="${esc(sp.navn)}" ${sp.skjenket ? "disabled" : ""}>${sp.skjenket ? "Skjenket i dag" : "Skjenk et glass vin"}<small>${sp.skjenket ? "Kom igjen i morgen" : `Han får vin, du får +10 oliven og +5 ære`}</small></button>
         <button class="knapp sekundar" type="button" data-nask="${esc(sp.navn)}" ${sp.nasket || m.naskIgjen <= 0 || sp.bytte < 5 ? "disabled" : ""}>${nask}<small>${m.naskIgjen} av ${T.regler.naskPerDag} nask igjen i dag. Han får beskjed.</small></button>

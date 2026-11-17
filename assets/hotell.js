@@ -1,6 +1,7 @@
 // TAFSE HOTELL: rom sett skrått ovenfra, der hver bror styrer sin egen figur.
 // Trykk på gulvet for å gå, på en stol for å sette deg og på en dør for å bytte rom.
-// Serveren (lib/hotell.js) holder orden på hvem som er hvor og hva som blir sagt.
+// Hver bror har også sitt eget rom. Det vokser med villaen i Symposion og innredes
+// med møbler kjøpt for oliven, vin og marmor. Serveren (lib/hotell.js) holder orden på alt.
 
 (() => {
   const rot = document.getElementById("h");
@@ -14,7 +15,7 @@
   const TOGA = ["#ece4d2", "#8e2f52", "#2f5d8e", "#2f7d5b", "#c9a24a", "#5b3a8e", "#b5482a", "#2b2b2b"];
   const GESTER = { vink: "vinker", skal: "skåler", dans: "danser" };
 
-  // ---------- Rommene ----------
+  // ---------- Fellesrommene ----------
   // Koordinater: x går ned mot høyre, y ned mot venstre. Veggene står langs x = 0 og y = 0.
   const ROM = {
     lobbyen: {
@@ -30,7 +31,7 @@
         ["amfora", 10, 5], ["amfora", 10, 6],
       ],
       npc: [{ navn: "Portieren", x: 7, y: 0, utseende: { hud: HUD[1], har: "kort", harfarge: "#9a9a9a", skjegg: "ja", toga: "#2b2b2b" },
-        replikker: ["Velkommen til Tafse Hotell.", "Baren ligger gjennom døra til høyre.", "Terrassen har basseng. Togaen tåler vann.", "Frokost serveres aldri. Vi er et taffelakademi.", "Rom 1412 er dessverre opptatt."] }],
+        replikker: ["Velkommen til Tafse Hotell.", "Baren ligger gjennom døra til høyre.", "Terrassen har basseng. Togaen tåler vann.", "Rommet ditt finner du øverst. Det vokser med villaen i Symposion.", "Frokost serveres aldri. Vi er et taffelakademi.", "Rom 1412 er dessverre opptatt."] }],
     },
     baren: {
       navn: "Baren", b: 10, d: 9, start: [7, 2], vegg: 112, veggfarge: ["#16302f", "#1d3d3b"], bakgrunn: ["#0f1413", "#0b0b0a"],
@@ -41,7 +42,7 @@
         ["disk", 1, 2], ["disk", 1, 3], ["disk", 1, 4], ["disk", 1, 5],
         ["krakk", 2, 2], ["krakk", 2, 3], ["krakk", 2, 4], ["krakk", 2, 5],
         ["bord", 5, 1], ["krakk", 4, 1], ["krakk", 6, 1], ["bord", 3, 7], ["krakk", 2, 7], ["krakk", 4, 7],
-        ["amfora", 0, 7], ["amfora", 0, 8], ["plante", 9, 0], ["soyle", 0, 0],
+        ["vinfat", 0, 7], ["vinfat", 0, 8], ["plante", 9, 0], ["soyle", 0, 0],
       ],
       npc: [{ navn: "Dionysos", x: 0, y: 3, utseende: { hud: HUD[2], har: "krøller", harfarge: "#1c1612", skjegg: "ja", toga: "#8e2f52" },
         replikker: ["Hva skal det være? Vi har vin, vin og vin.", "Skål, bror!", "Dansegulvet lyser ikke for ingenting.", "Jeg blander aldri vinen med vann. Det er det dere som gjør.", "Siste runde var for to tusen år siden."] }],
@@ -63,9 +64,12 @@
   // ---------- Tilstand ----------
   let rom = "lobbyen", R = ROM[rom], ruter = [], mobler = [];
   let figurer = new Map();   // navn → figur (brødre og hotellets egne)
-  let meg = null, etter = 0, forste = true, antall = {}, logg = [];
+  let meg = null, look = null, etter = 0, forste = true, antall = {}, medlemmer = [], logg = [];
+  let hjem = null, innred = false, valgt = null, melding = "";   // rommet til en bror, og innredning av eget rom
+  let bytter = false, romNokkel = "", innredNokkel = "";
   let lerret, ctx, logW = 960, logH = 600, kam = [0, 0], peker = null, mal = null;
   let lagreTid = null;
+  let zoom = 1; // små rom forstørres så de fyller bildet
   let TK = 1; // tekst tegnes større når rommet vises lite, som på mobil
 
   const P = (x, y, z = 0) => [(x - y) * TW / 2, (x + y) * TH / 2 - z];
@@ -76,6 +80,11 @@
     return { hud: HUD[n % 3], har: HAR[n % 4], harfarge: HARFARGE[(n >> 1) % 5], skjegg: n % 3 === 0 ? "ja" : "nei", toga: TOGA[n % TOGA.length] };
   };
   const utseende = (u, navn) => ({ ...standard(navn), ...(u || {}) });
+  const eier = (navn) => (/[sxz]$/i.test(navn) ? `${navn}'` : `${navn}s`);
+  const mittRom = () => `hjem:${MEG}`;
+  const erMitt = () => rom === mittRom();
+  const romNavn = (id) => (ROM[id] ? ROM[id].navn : id === mittRom() ? "Rommet ditt" : `${eier(id.slice(5))} rom`);
+  const post = (kropp) => ({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(kropp) });
 
   // ---------- Møbler ----------
   function flate(pkt, farge) {
@@ -85,6 +94,7 @@
     ctx.closePath();
     ctx.fill();
   }
+  const rombe = (x, y, inn, farge) => flate([P(x + inn, y + inn), P(x + 1 - inn, y + inn), P(x + 1 - inn, y + 1 - inn), P(x + inn, y + 1 - inn)], farge);
   // En kloss som står på flisa. fx/fy er hvor på flisa (0 til 1), z er høyde fra og til.
   function kloss(x, y, fx0, fy0, fx1, fy1, z0, z1, farge) {
     const x0 = x + fx0, x1 = x + fx1, y0 = y + fy0, y1 = y + fy1;
@@ -92,20 +102,43 @@
     flate([P(x1, y0, z1), P(x1, y1, z1), P(x1, y1, z0), P(x1, y0, z0)], mork(farge, 0.86));
     flate([P(x0, y0, z1), P(x1, y0, z1), P(x1, y1, z1), P(x0, y1, z1)], farge);
   }
+  // mot = "v" betyr at ryggen står mot venstre vegg (x = 0), ellers mot høyre vegg (y = 0)
   const MOBEL = {
     disk: { blokk: true, tegn(x, y) { kloss(x, y, 0, 0.1, 1, 0.9, 0, 30, "#6b4a2a"); kloss(x, y, 0, 0.05, 1, 0.95, 30, 34, "#c9a24a"); } },
     sofa: { sete: 15, tegn(x, y, mot) {
       if (mot === "v") { kloss(x, y, 0, 0, 0.28, 1, 0, 36, "#7a2843"); kloss(x, y, 0.28, 0, 1, 1, 0, 15, "#8e2f52"); }
       else { kloss(x, y, 0, 0, 1, 0.28, 0, 36, "#7a2843"); kloss(x, y, 0, 0.28, 1, 1, 0, 15, "#8e2f52"); }
     } },
+    seng: { sete: 14, tegn(x, y, mot) {
+      if (mot === "v") { kloss(x, y, 0, 0.06, 0.14, 0.94, 0, 30, "#5a4630"); kloss(x, y, 0.14, 0.06, 1, 0.94, 0, 13, "#ece4d2"); kloss(x, y, 0.18, 0.16, 0.42, 0.84, 13, 17, "#d8cdb4"); kloss(x, y, 0.55, 0.06, 1, 0.94, 13, 14.5, "#8e2f52"); }
+      else { kloss(x, y, 0.06, 0, 0.94, 0.14, 0, 30, "#5a4630"); kloss(x, y, 0.06, 0.14, 0.94, 1, 0, 13, "#ece4d2"); kloss(x, y, 0.16, 0.18, 0.84, 0.42, 13, 17, "#d8cdb4"); kloss(x, y, 0.06, 0.55, 0.94, 1, 13, 14.5, "#8e2f52"); }
+    } },
     krakk: { sete: 14, tegn(x, y) { kloss(x, y, 0.3, 0.3, 0.7, 0.7, 0, 11, "#5a4630"); kloss(x, y, 0.2, 0.2, 0.8, 0.8, 11, 14, "#c9a24a"); } },
     bord: { blokk: true, tegn(x, y) { kloss(x, y, 0.4, 0.4, 0.6, 0.6, 0, 18, "#5a4630"); kloss(x, y, 0.08, 0.08, 0.92, 0.92, 18, 22, "#ece4d2"); const [a, b] = P(x + 0.5, y + 0.5, 22); ctx.fillStyle = "#8e2f52"; ctx.fillRect(a - 3, b - 9, 6, 9); ctx.fillStyle = "#c9a24a"; ctx.fillRect(a - 4, b - 11, 8, 2); } },
     solseng: { sete: 10, tegn(x, y) { kloss(x, y, 0.15, 0, 0.85, 1, 0, 9, "#ece4d2"); kloss(x, y, 0.15, 0, 0.85, 0.22, 9, 22, "#d8cdb4"); } },
+    teppe: { gulv: true, tegn(x, y) { rombe(x, y, 0.06, "#c9a24a"); rombe(x, y, 0.13, "#8e2f52"); rombe(x, y, 0.36, "#c9a24a"); rombe(x, y, 0.42, "#7a2843"); } },
     soyle: { blokk: true, tegn(x, y) {
       kloss(x, y, 0.15, 0.15, 0.85, 0.85, 0, 7, "#d8cdb4"); kloss(x, y, 0.28, 0.28, 0.72, 0.72, 7, 94, "#ece4d2");
       const [a, b] = P(x + 0.5, y + 0.5, 0); ctx.strokeStyle = "rgba(0,0,0,.12)"; ctx.lineWidth = 1;
       for (const dx of [-8, -3, 3, 9]) { ctx.beginPath(); ctx.moveTo(a + dx, b - 6); ctx.lineTo(a + dx, b - 92); ctx.stroke(); }
       kloss(x, y, 0.15, 0.15, 0.85, 0.85, 94, 102, "#ece4d2");
+    } },
+    statue: { blokk: true, tegn(x, y) {
+      kloss(x, y, 0.22, 0.22, 0.78, 0.78, 0, 14, "#d8cdb4");
+      const [a, b] = P(x + 0.5, y + 0.5, 14);
+      ctx.fillStyle = "#ece4d2"; ctx.fillRect(a - 8, b - 36, 16, 36); ctx.fillRect(a - 6, b - 52, 12, 14); ctx.fillRect(a + 8, b - 52, 5, 18); ctx.fillRect(a - 12, b - 34, 4, 14);
+      ctx.fillStyle = "#cfc5ad"; ctx.fillRect(a + 3, b - 36, 5, 36); ctx.fillRect(a + 3, b - 52, 3, 14);
+      ctx.fillStyle = "#c9a24a"; ctx.fillRect(a + 6, b - 60, 9, 8);
+    } },
+    vinfat: { blokk: true, tegn(x, y) {
+      const [a, b] = P(x + 0.5, y + 0.5);
+      ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.beginPath(); ctx.ellipse(a, b, 16, 7, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = "#5a3a22"; ctx.beginPath(); ctx.ellipse(a, b - 4, 14, 6, 0, 0, 7); ctx.fill(); ctx.fillRect(a - 14, b - 32, 28, 28);
+      ctx.fillStyle = "#6f4a2c"; ctx.fillRect(a - 14, b - 32, 9, 28);
+      ctx.fillStyle = "#8a6038"; ctx.beginPath(); ctx.ellipse(a, b - 32, 14, 6, 0, 0, 7); ctx.fill();
+      ctx.strokeStyle = "#2b2118"; ctx.lineWidth = 2;
+      for (const dy of [-10, -24]) { ctx.beginPath(); ctx.ellipse(a, b + dy, 14, 6, 0, 0, Math.PI); ctx.stroke(); }
+      ctx.fillStyle = "#8e2f52"; ctx.beginPath(); ctx.ellipse(a, b - 32, 9, 3.5, 0, 0, 7); ctx.fill();
     } },
     plante: { blokk: true, tegn(x, y) {
       kloss(x, y, 0.3, 0.3, 0.7, 0.7, 0, 13, "#a9603c");
@@ -135,26 +168,47 @@
     } },
   };
 
-  function byggRom(navn) {
-    rom = navn; R = ROM[navn];
+  // Rommet til en bror. Størrelse og stil følger villanivået hans i Symposion.
+  function lagHjem(id, h) {
+    const n = h.storrelse, trinn = h.niva <= 2 ? 0 : h.niva <= 4 ? 1 : h.niva <= 7 ? 2 : 3;
+    return {
+      navn: romNavn(id), b: n, d: n, start: [1, 1], vegg: 112, bakgrunn: ["#141110", "#0b0b0a"],
+      veggfarge: [["#75624a", "#8a7458"], ["#8c4a2f", "#a25a3a"], ["#9a917b", "#b0a68e"], ["#5a1d2c", "#6f2638"]][trinn],
+      gulv: [
+        (x, y) => (y % 2 ? "#6b4f36" : "#62482f"),
+        (x, y) => ((x + y) % 2 ? "#b5623a" : "#a85832"),
+        (x, y) => ((x + y) % 2 ? "#d8cdb4" : "#c2b697"),
+        (x, y) => (x === 0 || y === 0 || x === n - 1 || y === n - 1 ? "#c9a24a" : (x + y) % 2 ? "#ece4d2" : "#d8cdb4"),
+      ][trinn],
+      skilt: { side: "v", pos: n / 2, z: 64, tekst: h.eier.toUpperCase(), font: "600 16px Cinzel, Georgia, serif" },
+      dorer: [{ x: 1, y: 0, side: "h", til: "lobbyen" }],
+      mobler: h.mobler.map((m) => [m.type, m.x, m.y, m.x === 0 ? "v" : "h"]),
+      npc: [],
+    };
+  }
+
+  function lagRuter() {
     ruter = Array.from({ length: R.b }, (_, x) => Array.from({ length: R.d }, (_, y) => ({ vann: !!(R.vann && R.vann(x, y)) })));
-    mobler = R.mobler.map(([type, x, y, mot]) => {
+    mobler = [];
+    for (const [type, x, y, mot] of R.mobler) {
       const m = MOBEL[type];
+      if (!m || !rute(x, y)) continue;
       if (m.blokk) ruter[x][y].blokk = true;
       if (m.sete) ruter[x][y].sete = { h: m.sete };
-      return { type, x, y, mot, dybde: x + y };
-    });
-    for (const d of R.dorer) ruter[d.x][d.y].dor = d;
-    figurer = new Map();
-    for (const n of R.npc) {
-      ruter[n.x][n.y].blokk = true;
-      ruter[n.x][n.y].npc = n.navn;
-      figurer.set(n.navn, { navn: n.navn, x: n.x, y: n.y, sti: [], utseende: n.utseende, npc: n });
+      mobler.push({ type, x, y, mot, dybde: x + y, gulv: !!m.gulv });
     }
+    for (const d of R.dorer) ruter[d.x][d.y].dor = d;
+    for (const n of R.npc) { ruter[n.x][n.y].blokk = true; ruter[n.x][n.y].npc = n.navn; }
+  }
+  function byggRom(navn, def) {
+    rom = navn; R = def;
+    lagRuter();
+    figurer = new Map();
+    for (const n of R.npc) figurer.set(n.navn, { navn: n.navn, x: n.x, y: n.y, sti: [], utseende: n.utseende, npc: n });
     mal = null;
   }
 
-  // Korteste vei mellom to fliser. Seter og dører kan bare være mål, ikke gjennomgang.
+  // Korteste vei mellom to fliser. Seter kan bare være mål, ikke gjennomgang.
   function finnSti(fx, fy, tx, ty) {
     const m = rute(tx, ty);
     if (!m || m.blokk) return null;
@@ -181,51 +235,37 @@
   }
 
   // ---------- Figurene ----------
-  function tegnFigur(f, t) {
-    const rt = rute(Math.round(f.x), Math.round(f.y));
-    const [sx, sy0] = P(f.x + 0.5, f.y + 0.5);
-    const sitter = !f.sti.length && rt && rt.sete;
-    const vann = rt && rt.vann;
-    const gest = f.gest && f.gestTil > t ? f.gest : null;
-    const dans = gest === "dans";
-    const a = f.utseende, u = 2;
-    const gaar = f.sti.length > 0;
-    const hopp = dans ? Math.abs(Math.sin(t * 9)) * 6 : gaar ? Math.abs(Math.sin(t * 11)) * 3 : 0;
-    const flip = dans ? Math.floor(t * 2.5) % 2 === 0 : f.flip;
-    const bak = f.bak && gaar;
+  // Tegner en figur med føttene i origo. c er lerretet, a er utseendet, o sier hva figuren gjør.
+  function figur(c, a, o) {
+    const u = 2, t = o.t, dans = o.gest === "dans";
     const hud = a.hud, hudM = mork(hud, 0.84), toga = a.toga, togaM = mork(toga, 0.78), har = a.harfarge;
     const kant = toga === "#c9a24a" ? "#8e2f52" : "#c9a24a";
+    if (o.flip) c.scale(-1, 1);
+    const px = (x, y, w, h, f) => { c.fillStyle = f; c.fillRect(x * u, y * u, w * u, h * u); };
 
-    if (!vann) { ctx.fillStyle = "rgba(0,0,0,.28)"; ctx.beginPath(); ctx.ellipse(sx, sy0, 15, 6, 0, 0, 7); ctx.fill(); }
-    ctx.save();
-    ctx.translate(sx, sy0 - (sitter ? rt.sete.h : 0) + (vann ? 16 : 0) - hopp);
-    if (vann) { ctx.beginPath(); ctx.rect(-40, -130, 80, 130 - 20 + hopp); ctx.clip(); }
-    if (flip) ctx.scale(-1, 1);
-    const px = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(x * u, y * u, w * u, h * u); };
-
-    if (a.har === "langt") px(-7, -36 + (sitter ? 4 : 0), 14, 14, har);
-    if (sitter) { px(-5, -5, 4, 5, hud); px(1, -5, 4, 5, hudM); px(-5, -1, 5, 1, "#6b4a2a"); px(1, -1, 5, 1, "#6b4a2a"); ctx.translate(0, 4 * u); }
+    if (a.har === "langt") px(-7, -36 + (o.sitter ? 4 : 0), 14, 14, har);
+    if (o.sitter) { px(-5, -5, 4, 5, hud); px(1, -5, 4, 5, hudM); px(-5, -1, 5, 1, "#6b4a2a"); px(1, -1, 5, 1, "#6b4a2a"); c.translate(0, 4 * u); }
     else {
-      const l = gaar ? (Math.sin(t * 11) > 0 ? 1 : -1) : 0;
+      const l = o.gaar ? (Math.sin(t * 11) > 0 ? 1 : -1) : 0;
       px(-5, -9, 4, 9 - (l > 0 ? 2 : 0), hud); px(1, -9, 4, 9 - (l < 0 ? 2 : 0), hudM);
       px(-5, -1 - (l > 0 ? 2 : 0), 5, 1, "#6b4a2a"); px(1, -1 - (l < 0 ? 2 : 0), 5, 1, "#6b4a2a");
     }
     // Toga med skrå kant og belte
     px(-6, -23, 12, 15, toga); px(3, -23, 3, 15, togaM); px(-6, -9, 12, 1, togaM);
-    if (!bak) for (let i = 0; i < 5; i++) px(-6 + i * 2, -23 + i * 2, 3, 2, kant);
+    if (!o.bak) for (let i = 0; i < 5; i++) px(-6 + i * 2, -23 + i * 2, 3, 2, kant);
     px(-6, -13, 12, 1, kant);
     // Armer
     if (dans) { px(-10, -31, 3, 9, hud); px(7, -31, 3, 9, hudM); px(-9, -22, 3, 3, toga); px(6, -22, 3, 3, togaM); }
     else {
       px(-9, -22, 3, 4, toga); px(-9, -18, 3, 6, hud);
-      if (gest === "vink") { px(6, -22, 3, 3, togaM); px(7 + Math.round(Math.sin(t * 14)), -31, 3, 9, hudM); }
-      else if (gest === "skal") { px(6, -22, 3, 3, togaM); px(7, -30, 3, 8, hudM); px(6, -35, 5, 5, "#e2c174"); px(7, -36, 3, 1, "#8e2f52"); }
+      if (o.gest === "vink") { px(6, -22, 3, 3, togaM); px(7 + Math.round(Math.sin(t * 14)), -31, 3, 9, hudM); }
+      else if (o.gest === "skal") { px(6, -22, 3, 3, togaM); px(7, -30, 3, 8, hudM); px(6, -35, 5, 5, "#e2c174"); px(7, -36, 3, 1, "#8e2f52"); }
       else { px(6, -22, 3, 4, togaM); px(6, -18, 3, 6, hudM); }
     }
     // Hode, ansikt og hår
     px(-2, -25, 4, 2, hudM);
     px(-6, -36, 12, 11, hud); px(4, -36, 2, 11, hudM);
-    if (!bak) {
+    if (!o.bak) {
       px(-4, -31, 2, 2, "#1c1612"); px(1, -31, 2, 2, "#1c1612");
       if (a.skjegg === "ja") { px(-6, -28, 12, 3, har); px(-2, -27, 3, 1, mork(har, 0.55)); }
       else px(-2, -27, 3, 1, mork(hud, 0.6));
@@ -235,6 +275,23 @@
     else if (a.har === "krøller") { px(-7, -39, 14, 4, har); px(-8, -37, 2, 5, har); px(6, -37, 2, 5, har); px(-5, -40, 3, 1, har); px(1, -40, 4, 1, har); }
     else if (a.har === "knute") { px(-6, -38, 12, 3, har); px(-2, -41, 4, 3, har); }
     else { px(-6, -34, 1, 3, har); px(5, -34, 1, 3, har); }
+  }
+
+  function tegnFigur(f, t) {
+    const rt = rute(Math.round(f.x), Math.round(f.y));
+    const [sx, sy0] = P(f.x + 0.5, f.y + 0.5);
+    const sitter = !f.sti.length && rt && rt.sete;
+    const vann = rt && rt.vann;
+    const gest = f.gest && f.gestTil > t ? f.gest : null;
+    const dans = gest === "dans";
+    const gaar = f.sti.length > 0;
+    const hopp = dans ? Math.abs(Math.sin(t * 9)) * 6 : gaar ? Math.abs(Math.sin(t * 11)) * 3 : 0;
+
+    if (!vann) { ctx.fillStyle = "rgba(0,0,0,.28)"; ctx.beginPath(); ctx.ellipse(sx, sy0, 15, 6, 0, 0, 7); ctx.fill(); }
+    ctx.save();
+    ctx.translate(sx, sy0 - (sitter ? rt.sete.h : 0) + (vann ? 16 : 0) - hopp);
+    if (vann) { ctx.beginPath(); ctx.rect(-40, -130, 80, 130 - 20 + hopp); ctx.clip(); }
+    figur(ctx, f.utseende, { t, gaar, sitter: !!sitter, gest, flip: dans ? Math.floor(t * 2.5) % 2 === 0 : f.flip, bak: f.bak && gaar });
     ctx.restore();
     if (vann) { ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(sx, sy0 - 4, 16 + Math.sin(t * 4) * 2, 6, 0, 0, 7); ctx.stroke(); }
     f.topp = sy0 - (sitter ? rt.sete.h - 8 : 0) + (vann ? 16 : 0) - 84;
@@ -251,7 +308,7 @@
     if (!f.boble || f.boble.til < t) return;
     ctx.font = `${Math.round(16 * TK)}px 'EB Garamond', Georgia, serif`;
     const b = Math.max(...f.boble.linjer.map((l) => ctx.measureText(l).width)) + 20, lh = 19 * TK, h = f.boble.linjer.length * lh + 12;
-    const x = Math.max(-kam[0] + 6, Math.min(logW - kam[0] - b - 6, sx - b / 2)), y = f.topp - h;
+    const x = Math.max(-kam[0] + 6, Math.min(logW / zoom - kam[0] - b - 6, sx - b / 2)), y = f.topp - h;
     ctx.globalAlpha = Math.min(1, (f.boble.til - t) / 0.4);
     ctx.fillStyle = "#f5efe0"; ctx.strokeStyle = "#c9a24a"; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.roundRect(x, y, b, h, 8); ctx.fill(); ctx.stroke();
@@ -299,10 +356,13 @@
     // Kamera: hele rommet hvis det får plass, ellers følger det figuren din
     const minX = -R.d * TW / 2 - 16, maxX = R.b * TW / 2 + 16, minY = -Math.max(R.vegg, 100) - 26, maxY = (R.b + R.d) * TH / 2 + 30;
     const [mx, my] = meg ? P(meg.x + 0.5, meg.y + 0.5) : [0, 0];
+    zoom = Math.max(1, Math.min(1.6, logW / (maxX - minX), logH / (maxY - minY)));
+    const vW = logW / zoom, vH = logH / zoom;
     kam = [
-      maxX - minX <= logW ? logW / 2 - (minX + maxX) / 2 : Math.max(logW - maxX, Math.min(-minX, logW / 2 - mx)),
-      maxY - minY <= logH ? logH / 2 - (minY + maxY) / 2 : Math.max(logH - maxY, Math.min(-minY, logH / 2 - my + 30)),
+      maxX - minX <= vW ? vW / 2 - (minX + maxX) / 2 : Math.max(vW - maxX, Math.min(-minX, vW / 2 - mx)),
+      maxY - minY <= vH ? vH / 2 - (minY + maxY) / 2 : Math.max(vH - maxY, Math.min(-minY, vH / 2 - my + 30)),
     ];
+    ctx.scale(zoom, zoom);
     ctx.translate(kam[0], kam[1]);
 
     // Vegger
@@ -321,26 +381,35 @@
       if (V < 90) flate([veggP(d.side, pos - 0.1, 0), veggP(d.side, pos + 1.1, 0), veggP(d.side, pos + 1.1, 104), veggP(d.side, pos - 0.1, 104)], R.veggfarge[d.side === "h" ? 1 : 0]);
       flate([veggP(d.side, pos + 0.08, 0), veggP(d.side, pos + 0.92, 0), veggP(d.side, pos + 0.92, 84), veggP(d.side, pos + 0.08, 84)], "#c9a24a");
       flate([veggP(d.side, pos + 0.14, 0), veggP(d.side, pos + 0.86, 0), veggP(d.side, pos + 0.86, 80), veggP(d.side, pos + 0.14, 80)], "#0b0b0a");
-      veggTekst(d.side, pos + 0.5, 90, ROM[d.til].navn.toUpperCase(), "600 10px Cinzel, Georgia, serif", "#e2c174");
+      veggTekst(d.side, pos + 0.5, 90, romNavn(d.til).toUpperCase(), "600 10px Cinzel, Georgia, serif", "#e2c174");
     }
-    // Gulv
+    // Gulv, tepper og markeringer
     flate([P(0, R.d), P(R.b, R.d), P(R.b, R.d, -10), P(0, R.d, -10)], "#3a342a");
     flate([P(R.b, 0), P(R.b, R.d), P(R.b, R.d, -10), P(R.b, 0, -10)], "#4a4336");
-    for (let x = 0; x < R.b; x++) for (let y = 0; y < R.d; y++) flate([P(x, y), P(x + 1, y), P(x + 1, y + 1), P(x, y + 1)], R.gulv(x, y, t));
-    for (const d of R.dorer) { ctx.globalAlpha = 0.35 + Math.sin(t * 3) * 0.12; flate([P(d.x, d.y), P(d.x + 1, d.y), P(d.x + 1, d.y + 1), P(d.x, d.y + 1)], "#e2c174"); ctx.globalAlpha = 1; }
+    for (let x = 0; x < R.b; x++) for (let y = 0; y < R.d; y++) rombe(x, y, 0, R.gulv(x, y, t));
+    for (const m of mobler) if (m.gulv) MOBEL[m.type].tegn(m.x, m.y, m.mot, t);
+    for (const d of R.dorer) { ctx.globalAlpha = 0.35 + Math.sin(t * 3) * 0.12; rombe(d.x, d.y, 0, "#e2c174"); ctx.globalAlpha = 1; }
     const merk = (m, farge, bredde) => {
       ctx.strokeStyle = farge; ctx.lineWidth = bredde; ctx.beginPath();
       [P(m[0] + 0.06, m[1] + 0.06), P(m[0] + 0.94, m[1] + 0.06), P(m[0] + 0.94, m[1] + 0.94), P(m[0] + 0.06, m[1] + 0.94)].forEach(([a, b], i) => (i ? ctx.lineTo(a, b) : ctx.moveTo(a, b)));
       ctx.closePath(); ctx.stroke();
     };
-    if (peker && rute(peker[0], peker[1]) && (!rute(peker[0], peker[1]).blokk || rute(peker[0], peker[1]).npc)) merk(peker, "rgba(226,193,116,.9)", 2);
+    const pr = peker && rute(peker[0], peker[1]);
+    if (pr && (innred || !pr.blokk || pr.npc)) merk(peker, "rgba(226,193,116,.9)", 2);
     if (mal && meg && meg.sti.length) merk(mal, "rgba(236,228,210,.7)", 1.5);
 
     // Møbler og figurer, bakerst først
-    const ting = [...mobler.map((m) => ({ d: m.dybde, m })), ...[...figurer.values()].map((f) => ({ d: f.x + f.y + 0.5, f }))].sort((a, b) => a.d - b.d);
+    const ting = [...mobler.filter((m) => !m.gulv).map((m) => ({ d: m.dybde, m })), ...[...figurer.values()].map((f) => ({ d: f.x + f.y + 0.5, f }))].sort((a, b) => a.d - b.d);
     for (const e of ting) {
       if (e.m) MOBEL[e.m.type].tegn(e.m.x, e.m.y, e.m.mot, t);
       else tegnFigur(e.f, t);
+    }
+    // Når du innreder: vis møbelet du holder, der pekeren er
+    const holder = innred && valgt && hjem && hjem.lager.find((m) => m.id === valgt);
+    if (holder && pr && MOBEL[holder.type] && !mobler.some((m) => m.x === peker[0] && m.y === peker[1])) {
+      ctx.globalAlpha = 0.6;
+      MOBEL[holder.type].tegn(peker[0], peker[1], peker[0] === 0 ? "v" : "h", t);
+      ctx.globalAlpha = 1;
     }
     for (const f of figurer.values()) tegnNavnOgBoble(f, t);
   }
@@ -356,7 +425,7 @@
         if (lengde <= igjen) { f.x = tx; f.y = ty; f.sti.shift(); igjen -= lengde; }
         else { f.x += (dx / lengde) * igjen; f.y += (dy / lengde) * igjen; igjen = 0; }
       }
-      if (f === meg && !f.sti.length) {
+      if (f === meg && !f.sti.length && !bytter) {
         const r = rute(Math.round(f.x), Math.round(f.y));
         if (r && r.dor) gaTil(r.dor.til, rom);
       }
@@ -364,7 +433,7 @@
   }
 
   function ga(tx, ty) {
-    if (!meg) return;
+    if (!meg || bytter) return;
     const r = rute(tx, ty);
     if (!r) return;
     if (r.npc) { const n = figurer.get(r.npc); si(n, n.npc.replikker[Math.floor(Math.random() * n.npc.replikker.length)], performance.now() / 1000); return; }
@@ -380,37 +449,43 @@
 
   // Bytt rom. Kommer man gjennom en dør, havner man foran døra på den andre siden.
   async function gaTil(til, fra) {
-    if (!ROM[til]) return;
-    byggRom(til);
-    const d = fra && R.dorer.find((x) => x.til === fra);
-    const [x, y] = d ? (d.side === "h" ? [d.x, 1] : [1, d.y]) : R.start;
-    meg = { navn: MEG, x, y, sti: [], utseende: meg ? meg.utseende : standard(MEG) };
-    figurer.set(MEG, meg);
-    visRomliste();
-    leggILogg(null, `Du er i ${R.navn.toLowerCase()}.`, "info");
+    if (bytter) return;
+    const erHjem = til.startsWith("hjem:");
+    if (!erHjem && !ROM[til]) til = "lobbyen";
+    bytter = true;
+    let feilet = false;
     try {
-      const svar = await api("hotell/flytt", post({ rom: til, x, y }));
-      if (!meg.lastet) {
-        meg.utseende = utseende(svar.utseende, MEG);
-        if (!svar.utseende) api("hotell/utseende", post(meg.utseende)).catch(() => {});
-        visGarderobe();
-      }
-      meg.lastet = true;
-    } catch (_) {}
+      let def = erHjem ? null : ROM[til], pos = [1, 1];
+      if (def) { const d = fra && def.dorer.find((x) => x.til === fra); pos = d ? (d.side === "h" ? [d.x, 1] : [1, d.y]) : def.start; }
+      const svar = await api("hotell/flytt", post({ rom: til, x: pos[0], y: pos[1] }));
+      hjem = erHjem ? svar.hjem : null;
+      if (erHjem) def = lagHjem(til, hjem);
+      innred = false; valgt = null; melding = "";
+      byggRom(til, def);
+      meg = { navn: MEG, x: pos[0], y: pos[1], sti: [], utseende: look };
+      figurer.set(MEG, meg);
+      visRomliste(); visInnred();
+      leggILogg(null, ROM[til] ? `Du er i ${R.navn.toLowerCase()}.` : til === mittRom() ? "Du er i rommet ditt." : `Du er på besøk hos ${til.slice(5)}.`, "info");
+    } catch (e) {
+      feilet = true;
+      leggILogg(null, e.message, "info");
+      if (meg) { meg.x = R.start[0]; meg.y = R.start[1]; meg.sti = []; }
+    } finally { bytter = false; }
+    if (feilet && !meg && til !== "lobbyen") return gaTil("lobbyen", null);
     hent();
   }
 
   // ---------- Samtale med serveren ----------
-  const post = (kropp) => ({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(kropp) });
   let henter = false;
   async function hent() {
-    if (henter || document.hidden || !meg) return;
+    if (henter || bytter || document.hidden || !meg) return;
     henter = true;
     const spurtRom = rom;
     try {
-      const s = await api(`hotell?rom=${rom}&etter=${etter}${forste ? "&forste=1" : ""}`);
-      if (spurtRom !== rom) return;
+      const s = await api(`hotell?rom=${encodeURIComponent(rom)}&etter=${etter}${forste ? "&forste=1" : ""}`);
+      if (spurtRom !== rom || bytter) return;
       const t = performance.now() / 1000;
+      if (s.hjem && hjem) oppdaterHjem(s.hjem);
       const sett = new Set([MEG]);
       for (const g of s.gjester) {
         if (g.navn === MEG) continue;
@@ -434,7 +509,7 @@
         else { if (f && !s.forste) si(f, m.tekst, t); leggILogg(m.navn, m.tekst); }
       }
       etter = s.sisteId; forste = false;
-      antall = s.antall;
+      antall = s.antall; medlemmer = s.medlemmer || medlemmer;
       visRomliste();
     } catch (_) {
     } finally { henter = false; }
@@ -449,6 +524,54 @@
     catch (e) { leggILogg(null, e.message, "info"); }
   }
 
+  // ---------- Innredning av eget rom ----------
+  function oppdaterHjem(h) {
+    const nokkel = (x) => JSON.stringify([x.mobler, x.storrelse, x.niva]);
+    const endret = !hjem || nokkel(hjem) !== nokkel(h);
+    hjem = h;
+    if (endret) { R = lagHjem(rom, h); lagRuter(); }
+    visInnred();
+  }
+  async function innredning(sti, kropp, etterpa) {
+    try {
+      const s = await api(sti, post(kropp));
+      melding = "";
+      if (etterpa) etterpa(s);
+      oppdaterHjem(s.hjem);
+    } catch (e) { melding = e.message; visInnred(); }
+  }
+  function innredKlikk(x, y) {
+    if (!rute(x, y)) return;
+    const star = hjem.mobler.find((m) => m.x === x && m.y === y);
+    if (star) innredning("hotell/mobel", { id: star.id, x: null }, () => { valgt = star.id; });
+    else if (valgt) innredning("hotell/mobel", { id: valgt, x, y }, () => { valgt = null; });
+  }
+  const prisTekst = (pris) => Object.entries(pris).map(([r, n]) => `${n} ${r}`).join(", ");
+  function visInnred() {
+    const boks = document.getElementById("h-innred");
+    if (!boks) return;
+    if (!erMitt() || !hjem || !hjem.katalog) { if (innredNokkel) { boks.innerHTML = ""; innredNokkel = ""; } return; }
+    const nokkel = JSON.stringify([hjem.lager, hjem.beholdning, hjem.niva, innred, valgt, melding]);
+    if (nokkel === innredNokkel) return;
+    innredNokkel = nokkel;
+    const b = hjem.beholdning, K = hjem.katalog;
+    const rad = (v) => Object.entries(v.pris).every(([r, n]) => b[r] >= n);
+    boks.innerHTML = `<section class="h-boks h-innred">
+      <div class="h-innredhode">
+        <div><p class="h-etikett">Rommet ditt</p>
+          <p>${hjem.harGods ? `Villaen din i Symposion er på nivå ${hjem.niva}, og det gir et rom på ${hjem.storrelse} × ${hjem.storrelse} fliser. <a href="symposion.html">Bygg ut villaen</a> for å få større rom.` : `Du har ikke flyttet inn i <a href="symposion.html">Symposion</a> ennå. Der høster du oliven, vin og marmor, som du handler møbler for.`}</p>
+          <p class="h-saldo">Du har <strong>${b.oliven.toLocaleString("nb-NO")}</strong> oliven · <strong>${b.vin.toLocaleString("nb-NO")}</strong> vin · <strong>${b.marmor.toLocaleString("nb-NO")}</strong> marmor</p></div>
+        <button class="knapp${innred ? "" : " sekundar"}" type="button" data-innred>${innred ? "Ferdig" : "Innred rommet"}</button>
+      </div>
+      ${melding ? `<p class="melding feil">${esc(melding)}</p>` : ""}
+      ${innred ? `<p class="h-etikett">På lager</p>
+        <div class="h-lager">${hjem.lager.length ? hjem.lager.map((m) => `<button type="button" class="h-valg${m.id === valgt ? " valgt" : ""}" data-velg="${m.id}">${esc(K[m.type] ? K[m.type].navn : m.type)}</button>`).join("") : `<span class="dempet">Tomt. Kjøp noe i butikken under.</span>`}</div>
+        <p class="dempet h-hjelp">Velg et møbel og trykk på en ledig flis for å sette det ut. Trykk på et møbel i rommet for å ta det ned igjen.</p>` : ""}
+      <p class="h-etikett" style="margin-top:16px">Møbelbutikken</p>
+      <div class="h-butikk">${Object.entries(K).map(([id, v]) => `<div class="h-vare"><strong>${esc(v.navn)}</strong><span>${prisTekst(v.pris)}</span><button class="liten-knapp" type="button" data-kjop="${id}" ${rad(v) ? "" : "disabled"}>Kjøp</button></div>`).join("")}</div>
+    </section>`;
+  }
+
   // ---------- Det rundt lerretet ----------
   function leggILogg(navn, tekst, type) {
     logg.push({ navn, tekst, type });
@@ -461,14 +584,22 @@
   function visRomliste() {
     const l = document.getElementById("h-rom");
     if (!l) return;
-    l.innerHTML = Object.entries(ROM).map(([id, r]) => `<button type="button" class="h-romknapp${id === rom ? " aktiv" : ""}" data-rom="${id}">${esc(r.navn)}<span>${antall[id] || 0}</span></button>`).join("");
+    const nokkel = JSON.stringify([rom, antall, medlemmer]);
+    if (nokkel === romNokkel) return;
+    romNokkel = nokkel;
+    const knapp = (id, navn) => `<button type="button" class="h-romknapp${id === rom ? " aktiv" : ""}" data-rom="${esc(id)}">${esc(navn)}<span>${antall[id] || 0}</span></button>`;
+    const andre = medlemmer.filter((n) => n !== MEG);
+    l.innerHTML = Object.entries(ROM).map(([id, r]) => knapp(id, r.navn)).join("") + knapp(mittRom(), "Rommet mitt") +
+      (andre.length ? `<select id="h-besok" class="h-besok${rom.startsWith("hjem:") && !erMitt() ? " aktiv" : ""}" aria-label="Besøk en bror">
+        <option value="">Besøk en bror …</option>
+        ${andre.map((n) => `<option value="hjem:${esc(n)}"${rom === `hjem:${n}` ? " selected" : ""}>${esc(n)}${antall[`hjem:${n}`] ? ` (${antall[`hjem:${n}`]} inne)` : ""}</option>`).join("")}</select>` : "");
   }
   function visGarderobe() {
     const g = document.getElementById("h-garderobe");
-    if (!g || !meg) return;
-    const a = meg.utseende;
+    if (!g || !look) return;
+    const a = look;
     const farger = (felt, liste) => liste.map((f) => `<button type="button" class="h-farge${a[felt] === f ? " valgt" : ""}" data-felt="${felt}" data-verdi="${f}" style="background:${f}" aria-label="${felt}"></button>`).join("");
-    const valg = (felt, liste, navn) => liste.map((v, i) => `<button type="button" class="h-valg${a[felt] === v ? " valgt" : ""}" data-felt="${felt}" data-verdi="${v}">${navn ? navn[i] : v}</button>`).join("");
+    const valg = (felt, liste) => liste.map((v) => `<button type="button" class="h-valg${a[felt] === v ? " valgt" : ""}" data-felt="${felt}" data-verdi="${v}">${v}</button>`).join("");
     g.innerHTML = `
       <div class="h-rad"><span>Toga</span><div>${farger("toga", TOGA)}</div></div>
       <div class="h-rad"><span>Hud</span><div>${farger("hud", HUD)}</div></div>
@@ -478,6 +609,7 @@
   }
 
   function tilpass() {
+    if (!lerret) return;
     const bredde = lerret.parentElement.clientWidth || 960;
     const stor = bredde >= 720;
     logW = stor ? 960 : 540; logH = stor ? 600 : 640;
@@ -488,9 +620,31 @@
   }
   function tilFlis(e) {
     const r = lerret.getBoundingClientRect();
-    const a = (((e.clientX - r.left) / r.width) * logW - kam[0]) / (TW / 2), b = (((e.clientY - r.top) / r.height) * logH - kam[1]) / (TH / 2);
+    const a = (((e.clientX - r.left) / r.width) * logW / zoom - kam[0]) / (TW / 2), b = (((e.clientY - r.top) / r.height) * logH / zoom - kam[1]) / (TH / 2);
     return [Math.floor((a + b) / 2), Math.floor((b - a) / 2)];
   }
+
+  // Rull rommet inn i bildet, så det nye møbelet kan settes ut med en gang
+  const visRommet = () => lerret && lerret.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+  // Knapper utenfor lerretet. Gjelder både innsjekkingen og selve hotellet.
+  rot.addEventListener("click", (e) => {
+    const k = e.target.closest("button");
+    if (!k || k.disabled) return;
+    if (k.dataset.gest) send("gest", k.dataset.gest);
+    else if (k.dataset.rom && k.dataset.rom !== rom) gaTil(k.dataset.rom, null);
+    else if (k.dataset.felt && look) {
+      look = { ...look, [k.dataset.felt]: k.dataset.verdi };
+      if (meg) meg.utseende = look;
+      visGarderobe();
+      clearTimeout(lagreTid);
+      if (meg) lagreTid = setTimeout(() => api("hotell/utseende", post(look)).catch(() => {}), 500);
+    }
+    else if (k.dataset.innred !== undefined) { innred = !innred; valgt = null; melding = ""; visInnred(); }
+    else if (k.dataset.velg) { valgt = valgt === Number(k.dataset.velg) ? null : Number(k.dataset.velg); visInnred(); if (valgt) visRommet(); }
+    else if (k.dataset.kjop) innredning("hotell/kjop", { type: k.dataset.kjop }, (s) => { innred = true; valgt = s.id; visRommet(); });
+  });
+  rot.addEventListener("change", (e) => { if (e.target.id === "h-besok" && e.target.value) gaTil(e.target.value, null); });
 
   function bygg() {
     rot.innerHTML = `
@@ -501,6 +655,7 @@
         <button class="knapp" type="submit">Si</button>
         <div class="h-gester">${Object.keys(GESTER).map((g) => `<button class="liten-knapp" type="button" data-gest="${g}">${{ vink: "Vink", skal: "Skål", dans: "Dans" }[g]}</button>`).join("")}</div>
       </form>
+      <div id="h-innred"></div>
       <div class="h-to">
         <section class="h-boks"><p class="h-etikett">Praten</p><ul class="h-logg" id="h-logg"></ul></section>
         <section class="h-boks"><p class="h-etikett">Garderoben</p><div id="h-garderobe"></div>
@@ -509,8 +664,12 @@
     lerret = document.getElementById("h-lerret");
     ctx = lerret.getContext("2d");
     tilpass();
+    visGarderobe();
 
-    lerret.addEventListener("click", (e) => { const [x, y] = tilFlis(e); ga(x, y); });
+    lerret.addEventListener("click", (e) => {
+      const [x, y] = tilFlis(e);
+      if (innred && erMitt() && hjem) innredKlikk(x, y); else ga(x, y);
+    });
     lerret.addEventListener("pointermove", (e) => { peker = tilFlis(e); });
     lerret.addEventListener("pointerleave", () => { peker = null; });
     document.getElementById("h-prat").addEventListener("submit", (e) => {
@@ -520,21 +679,9 @@
       if (tekst) send("si", tekst);
       felt.value = "";
     });
-    rot.addEventListener("click", (e) => {
-      const k = e.target.closest("button");
-      if (!k) return;
-      if (k.dataset.gest) send("gest", k.dataset.gest);
-      else if (k.dataset.rom && k.dataset.rom !== rom) gaTil(k.dataset.rom, null);
-      else if (k.dataset.felt && meg) {
-        meg.utseende = { ...meg.utseende, [k.dataset.felt]: k.dataset.verdi };
-        visGarderobe();
-        clearTimeout(lagreTid);
-        lagreTid = setTimeout(() => api("hotell/utseende", post(meg.utseende)).catch(() => {}), 500);
-      }
-    });
     window.addEventListener("resize", tilpass);
     document.addEventListener("visibilitychange", () => {
-      if (!document.hidden && meg) api("hotell/flytt", post({ rom, x: Math.round(meg.x), y: Math.round(meg.y) })).then(hent).catch(() => {});
+      if (!document.hidden && meg && !bytter) api("hotell/flytt", post({ rom, x: Math.round(meg.x), y: Math.round(meg.y) })).then(hent).catch(() => {});
     });
     window.addEventListener("pagehide", () => { try { navigator.sendBeacon("/api/hotell/ut"); } catch (_) {} });
 
@@ -549,12 +696,56 @@
     setInterval(hent, HENT_HVERT);
   }
 
+  // Første gang: lag figuren din før du slipper inn
+  function visInnsjekk() {
+    rot.innerHTML = `<div class="h-innsjekk">
+      <canvas id="h-speil" width="480" height="640" aria-hidden="true"></canvas>
+      <div>
+        <p class="overline">Innsjekking</p>
+        <h2>Lag figuren din</h2>
+        <p>Før portieren slipper deg inn, må du bestemme hvordan du ser ut. Du kan bytte om i garderoben senere.</p>
+        <div id="h-garderobe"></div>
+        <button class="knapp" type="button" id="h-sjekkinn">Sjekk inn som ${esc(MEG)}</button>
+        <p class="melding feil" id="h-innfeil" hidden></p>
+      </div></div>`;
+    visGarderobe();
+    const speil = document.getElementById("h-speil"), c = speil.getContext("2d");
+    let aktiv = true;
+    const ramme = (ms) => {
+      if (!aktiv || !speil.isConnected) return;
+      const t = ms / 1000;
+      c.setTransform(2, 0, 0, 2, 0, 0);
+      c.clearRect(0, 0, 240, 320);
+      c.fillStyle = "#c2b697"; c.beginPath(); c.moveTo(120, 248); c.lineTo(216, 280); c.lineTo(120, 312); c.lineTo(24, 280); c.closePath(); c.fill();
+      c.fillStyle = "rgba(0,0,0,.25)"; c.beginPath(); c.ellipse(120, 280, 44, 14, 0, 0, 7); c.fill();
+      c.save(); c.translate(120, 280); c.scale(3, 3);
+      figur(c, look, { t, gaar: false, sitter: false, gest: t % 7 < 2.2 ? "vink" : null, flip: false, bak: false });
+      c.restore();
+      requestAnimationFrame(ramme);
+    };
+    requestAnimationFrame(ramme);
+    document.getElementById("h-sjekkinn").addEventListener("click", async (e) => {
+      e.currentTarget.disabled = true;
+      look = { ...look, klar: "ja" };
+      try { await api("hotell/utseende", post(look)); aktiv = false; start(); }
+      catch (err) { const f = document.getElementById("h-innfeil"); f.textContent = err.message; f.hidden = false; e.currentTarget.disabled = false; }
+    });
+  }
+
+  function start() {
+    bygg();
+    const onsket = new URLSearchParams(location.search).get("rom") || "";
+    gaTil(ROM[onsket] || onsket.startsWith("hjem:") ? onsket : "lobbyen", null);
+  }
+
   (async () => {
     if (!(await hvemErJeg())) {
       rot.innerHTML = `<p class="tomt">Hotellet er bare for brødrene. <a href="salongen.html">Logg inn</a> for å sjekke inn.</p>`;
       return;
     }
-    bygg();
-    gaTil("lobbyen", null);
+    let profil = null;
+    try { profil = (await api("hotell/profil")).utseende; } catch (_) {}
+    look = utseende(profil, MEG);
+    if (!profil || profil.klar !== "ja") visInnsjekk(); else start();
   })();
 })();

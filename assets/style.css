@@ -934,3 +934,25 @@ input:focus, select:focus, textarea:focus, .knapp:focus-visible, a:focus-visible
 .h-valg.valgt { border-color: var(--gull); color: var(--gull-lys); }
 .h-hjelp { font-size: 15px; margin: 14px 0 0; }
 @media (max-width: 760px) { .h-to { grid-template-columns: 1fr; } .h-prat .knapp { flex: none; } .h-gester { width: 100%; } .h-gester .liten-knapp { flex: 1; } }
+
+.sy-hodeknapper { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+a.liten-knapp { text-decoration: none; display: inline-flex; align-items: center; }
+.h-besok { background: var(--bunn); border: 1px solid var(--linje); color: var(--dempet); padding: 8px 12px; font-family: var(--display); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; width: auto; }
+.h-besok.aktiv { border-color: var(--gull); color: var(--gull-lys); }
+.h-innsjekk { display: grid; grid-template-columns: 240px 1fr; gap: 36px; align-items: center; border: 1px solid var(--gull); background: var(--flate); padding: 28px; }
+.h-innsjekk canvas { width: 240px; height: 320px; background: radial-gradient(circle at 50% 40%, #2a261e, #0b0b0a); border: 1px solid var(--linje); }
+.h-innsjekk h2 { margin: 0 0 8px; }
+.h-innsjekk .knapp { margin-top: 10px; }
+.h-innred { margin-top: 18px; }
+.h-innred p { margin: 0 0 8px; }
+.h-innredhode { display: flex; gap: 18px; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; }
+.h-innredhode > div { flex: 1 1 320px; }
+.h-saldo strong { color: var(--gull-lys); font-weight: 500; }
+.h-lager { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.h-butikk { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.h-vare { border: 1px solid var(--linje); background: var(--bunn); padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
+.h-vare strong { font-family: var(--display); font-size: 14px; letter-spacing: .04em; font-weight: 600; }
+.h-vare span { font-size: 15px; color: var(--dempet); margin-bottom: 6px; }
+.h-vare .liten-knapp { margin-top: auto; }
+.h-vare .liten-knapp:disabled { opacity: .45; cursor: default; }
+@media (max-width: 760px) { .h-innsjekk { grid-template-columns: 1fr; justify-items: center; padding: 18px; gap: 18px; } .h-innsjekk canvas { width: 180px; height: 240px; } .h-butikk { grid-template-columns: 1fr 1fr; } }
