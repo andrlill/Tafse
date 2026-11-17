@@ -70,6 +70,13 @@ window.LYD = (() => {
     rekord: () => [784, 988, 1175].forEach((f, i) => tone({ f, start: i * 0.06, varighet: 0.14, volum: 0.08, type: "sine" })),
     vant: () => { [523, 659, 784, 1047].forEach((f, i) => tone({ f, start: i * 0.11, varighet: 0.3, volum: 0.16, type: "triangle" })); akkord([523, 659, 784, 1047], 0.5, 0.9, 0.07); },
     tapt: () => [392, 330, 262, 196].forEach((f, i) => tone({ f, start: i * 0.16, varighet: 0.32, volum: 0.13, type: "triangle" })),
+    // Murbrekker
+    sprett: () => tone({ f: 220, til: 330, type: "triangle", varighet: 0.09, volum: 0.2 }),
+    vegg: () => tone({ f: 160, type: "sine", varighet: 0.05, volum: 0.1 }),
+    kloss: (rad = 1) => { const f = 392 * Math.pow(2, (rad - 1) / 6); tone({ f, type: "triangle", varighet: 0.12, volum: 0.16 }); tone({ f: f * 2, varighet: 0.07, volum: 0.04 }); },
+    marmor: () => { tone({ f: 1400, type: "square", varighet: 0.04, volum: 0.04 }); sus({ varighet: 0.06, volum: 0.1, f: 3200, q: 2 }); },
+    mistet: () => tone({ f: 300, til: 80, type: "triangle", varighet: 0.45, volum: 0.18 }),
+    niva: () => [523, 659, 784, 1047].forEach((f, i) => tone({ f, start: i * 0.08, varighet: 0.2, volum: 0.13, type: "triangle" })),
     // Idus Martiae
     stikk: () => {
       sus({ varighet: 0.09, volum: 0.35, filter: "highpass", f: 2500, q: 0.7 });

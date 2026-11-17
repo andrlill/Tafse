@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Murbrekker · TAFSE</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main class="side">
+  <p class="overline">Spill</p>
+  <h1 class="side-tittel">Murbrekker</h1>
+  <nav class="spillhall" aria-label="Spillene">
+    <a href="symposion.html">Symposion</a>
+    <a href="2048.html">2048</a>
+    <a href="murbrekker.html" class="aktiv" aria-current="page">Murbrekker</a>
+    <a href="honningfella.html">Honningfella</a>
+    <a href="spill.html">Idus Martiae</a>
+  </nav>
+
+  <div class="t-oppsett">
+    <section class="t-spill" aria-label="Spillet">
+      <div class="t-hode">
+        <div class="t-tall"><span>Poeng</span><strong id="m-poeng">0</strong></div>
+        <div class="t-tall"><span>Din rekord</span><strong id="m-rekord">0</strong></div>
+        <button class="liten-knapp" type="button" id="m-ny">Nytt spill</button>
+      </div>
+      <div class="m-brett" id="m-brett">
+        <canvas id="m-lerret" tabindex="0" aria-label="Spillet. Styr plattformen med mus, finger eller piltaster."></canvas>
+        <div class="t-melding" id="m-melding" hidden></div>
+      </div>
+      <div class="t-under"><p class="t-hjelp">Mus, finger eller piltaster. Trykk eller mellomrom for å sende ballen.</p><button class="liten-knapp t-lyd" type="button" id="m-lyd">Lyd på</button></div>
+    </section>
+    <section class="t-side">
+      <h2 class="t-tittel">Tavlen</h2>
+      <div id="m-tavle"><p class="dempet">Laster …</p></div>
+    </section>
+  </div>
+</main>
+<script src="assets/app.js"></script>
+<script src="assets/lyd.js"></script>
+<script src="assets/murbrekker.js"></script>
+</body>
+</html>

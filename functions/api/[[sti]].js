@@ -129,6 +129,13 @@ async function sikreSkjema(db) {
       trekk INTEGER NOT NULL,
       opprettet TEXT NOT NULL
     )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS murbrekker (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      navn TEXT NOT NULL,
+      poeng INTEGER NOT NULL,
+      niva INTEGER NOT NULL,
+      opprettet TEXT NOT NULL
+    )`),
   ]);
   // Eldre databaser mangler kolonnen tafse
   try { await db.prepare("ALTER TABLE profiler ADD COLUMN tafse TEXT").run(); } catch (_) {}
@@ -654,6 +661,28 @@ export async function onRequest({ request, env, params }) {
       if (brikke & (brikke - 1)) return feil(400, "Ugyldig brikke.");
       await db.prepare("INSERT INTO tall2048 (navn, poeng, brikke, trekk, opprettet) VALUES (?, ?, ?, ?, ?)")
         .bind(meg, heltall(b.poeng, 0, 4000000), brikke, heltall(b.trekk, 0, 100000), naa()).run();
+      return json({ ok: true }, 201);
+    }
+  }
+
+  // --- Spillet: Murbrekker. Tavlen viser beste resultat per bror, denne uka og for alle tider ---
+  if (ressurs === "murbrekker") {
+    if (metode === "GET") {
+      const n = new Date(Date.now() + 3600000);
+      const mandag = new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate() - ((n.getUTCDay() + 6) % 7)) - 3600000).toISOString();
+      const beste = (hvor) => `SELECT t.navn, t.poeng, t.niva FROM murbrekker t JOIN (SELECT navn, MAX(poeng) AS p FROM murbrekker ${hvor} GROUP BY navn) m ON m.navn = t.navn AND m.p = t.poeng ${hvor ? "AND t.opprettet >= ?" : ""} GROUP BY t.navn ORDER BY t.poeng DESC`;
+      const [alle, uke, antall] = await db.batch([
+        db.prepare(beste("")),
+        db.prepare(beste("WHERE opprettet >= ?")).bind(mandag, mandag),
+        db.prepare("SELECT COUNT(*) AS n FROM murbrekker"),
+      ]);
+      return json({ alle: alle.results, uke: uke.results, antall: antall.results[0].n });
+    }
+    if (metode === "POST") {
+      const b = await lesJson(request);
+      const heltall = (v, min, maks) => Math.max(min, Math.min(maks, Math.round(Number(v) || 0)));
+      await db.prepare("INSERT INTO murbrekker (navn, poeng, niva, opprettet) VALUES (?, ?, ?, ?)")
+        .bind(meg, heltall(b.poeng, 0, 2000000), heltall(b.niva, 1, 999), naa()).run();
       return json({ ok: true }, 201);
     }
   }
