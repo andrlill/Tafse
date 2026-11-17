@@ -906,3 +906,31 @@ input:focus, select:focus, textarea:focus, .knapp:focus-visible, a:focus-visible
 @media (prefers-reduced-motion: reduce) { .sy-flagg path:nth-child(2) { animation: none; } }
 @media (max-width: 760px) { .sy-butikk { grid-template-columns: 1fr 1fr; gap: 8px; } .sy-vare { padding: 10px; } }
 .t-lyd { white-space: nowrap; flex: none; }
+
+/* Tafse Hotell */
+.h-rom { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.h-romknapp { display: inline-flex; align-items: center; gap: 10px; background: transparent; border: 1px solid var(--linje); color: var(--dempet); padding: 8px 14px; font-family: var(--display); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; cursor: pointer; }
+.h-romknapp span { min-width: 20px; padding: 1px 6px; border-radius: 10px; background: var(--flate2); color: var(--tekst); font-size: 12px; letter-spacing: 0; text-align: center; }
+.h-romknapp.aktiv { border-color: var(--gull); color: var(--gull-lys); }
+.h-romknapp.aktiv span { background: var(--gull); color: var(--bunn); }
+.h-ramme { border: 1px solid var(--gull); background: var(--bunn); }
+.h-ramme canvas { display: block; width: 100%; height: auto; cursor: pointer; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+.h-prat { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+.h-prat input { flex: 1 1 240px; min-width: 0; }
+.h-gester { display: flex; gap: 6px; }
+.h-to { display: grid; grid-template-columns: 3fr 2fr; gap: 18px; margin-top: 18px; align-items: start; }
+.h-boks { border: 1px solid var(--linje); background: var(--flate); padding: 18px 20px; }
+.h-etikett { font-family: var(--display); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--gull); margin: 0 0 8px; }
+.h-logg { list-style: none; margin: 0; padding: 0; max-height: 220px; overflow-y: auto; font-size: 17px; }
+.h-logg li { padding: 3px 0; overflow-wrap: anywhere; }
+.h-logg strong { color: var(--gull-lys); font-weight: 500; margin-right: 4px; }
+.h-logg .gest, .h-logg .info { color: var(--dempet); font-style: italic; font-size: 15px; }
+.h-rad { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; }
+.h-rad > span { flex: 0 0 76px; font-size: 15px; color: var(--dempet); }
+.h-rad > div { display: flex; gap: 6px; flex-wrap: wrap; }
+.h-farge { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--linje); cursor: pointer; padding: 0; }
+.h-farge.valgt { border-color: var(--gull-lys); box-shadow: 0 0 0 2px var(--bunn) inset; }
+.h-valg { background: transparent; border: 1px solid var(--linje); color: var(--dempet); padding: 3px 10px; font: inherit; font-size: 15px; cursor: pointer; }
+.h-valg.valgt { border-color: var(--gull); color: var(--gull-lys); }
+.h-hjelp { font-size: 15px; margin: 14px 0 0; }
+@media (max-width: 760px) { .h-to { grid-template-columns: 1fr; } .h-prat .knapp { flex: none; } .h-gester { width: 100%; } .h-gester .liten-knapp { flex: 1; } }

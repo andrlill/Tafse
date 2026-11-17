@@ -4,6 +4,7 @@
 //   - en hemmelighet (secret) TAFSE_PASSORD. Den brukes til å signere innlogginger
 //     og invitasjonslenker, og fungerer som reservepassord ved registrering.
 
+import { hotell, SKJEMA as HOTELL_SKJEMA } from "../../lib/hotell.js";
 import { symposion, SKJEMA as SYMPOSION_SKJEMA, MIGRERING as SYMPOSION_MIGRERING } from "../../lib/symposion.js";
 
 const MAKS_BILDE = 1_900_000; // byte, D1 tåler rundt 2 MB per rad
@@ -121,6 +122,7 @@ async function sikreSkjema(db) {
     db.prepare(`CREATE INDEX IF NOT EXISTS poster_mote ON poster (mote)`),
     db.prepare(`CREATE INDEX IF NOT EXISTS svar_post ON svar (post_id)`),
     ...SYMPOSION_SKJEMA.map((sql) => db.prepare(sql)),
+    ...HOTELL_SKJEMA.map((sql) => db.prepare(sql)),
     db.prepare(`CREATE TABLE IF NOT EXISTS tall2048 (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       navn TEXT NOT NULL,
@@ -633,6 +635,11 @@ export async function onRequest({ request, env, params }) {
         .run();
       return json({ ok: true }, 201);
     }
+  }
+
+  // --- Tafse Hotell. Logikken ligger i lib/hotell.js ---
+  if (ressurs === "hotell" && (metode === "GET" || metode === "POST")) {
+    return hotell({ db, meg, metode, handling: id, request, url, json, feil, lesJson });
   }
 
   // --- Spillet: Symposion (den felles byen). Logikken ligger i lib/symposion.js ---

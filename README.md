@@ -20,6 +20,7 @@ Nettsiden til Taffelakademiet for Samvær og Etegilder.
 | `fortellingen.html` | Nettversjonen av lanseringspresentasjonen |
 | `spill.html`, `assets/spill.js` | Spillet Idus Martiae, med tavle for brødrene |
 | `symposion.html`, `assets/symposion.js`, `lib/symposion.js` | Spillet Symposion, den felles byen. Regler og serverlogikk ligger i `lib/symposion.js` |
+| `hotell.html`, `assets/hotell.js`, `lib/hotell.js` | Tafse Hotell: rom der brødrene styrer hver sin figur og prater. Rommene tegnes i `assets/hotell.js`, serverlogikken ligger i `lib/hotell.js` |
 | `murbrekker.html`, `assets/murbrekker.js` | Spillet Murbrekker (Breakout), med toppliste for uka og for alle tider |
 | `2048.html`, `assets/2048.js` | Spillet 2048, med toppliste for uka og for alle tider |
 | `honningfella.html`, `assets/honningfella.js` | Spillet Honningfella. Oppdragene ligger i `data/honningfella/oppdrag.json`, se `data/honningfella/OPPSKRIFT.md` |
