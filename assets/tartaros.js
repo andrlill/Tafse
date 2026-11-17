@@ -58,14 +58,14 @@
     odyssevs: { navn: "Odyssevs", vapen: "ild", farge: "#2f6fb5", tekst: "Gresk ild · +15 % sjeler" },
   };
   const GUNST = {
-    styrke: { navn: "Ares' velsignelse", tekst: "+5 % skade per nivå" },
-    liv: { navn: "Hestias arne", tekst: "+10 liv per nivå" },
-    fart: { navn: "Vind i ryggen", tekst: "+3 % fart per nivå" },
-    visdom: { navn: "Athenes visdom", tekst: "+5 % sjeler per nivå" },
-    magnet: { navn: "Sjelefanger", tekst: "+10 % rekkevidde på sjeler per nivå" },
-    rustning: { navn: "Hefaistos' rustning", tekst: "Du tar 4 % mindre skade per nivå" },
-    midas: { navn: "Midas' berøring", tekst: "+10 % drakmer fra hvert tokt per nivå" },
-    orakel: { navn: "Orakelet i Delfi", tekst: "Når du får velge gave og ikke liker kortene, kan du bytte dem ut med tre nye. Du får ett bytte per tokt for hvert nivå du har kjøpt" },
+    styrke: { navn: "Ares' velsignelse", tekst: "+5 % skade per kjøp" },
+    liv: { navn: "Hestias arne", tekst: "+10 liv per kjøp" },
+    fart: { navn: "Vind i ryggen", tekst: "+3 % fart per kjøp" },
+    visdom: { navn: "Athenes visdom", tekst: "+5 % sjeler per kjøp" },
+    magnet: { navn: "Sjelefanger", tekst: "+10 % rekkevidde på sjeler per kjøp" },
+    rustning: { navn: "Hefaistos' rustning", tekst: "Du tar 4 % mindre skade per kjøp" },
+    midas: { navn: "Midas' berøring", tekst: "+10 % drakmer fra hvert tokt per kjøp" },
+    orakel: { navn: "Orakelet i Delfi", tekst: "Når du får velge gave og ikke liker kortene, kan du bytte dem ut med tre nye. Du får ett bytte per tokt for hvert kjøp" },
     arsenal: { navn: "Våpenbærer", tekst: "Du starter hvert tokt med ett tilfeldig våpen i tillegg" },
     fjaer: { navn: "Føniksfjær", tekst: "Du reiser deg én gang per tokt" },
   };
