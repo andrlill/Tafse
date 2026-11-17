@@ -346,15 +346,15 @@ export async function onRequest({ request, env, params }) {
     const fra = tekst(b.fra, 60);
     if (!(await medlemsliste(env, url)).includes(fra) || !likt(String(b.kode || ""), await gjestekode(env, fra))) {
       await vent(600);
-      return feil(401, "Gjestelenken er ugyldig. Be broren som inviterte deg om en ny.");
+      return feil(401, "Lenken er ugyldig. Be om en ny.");
     }
     const navn = tekst(b.navn, 24).replace(/\s+/g, " ");
     if (!/^[\p{L}\p{N}][\p{L}\p{N} .'-]{1,23}$/u.test(navn)) return feil(400, "Navnet må ha 2 til 24 tegn: bokstaver, tall, mellomrom, punktum, bindestrek eller apostrof.");
-    if ((await medlemsliste(env, url)).some((m) => m.toLowerCase() === navn.toLowerCase())) return feil(409, "Det navnet tilhører en Tafsebror. Velg et annet.");
+    if ((await medlemsliste(env, url)).some((m) => m.toLowerCase() === navn.toLowerCase())) return feil(409, "Navnet er tatt. Velg et annet.");
     if (typeof b.passord !== "string" || b.passord.length < 6) return feil(400, "Passordet må ha minst seks tegn.");
     if (await db.prepare("SELECT 1 FROM gjester WHERE navn = ?").bind(navn).first()) return feil(409, "Navnet er tatt. Velg et annet, eller logg inn hvis det er deg.");
     const antall = await db.prepare("SELECT COUNT(*) AS n FROM gjester").first();
-    if (antall && antall.n >= MAKS_GJESTER) return feil(403, "Gjestelisten er full.");
+    if (antall && antall.n >= MAKS_GJESTER) return feil(403, "Det er ikke plass til flere brukere.");
     const salt = hex(crypto.getRandomValues(new Uint8Array(16)));
     const hash = await hashPassord(b.passord, salt);
     await db.prepare("INSERT INTO gjester (navn, salt, hash, invitert_av, opprettet) VALUES (?, ?, ?, ?, ?)").bind(navn, salt, hash, fra, naa()).run();
@@ -427,7 +427,7 @@ export async function onRequest({ request, env, params }) {
   }
   if (!meg) return feil(401, "Ikke innlogget");
   const erGjest = meg.endsWith(" (gjest)");
-  if (erGjest && !GJESTESPILL.includes(ressurs)) return feil(403, "Gjester har bare tilgang til spillene.");
+  if (erGjest && !GJESTESPILL.includes(ressurs)) return feil(403, "Ingen tilgang.");
 
   if (ressurs === "gjestelenke" && metode === "GET") {
     return json({ fra: meg, kode: await gjestekode(env, meg) });

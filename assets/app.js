@@ -43,6 +43,7 @@ const erGjestemerke = () => /(?:^|;\s*)tafserolle=gjest/.test(document.cookie);
 function settGjestemerke(pa) {
   document.cookie = pa ? "tafserolle=gjest; Path=/; Max-Age=31536000; SameSite=Lax" : "tafserolle=; Path=/; Max-Age=0; SameSite=Lax";
 }
+const visningsnavn = (navn) => String(navn || "").replace(/ \(gjest\)$/, "");
 const gjestTillatt = () => herSide() === "gjest" || GJESTESPILL.some(([s]) => s === herSide());
 
 function menyHtml() {
@@ -60,6 +61,8 @@ function oppdaterMeny() {
   if (nav) nav.innerHTML = menyHtml();
   const merke = document.querySelector(".topp .merke");
   if (merke) merke.href = erGjestemerke() ? "gjest.html" : "index.html";
+  const bunntekst = document.querySelector(".bunn .bunn-tekst");
+  if (bunntekst && !bunntekst.classList.contains("bunn-status")) bunntekst.textContent = erGjestemerke() ? "" : "Taffelakademiet for Samvær og Etegilder";
 }
 
 function byggRamme() {
@@ -90,7 +93,7 @@ function byggRamme() {
   const bunn = document.createElement("footer");
   bunn.className = "bunn";
   bunn.innerHTML = `<div class="meander" aria-hidden="true"></div>
-  <p class="bunn-tekst">Taffelakademiet for Samvær og Etegilder</p>
+  <p class="bunn-tekst">${erGjestemerke() ? "" : "Taffelakademiet for Samvær og Etegilder"}</p>
   <p class="bunn-tekst bunn-status" style="padding-top:0; font-style:normal"></p>`;
   document.body.append(bunn);
 }
@@ -256,10 +259,10 @@ function visInnloggetLinje() {
   const p = document.querySelector(".bunn-status");
   if (!p) return;
   p.innerHTML = GJEST
-    ? `Spiller som <strong>${esc(MEG)}</strong> · <a href="gjest.html">Spillene</a> · <a href="#" id="loggut">Logg ut</a>`
+    ? `Innlogget som <strong>${esc(visningsnavn(MEG))}</strong> · <a href="#" id="loggut">Logg ut</a>`
     : MEG
     ? `Innlogget som <strong>${esc(MEG)}</strong>${paaGjesteside() ? ` · <a href="gjest.html">Inviter en gjest</a>` : ""}${ADMIN ? ` · <a href="invitasjoner.html">Invitasjoner</a>` : ""} · <a href="#" id="loggut">Logg ut</a>`
-    : paaGjesteside() ? `Gjest? <a href="gjest.html">Logg inn som gjest</a>` : "";
+    : paaGjesteside() ? `<a href="gjest.html">Logg inn i spillhallen</a>` : "";
   const l = document.getElementById("loggut");
   if (l) l.addEventListener("click", async (e) => {
     e.preventDefault();

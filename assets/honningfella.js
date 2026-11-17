@@ -472,7 +472,7 @@
       const rader = Object.values(brodre).sort((a, b) => b.sum - a.sum);
       if (!rader.length) { tavle.innerHTML = `<p class="tomt">Ingen har spilt ennå. Bli den første som ikke går i fella.</p>`; return; }
       tavle.innerHTML = `<div class="tabell-boks"><table class="tavle">
-        <thead><tr><th>#</th><th>Bror</th><th>Karriereskår</th>${OPPDRAG.map((o) => `<th>${esc(o.tittel)}</th>`).join("")}</tr></thead>
+        <thead><tr><th>#</th><th>Spiller</th><th>Karriereskår</th>${OPPDRAG.map((o) => `<th>${esc(o.tittel)}</th>`).join("")}</tr></thead>
         <tbody>${rader.map((r, i) => `<tr${r.navn === MEG ? ' class="meg"' : ""}>
           <td>${i + 1}</td><td>${esc(r.navn)}</td><td><strong>${skarTekst(r.sum)}</strong></td>
           ${OPPDRAG.map((o) => `<td>${r.per[o.id] !== undefined ? skarTekst(r.per[o.id]) : "·"}</td>`).join("")}</tr>`).join("")}</tbody>

@@ -261,7 +261,7 @@
   }
   function liste(rader, tom) {
     return rader.length
-      ? `<table class="tavle t-tavle"><thead><tr><th>#</th><th>Bror</th><th>Poeng</th><th>Nivå</th></tr></thead><tbody>${rader.map((r, i) =>
+      ? `<table class="tavle t-tavle"><thead><tr><th>#</th><th>Spiller</th><th>Poeng</th><th>Nivå</th></tr></thead><tbody>${rader.map((r, i) =>
           `<tr${r.navn === MEG ? ' class="meg"' : ""}><td>${i + 1}</td><td>${esc(r.navn)}</td><td>${tall(r.poeng)}</td><td>${r.niva}</td></tr>`).join("")}</tbody></table>`
       : `<p class="tomt">${tom}</p>`;
   }

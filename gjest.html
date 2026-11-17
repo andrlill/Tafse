@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Gjest i spillhallen · TAFSE</title>
+<title>Spillhallen · TAFSE</title>
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,8 +12,7 @@
 </head>
 <body>
 <main class="side smal">
-  <p class="overline">Spillhallen</p>
-  <h1 class="side-tittel">Gjester</h1>
+  <h1 class="side-tittel" id="tittel">Spillhallen</h1>
   <div id="innhold"><p class="dempet">Laster …</p></div>
 </main>
 <script src="assets/app.js"></script>
@@ -38,19 +37,19 @@ function loggUtKnapp() {
 
 function visInnloggetGjest(navn, ny) {
   boks.innerHTML = `
-    <p>${ny ? "Velkommen! " : ""}Du spiller som <strong>${esc(navn)}</strong>. Resultatene dine havner på tavlene sammen med brødrenes.</p>
+    <p>${ny ? "Velkommen, " : "Hei, "}<strong>${esc(visningsnavn(navn))}</strong>. Velg et spill.</p>
     ${spilliste()}
-    <p class="dempet">Som gjest har du bare tilgang til spillene. Salongen, sakene og resten av siden er forbeholdt Tafsebrødrene.</p>
     <p><button class="liten-knapp" type="button" id="gjest-ut">Logg ut</button></p>`;
   loggUtKnapp();
 }
 
 async function visBror(navn) {
+  document.getElementById("tittel").textContent = "Gjester";
   const { fra, kode } = await api("gjestelenke");
   const lenke = `${location.origin}/gjest.html?fra=${encodeURIComponent(fra)}&kode=${kode}`;
-  const melding = `Hei! Du er invitert som gjest i spillhallen til TAFSE. Lag deg en bruker her, så kan du spille og komme på tavlene:\n\n${lenke}`;
+  const melding = `Hei! Du er invitert til spillhallen. Lag deg en bruker her, så kan du spille og komme på tavlene:\n\n${lenke}`;
   boks.innerHTML = `
-    <p>Gjester kan spille ${GJESTESPILL.map(([, n]) => n).join(", ").replace(/, ([^,]*)$/, " og $1")}, og kommer på tavlene med «(gjest)» bak navnet. De ser ikke noe annet på siden.</p>
+    <p>Gjester kan spille ${GJESTESPILL.map(([, n]) => n).join(", ").replace(/, ([^,]*)$/, " og $1")}, og kommer på tavlene med «(gjest)» bak navnet. De ser ikke noe annet på siden, og ingenting forteller dem at det finnes mer. Hold det gjerne slik.</p>
     <h2 style="font-size:20px; color:var(--gull); letter-spacing:.1em; margin:28px 0 8px">Din gjestelenke</h2>
     <p class="dempet" style="word-break:break-all">${esc(lenke)}</p>
     <div class="gjest-handlinger">
@@ -65,15 +64,15 @@ async function visBror(navn) {
 
 function visRegistrering(fra, kode) {
   boks.innerHTML = `
-    <p><strong>${esc(fra)}</strong> har invitert deg som gjest i spillhallen til TAFSE, Taffelakademiet for Samvær og Etegilder. Velg et navn og et passord, så kan du spille og komme på tavlene.</p>
+    <p><strong>${esc(fra)}</strong> har invitert deg til spillhallen. Velg et navn og et passord, så kan du spille og komme på tavlene.</p>
     <form class="skjema" id="gjest-reg">
       <div class="felt"><label for="g-navn">Navnet ditt</label><input id="g-navn" maxlength="24" autocomplete="nickname" required></div>
       <div class="felt"><label for="g-pass">Passord (minst seks tegn)</label><input id="g-pass" type="password" minlength="6" autocomplete="new-password" required></div>
       <div class="felt"><label for="g-pass2">Gjenta passordet</label><input id="g-pass2" type="password" minlength="6" autocomplete="new-password" required></div>
-      <button class="knapp" type="submit">Lag gjestebruker</button>
+      <button class="knapp" type="submit">Lag bruker</button>
       <div id="g-melding" role="status"></div>
     </form>
-    <p class="dempet" style="font-size:15px">Har du allerede en gjestebruker? <a href="gjest.html">Logg inn</a>.</p>`;
+    <p class="dempet" style="font-size:15px">Har du allerede en bruker? <a href="gjest.html">Logg inn</a>.</p>`;
   boks.querySelector("#gjest-reg").addEventListener("submit", async (e) => {
     e.preventDefault();
     const m = boks.querySelector("#g-melding");
@@ -95,14 +94,14 @@ function visRegistrering(fra, kode) {
 
 function visInnlogging() {
   boks.innerHTML = `
-    <p>Har du fått en gjestelenke fra en Tafsebror, åpner du den for å lage bruker. Har du allerede en gjestebruker, logger du inn her.</p>
+    <p>Logg inn for å spille. Har du fått en invitasjonslenke, åpner du den for å lage bruker.</p>
     <form class="skjema" id="gjest-inn">
       <div class="felt"><label for="g-navn">Navnet ditt</label><input id="g-navn" maxlength="24" autocomplete="username" required></div>
       <div class="felt"><label for="g-pass">Passord</label><input id="g-pass" type="password" autocomplete="current-password" required></div>
-      <button class="knapp" type="submit">Logg inn som gjest</button>
+      <button class="knapp" type="submit">Logg inn</button>
       <div id="g-melding" role="status"></div>
     </form>
-    <p class="dempet" style="font-size:15px">Er du Tafsebror? <a href="salongen.html">Logg inn i Salongen</a>.</p>`;
+`;
   boks.querySelector("#gjest-inn").addEventListener("submit", async (e) => {
     e.preventDefault();
     const knapp = boks.querySelector("button[type=submit]");
@@ -127,7 +126,7 @@ function visInnlogging() {
     if (fra && kode) {
       const inv = await api(`gjest/invitasjon?fra=${encodeURIComponent(fra)}&kode=${encodeURIComponent(kode)}`);
       if (inv.gyldig) return m.gjest ? visInnloggetGjest(m.navn, false) : visRegistrering(inv.fra, kode);
-      boks.innerHTML = `<p class="melding feil">Gjestelenken er ugyldig. Be broren som inviterte deg om en ny.</p>`;
+      boks.innerHTML = `<p class="melding feil">Lenken er ugyldig. Be om en ny.</p>`;
       return;
     }
     if (m.gjest) return visInnloggetGjest(m.navn, false);
