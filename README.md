@@ -21,7 +21,8 @@ Nettsiden til Taffelakademiet for Samvær og Etegilder.
 | `fortellingen.html` | Nettversjonen av lanseringspresentasjonen |
 | `spill.html`, `assets/spill.js` | Spillet Idus Martiae, med tavle for brødrene |
 | `symposion.html`, `assets/symposion.js`, `lib/symposion.js` | Spillet Symposion, den felles byen. Regler og serverlogikk ligger i `lib/symposion.js` |
-| `hotell.html`, `assets/hotell.js`, `lib/hotell.js` | Tafse Hotell: rom der brødrene styrer hver sin figur og prater. Hver bror har et eget rom som vokser med villaen i Symposion og innredes med møbler kjøpt for oliven, vin og marmor (katalogen ligger i `lib/hotell.js`). Rommene tegnes i `assets/hotell.js`, serverlogikken ligger i `lib/hotell.js` |
+| `hotell.html`, `assets/hotell.js`, `lib/hotell.js` | Tafse Hotell: rom der brødrene styrer hver sin figur og prater. Hver bror har et eget rom som vokser med villaen i Symposion og innredes fra butikken: møbler, veggpynt, tepper, trofeer, gulv- og veggstiler, klær og kjæledyr. Katalogen, prisene og kravene til trofeene ligger i `lib/hotell.js`, tegningene i `assets/hotell.js` |
+| `lib/premier.js` | Premiene fra spillene, som brukes i Tafse Hotell: hvilken premie hvert spill gir, hvor mange poeng som gir én premie, og lommeboka som samler oliven, vin og marmor (Symposion), drakmer (Tartaros) og resten |
 | `tartaros.html`, `assets/tartaros.js`, `lib/tartaros.js` | Spillet Tartaros: overlev ti minutter i underverdenen. Våpen, fiender og tall ligger øverst i `assets/tartaros.js`, drakmer, gunst og tavle i `lib/tartaros.js` |
 | `murbrekker.html`, `assets/murbrekker.js` | Spillet Murbrekker (Breakout), med toppliste for uka og for alle tider |
 | `2048.html`, `assets/2048.js` | Spillet 2048, med toppliste for uka og for alle tider |

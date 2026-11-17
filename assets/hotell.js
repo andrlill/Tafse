@@ -1,7 +1,8 @@
 // TAFSE HOTELL: rom sett skrått ovenfra, der hver bror styrer sin egen figur.
 // Trykk på gulvet for å gå, på en stol for å sette deg og på en dør for å bytte rom.
-// Hver bror har også sitt eget rom. Det vokser med villaen i Symposion og innredes
-// med møbler kjøpt for oliven, vin og marmor. Serveren (lib/hotell.js) holder orden på alt.
+// Hver bror har også sitt eget rom. Det vokser med villaen i Symposion og innredes fra butikken,
+// der man betaler med premiene fra alle spillene. Serveren (lib/hotell.js) holder orden på alt,
+// også katalogen og prisene. Her ligger tegningene: MOBEL, GULVSTIL, VEGGSTIL, figur() og dyr().
 
 (() => {
   const rot = document.getElementById("h");
@@ -14,6 +15,7 @@
   const HARFARGE = ["#1c1612", "#4a2f1c", "#8a5a2b", "#c9a35a", "#b5482a", "#9a9a9a", "#ece4d2"];
   const TOGA = ["#ece4d2", "#8e2f52", "#2f5d8e", "#2f7d5b", "#c9a24a", "#5b3a8e", "#b5482a", "#2b2b2b"];
   const GESTER = { vink: "vinker", skal: "skåler", dans: "danser" };
+  const BARES = ["hode", "pynt", "dyr"];   // det figuren kan ha på seg eller med seg
 
   // ---------- Fellesrommene ----------
   // Koordinater: x går ned mot høyre, y ned mot venstre. Veggene står langs x = 0 og y = 0.
@@ -28,10 +30,10 @@
         ["sofa", 0, 2, "v"], ["sofa", 0, 3, "v"], ["sofa", 0, 4, "v"], ["bord", 2, 3],
         ["bord", 8, 7], ["krakk", 7, 7], ["krakk", 9, 7], ["krakk", 8, 6], ["krakk", 8, 8],
         ["soyle", 0, 0], ["soyle", 0, 6], ["soyle", 10, 0], ["plante", 0, 1], ["plante", 10, 1], ["plante", 1, 10],
-        ["amfora", 10, 5], ["amfora", 10, 6],
+        ["amfora", 10, 5], ["amfora", 10, 6], ["fontene", 2, 7], ["laurbartre", 10, 10], ["kandelaber", 4, 0],
       ],
       npc: [{ navn: "Portieren", x: 7, y: 0, utseende: { hud: HUD[1], har: "kort", harfarge: "#9a9a9a", skjegg: "ja", toga: "#2b2b2b" },
-        replikker: ["Velkommen til Tafse Hotell.", "Baren ligger gjennom døra til høyre.", "Terrassen har basseng. Togaen tåler vann.", "Rommet ditt finner du øverst. Det vokser med villaen i Symposion.", "Frokost serveres aldri. Vi er et taffelakademi.", "Rom 1412 er dessverre opptatt."] }],
+        replikker: ["Velkommen til Tafse Hotell.", "Baren ligger gjennom døra til høyre.", "Terrassen har basseng. Togaen tåler vann.", "Rommet ditt finner du øverst. Det vokser med villaen i Symposion.", "Butikken tar imot premier fra alle spillene. Vi er ikke kresne.", "Frokost serveres aldri. Vi er et taffelakademi.", "Rom 1412 er dessverre opptatt."] }],
     },
     baren: {
       navn: "Baren", b: 10, d: 9, start: [7, 2], vegg: 112, veggfarge: ["#16302f", "#1d3d3b"], bakgrunn: ["#0f1413", "#0b0b0a"],
@@ -42,7 +44,7 @@
         ["disk", 1, 2], ["disk", 1, 3], ["disk", 1, 4], ["disk", 1, 5],
         ["krakk", 2, 2], ["krakk", 2, 3], ["krakk", 2, 4], ["krakk", 2, 5],
         ["bord", 5, 1], ["krakk", 4, 1], ["krakk", 6, 1], ["bord", 3, 7], ["krakk", 2, 7], ["krakk", 4, 7],
-        ["vinfat", 0, 7], ["vinfat", 0, 8], ["plante", 9, 0], ["soyle", 0, 0],
+        ["vinfat", 0, 7], ["vinfat", 0, 8], ["plante", 9, 0], ["soyle", 0, 0], ["lyre", 9, 8], ["festbord", 5, 8],
       ],
       npc: [{ navn: "Dionysos", x: 0, y: 3, utseende: { hud: HUD[2], har: "krøller", harfarge: "#1c1612", skjegg: "ja", toga: "#8e2f52" },
         replikker: ["Hva skal det være? Vi har vin, vin og vin.", "Skål, bror!", "Dansegulvet lyser ikke for ingenting.", "Jeg blander aldri vinen med vann. Det er det dere som gjør.", "Siste runde var for to tusen år siden."] }],
@@ -55,7 +57,7 @@
       mobler: [
         ["solseng", 8, 4], ["solseng", 8, 6], ["solseng", 1, 5], ["solseng", 1, 7],
         ["tre", 0, 0], ["tre", 10, 0], ["tre", 0, 9], ["fakkel", 2, 3], ["fakkel", 7, 3], ["fakkel", 2, 8], ["fakkel", 7, 8],
-        ["bord", 9, 9], ["krakk", 8, 9], ["krakk", 10, 9], ["amfora", 10, 2],
+        ["bord", 9, 9], ["krakk", 8, 9], ["krakk", 10, 9], ["amfora", 10, 2], ["ildskal", 9, 1], ["druestokk", 2, 0],
       ],
       npc: [],
     },
@@ -74,21 +76,43 @@
       <li><strong>Besøk noen</strong> tar deg til rommet til en bror eller en gjest.</li>
     </ul>
     <h3>Rommet ditt</h3>
-    <p>Størrelsen og stilen følger villaen din i Symposion. Uten gods er rommet 4 × 4 fliser, og en villa på høyeste nivå gir 8 × 8 med marmor og gullkant. Bygg ut villaen i <a href="symposion.html">Symposion</a> for å få større rom.</p>
+    <p>Størrelsen følger villaen din i Symposion. Uten gods er rommet 4 × 4 fliser, og en villa på høyeste nivå gir 8 × 8. Bygg ut villaen i <a href="symposion.html">Symposion</a>, eller kjøp en utvidelse i butikken, for å få større rom. Med begge utvidelsene kan rommet bli 10 × 10.</p>
     <table class="tavle"><thead><tr><th>Villanivå</th><th>Rommet</th></tr></thead><tbody>
       <tr><td>Ikke flyttet inn</td><td>4 × 4</td></tr><tr><td>1–2</td><td>5 × 5, tregulv</td></tr><tr><td>3–4</td><td>6 × 6, terrakotta</td></tr><tr><td>5–7</td><td>7 × 7, marmor</td></tr><tr><td>8–10</td><td>8 × 8, marmor med gull</td></tr>
     </tbody></table>
-    <h3>Møbler</h3>
-    <p>I rommet ditt finner du møbelbutikken. Møblene betales med oliven, vin og marmor fra Symposion. Trykk «Innred rommet», velg et møbel og trykk på en ledig flis for å sette det ut. Trykk på et møbel i rommet for å ta det ned igjen. Døra kan ikke sperres, og du kan ha opptil 40 møbler.</p>
+    <h3>Premier fra spillene</h3>
+    <p>Hvert spill gir sin egen premie, og alle brukes i butikken her. Dagens første spill i hvert spill gir dobbel premie.</p>
+    <table class="tavle"><thead><tr><th>Spill</th><th>Premie</th><th>Slik får du den</th></tr></thead><tbody>
+      <tr><td>Symposion</td><td>oliven, vin og marmor</td><td>Høstes på godset</td></tr>
+      <tr><td>Tartaros</td><td>drakmer</td><td>Mynter, bosser og tid i hvert tokt</td></tr>
+      <tr><td>2048</td><td>mosaikkbiter</td><td>1 per 100 poeng</td></tr>
+      <tr><td>Murbrekker</td><td>teglstein</td><td>1 per 50 poeng</td></tr>
+      <tr><td>Tetris</td><td>steinblokker</td><td>1 per 300 poeng</td></tr>
+      <tr><td>Snake</td><td>slangeskinn</td><td>1 per 5 poeng</td></tr>
+      <tr><td>Idus Martiae</td><td>dolker</td><td>1 per 2 poeng</td></tr>
+    </tbody></table>
+    <h3>Butikken</h3>
+    <p>Butikken ligger under rommet og er delt i faner. Noen varer koster én premie, andre en blanding. Olympens trone koster litt av alt.</p>
+    <ul>
+      <li><strong>Møbler, planter og pynt</strong> settes ut i rommet ditt. Du kan ha opptil 80.</li>
+      <li><strong>Tepper og fliser</strong> ligger på gulvet, og du kan sette et møbel oppå. Bassenget kan du vasse i.</li>
+      <li><strong>Veggpynt</strong> henger på veggen bak en flis inntil veggen.</li>
+      <li><strong>Trofeer</strong> koster premien fra ett spill og krever en bragd i det spillet, for eksempel brikken 2048.</li>
+      <li><strong>Gulv og vegger</strong> gir hele rommet ny stil. Du bytter mellom stilene du eier i rommet ditt.</li>
+      <li><strong>Garderoben</strong> har hodeplagg og tilbehør, og <strong>kjæledyrene</strong> følger deg rundt i hele hotellet.</li>
+    </ul>
+    <h3>Innredning</h3>
+    <p>Gå til rommet ditt og trykk «Innred rommet». Velg noe fra lageret og trykk på en ledig flis for å sette det ut. Trykk på et møbel i rommet for å ta det ned igjen. Døra kan ikke sperres.</p>
     <h3>Garderoben</h3>
-    <p>Under rommet kan du når som helst bytte toga, hudfarge, hår og skjegg.</p>`;
+    <p>Under rommet kan du når som helst bytte toga, hudfarge, hår og skjegg, og ta på det du har kjøpt.</p>`;
 
   // ---------- Tilstand ----------
   let rom = "lobbyen", R = ROM[rom], ruter = [], mobler = [];
   let figurer = new Map();   // navn → figur (brødre og hotellets egne)
   let meg = null, look = null, etter = 0, forste = true, antall = {}, medlemmer = [], gjesterom = [], logg = [];
   let hjem = null, innred = false, valgt = null, melding = "";   // rommet til en bror, og innredning av eget rom
-  let bytter = false, romNokkel = "", innredNokkel = "";
+  let butikk = null, fane = "mobler", kvittering = null, veggting = [];   // butikken, og det som henger på veggene i rommet
+  let bytter = false, romNokkel = "", innredNokkel = "", butikkNokkel = "";
   let lerret, ctx, logW = 960, logH = 600, kam = [0, 0], peker = null, mal = null;
   let lagreTid = null;
   let zoom = 1; // små rom forstørres så de fyller bildet
@@ -124,6 +148,24 @@
     flate([P(x1, y0, z1), P(x1, y1, z1), P(x1, y1, z0), P(x1, y0, z0)], mork(farge, 0.86));
     flate([P(x0, y0, z1), P(x1, y0, z1), P(x1, y1, z1), P(x0, y1, z1)], farge);
   }
+  // f er posisjonen langs veggen møbelet står mot, g er avstanden ut fra veggen
+  const klm = (x, y, mot, f0, g0, f1, g1, z0, z1, farge) => (mot === "v" ? kloss(x, y, g0, f0, g1, f1, z0, z1, farge) : kloss(x, y, f0, g0, f1, g1, z0, z1, farge));
+  // En flate på forsiden av et møbel, g ut fra veggen
+  const front = (x, y, mot, f0, f1, g, z0, z1, farge) => flate(mot === "v"
+    ? [P(x + g, y + f0, z0), P(x + g, y + f1, z0), P(x + g, y + f1, z1), P(x + g, y + f0, z1)]
+    : [P(x + f0, y + g, z0), P(x + f1, y + g, z0), P(x + f1, y + g, z1), P(x + f0, y + g, z1)], farge);
+  const ell = (a, b, rx, ry, farge) => { ctx.fillStyle = farge; ctx.beginPath(); ctx.ellipse(a, b, rx, ry, 0, 0, 7); ctx.fill(); };
+  const rk = (a, b, w, h, farge) => { ctx.fillStyle = farge; ctx.fillRect(a, b, w, h); };
+  const flamme = (a, b, t, fro, s = 1) => { const f = 1 + Math.sin(t * 9 + fro) * 0.15; ell(a, b, 5 * s, 10 * s * f, "#f2c14e"); ell(a, b + 3 * s, 2.5 * s, 5 * s * f, "#fff0b8"); };
+  const glod = (a, b, r, styrke = 0.4) => { const g = ctx.createRadialGradient(a, b, 2, a, b, r); g.addColorStop(0, `rgba(242,193,78,${styrke})`); g.addColorStop(1, "rgba(242,193,78,0)"); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(a, b, r, 0, 7); ctx.fill(); };
+  const sokkel = (x, y, h = 14) => kloss(x, y, 0.22, 0.22, 0.78, 0.78, 0, h, "#d8cdb4");
+  // Veggene: side «h» er veggen langs y = 0, «v» veggen langs x = 0. pos er fliser bortover, z høyden.
+  const veggP = (side, pos, z) => (side === "h" ? P(pos, 0, z) : P(0, pos, z));
+  const vf = (side, p0, p1, z0, z1, farge) => flate([veggP(side, p0, z0), veggP(side, p1, z0), veggP(side, p1, z1), veggP(side, p0, z1)], farge);
+  // Tegner rett på veggen: origo ved pos i høyden z, 32 enheter per flis bortover og y nedover
+  const paVegg = (side, pos, z, tegn) => { ctx.save(); ctx.transform(1, side === "h" ? 0.5 : -0.5, 0, 1, 0, 0); ctx.translate((side === "h" ? 1 : -1) * pos * TW / 2, -z); tegn(); ctx.restore(); };
+  const hs = (i, k) => (((Math.sin(i * 127.1 + k * 311.7) * 43758.5453) % 1) + 1) % 1;   // fast «tilfeldig» tall mellom 0 og 1
+  const TETRIS = ["#4fc3d9", "#edc22e", "#9a5bd0", "#f08a4b", "#6fbf5a", "#e0533d", "#3f6fd0"];
   // mot = "v" betyr at ryggen står mot venstre vegg (x = 0), ellers mot høyre vegg (y = 0)
   const MOBEL = {
     disk: { blokk: true, tegn(x, y) { kloss(x, y, 0, 0.1, 1, 0.9, 0, 30, "#6b4a2a"); kloss(x, y, 0, 0.05, 1, 0.95, 30, 34, "#c9a24a"); } },
@@ -188,21 +230,257 @@
       ctx.fillStyle = "#f2c14e"; ctx.beginPath(); ctx.ellipse(a, b - 62, 5, 10 * f, 0, 0, 7); ctx.fill();
       ctx.fillStyle = "#fff0b8"; ctx.beginPath(); ctx.ellipse(a, b - 59, 2.5, 5 * f, 0, 0, 7); ctx.fill();
     } },
+    // ----- Flere møbler -----
+    benk: { sete: 15, tegn(x, y, mot) { klm(x, y, mot, 0.12, 0.3, 0.26, 0.8, 0, 11, "#d8cdb4"); klm(x, y, mot, 0.74, 0.3, 0.88, 0.8, 0, 11, "#d8cdb4"); klm(x, y, mot, 0.05, 0.25, 0.95, 0.85, 11, 15, "#ece4d2"); } },
+    kline: { sete: 15, tegn(x, y, mot) {
+      klm(x, y, mot, 0.04, 0.1, 0.96, 0.9, 0, 11, "#5a4630"); klm(x, y, mot, 0.04, 0.1, 0.96, 0.9, 11, 15, "#2f5d8e");
+      klm(x, y, mot, 0.04, 0.1, 0.24, 0.9, 15, 24, "#c9a24a"); klm(x, y, mot, 0.3, 0.2, 0.5, 0.8, 15, 18, "#ece4d2");
+    } },
+    bokhylle: { blokk: true, tegn(x, y, mot) {
+      klm(x, y, mot, 0.06, 0.04, 0.94, 0.42, 0, 76, "#5a4630");
+      const ruller = ["#ece4d2", "#d8cdb4", "#c9a24a", "#8e2f52", "#ece4d2", "#2f5d8e"];
+      for (let h = 0; h < 3; h++) {
+        const z = 6 + h * 23;
+        front(x, y, mot, 0.12, 0.88, 0.42, z, z + 19, "#2b2118");
+        for (let i = 0; i < 5; i++) front(x, y, mot, 0.16 + i * 0.145, 0.27 + i * 0.145, 0.42, z, z + 8 + ((i + h) % 3) * 4, ruller[(i + h * 2) % ruller.length]);
+      }
+    } },
+    festbord: { blokk: true, tegn(x, y) {
+      for (const [fx, fy] of [[0.1, 0.1], [0.78, 0.1], [0.1, 0.78], [0.78, 0.78]]) kloss(x, y, fx, fy, fx + 0.12, fy + 0.12, 0, 18, "#5a4630");
+      kloss(x, y, 0.03, 0.03, 0.97, 0.97, 18, 22, "#7a5532");
+      const [a, b] = P(x + 0.5, y + 0.5, 22);
+      ell(a - 9, b - 1, 9, 4.5, "#ece4d2"); for (const [dx, dy] of [[-12, -3], [-8, -4], [-10, -1], [-6, -2], [-9, -6]]) ell(a + dx, b + dy, 2.6, 2.6, "#6b2f6e");
+      ell(a + 8, b + 6, 8, 3.5, "#c98f4e"); ell(a + 8, b + 5, 6, 2.2, "#e0b070");
+      rk(a + 5, b - 14, 6, 8, "#c9a24a"); rk(a + 6.5, b - 6, 3, 4, "#c9a24a"); rk(a + 4, b - 2.5, 8, 1.5, "#c9a24a"); rk(a + 5, b - 14, 6, 2, "#8e2f52");
+    } },
+    spillebord: { blokk: true, tegn(x, y) {
+      kloss(x, y, 0.4, 0.4, 0.6, 0.6, 0, 16, "#5a4630"); kloss(x, y, 0.1, 0.1, 0.9, 0.9, 16, 20, "#2b2118");
+      const F = ["#eee4da", "#f2b179", "#edc22e", "#f67c5f", "#ede0c8", "#f59563", "#edcf72", "#f65e3b"];
+      for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { const fx = x + 0.16 + i * 0.175, fy = y + 0.16 + j * 0.175; flate([P(fx, fy, 20), P(fx + 0.15, fy, 20), P(fx + 0.15, fy + 0.15, 20), P(fx, fy + 0.15, 20)], F[(i * 3 + j * 5) % F.length]); }
+    } },
+    kiste: { blokk: true, tegn(x, y, mot) {
+      klm(x, y, mot, 0.12, 0.25, 0.88, 0.78, 0, 16, "#6b4a2a"); klm(x, y, mot, 0.12, 0.25, 0.88, 0.78, 16, 23, "#8a6038");
+      for (const f of [0.12, 0.78]) klm(x, y, mot, f, 0.245, f + 0.1, 0.785, 0, 23.5, "#c9a24a");
+      front(x, y, mot, 0.44, 0.56, 0.785, 11, 19, "#e2c174");
+    } },
+    lyre: { blokk: true, tegn(x, y) {
+      kloss(x, y, 0.3, 0.3, 0.7, 0.7, 0, 6, "#5a4630");
+      const [a, b] = P(x + 0.5, y + 0.5, 6);
+      ell(a, b - 8, 10, 8, "#8a6038"); ell(a, b - 9, 6, 4.5, "#5a3a22");
+      ctx.strokeStyle = "#c9a24a"; ctx.lineWidth = 3.5; ctx.lineCap = "round"; ctx.beginPath();
+      ctx.moveTo(a - 8, b - 12); ctx.quadraticCurveTo(a - 20, b - 34, a - 9, b - 52); ctx.moveTo(a + 8, b - 12); ctx.quadraticCurveTo(a + 20, b - 34, a + 9, b - 52); ctx.stroke();
+      ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(a - 13, b - 48); ctx.lineTo(a + 13, b - 48); ctx.stroke(); ctx.lineCap = "butt";
+      ctx.strokeStyle = "#ece4d2"; ctx.lineWidth = 1; ctx.beginPath(); for (const dx of [-6, -3, 0, 3, 6]) { ctx.moveTo(a + dx, b - 47); ctx.lineTo(a + dx * 0.7, b - 11); } ctx.stroke();
+    } },
+    ildsted: { blokk: true, tegn(x, y, _, t) {
+      const [a, b] = P(x + 0.5, y + 0.5);
+      ell(a, b, 22, 11, "#4a4336"); ell(a, b - 4, 22, 11, "#6b6252"); ell(a, b - 4, 15, 7.5, "#1c1612");
+      ctx.strokeStyle = "#5a3a22"; ctx.lineWidth = 4; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(a - 9, b - 2); ctx.lineTo(a + 8, b - 7); ctx.moveTo(a - 8, b - 7); ctx.lineTo(a + 9, b - 2); ctx.stroke(); ctx.lineCap = "butt";
+      glod(a, b - 14, 50); flamme(a - 5, b - 13, t, x); flamme(a + 5, b - 12, t, x + 2, 0.8); flamme(a, b - 17, t, x + 4, 1.2);
+    } },
+    badekar: { blokk: true, tegn(x, y, mot, t) {
+      klm(x, y, mot, 0.06, 0.18, 0.94, 0.82, 0, 17, "#ece4d2");
+      flate(mot === "v" ? [P(x + 0.25, y + 0.12, 17), P(x + 0.75, y + 0.12, 17), P(x + 0.75, y + 0.88, 17), P(x + 0.25, y + 0.88, 17)] : [P(x + 0.12, y + 0.25, 17), P(x + 0.88, y + 0.25, 17), P(x + 0.88, y + 0.75, 17), P(x + 0.12, y + 0.75, 17)], `hsl(198 55% ${44 + Math.sin(t * 2 + x) * 3}%)`);
+      klm(x, y, mot, 0.06, 0.18, 0.14, 0.3, 17, 27, "#c9a24a");
+    } },
+    // ----- Planter og pynt -----
+    vase: { blokk: true, tegn(x, y) {
+      const [a, b] = P(x + 0.5, y + 0.5);
+      ell(a, b, 11, 5, "rgba(0,0,0,.25)"); ell(a, b - 11, 9, 11, "#2f5d8e"); rk(a - 9, b - 13, 18, 3, "#ece4d2"); rk(a - 4, b - 26, 8, 6, "#2f5d8e"); rk(a - 6, b - 28, 12, 2.5, "#ece4d2");
+      const B = [[-9, -44, "#b5282a"], [0, -50, "#f2c14e"], [9, -43, "#e88fb0"], [-4, -40, "#f2c14e"], [5, -38, "#b5282a"]];
+      ctx.strokeStyle = "#4f6a34"; ctx.lineWidth = 1.5; ctx.beginPath(); for (const [dx, dy] of B) { ctx.moveTo(a, b - 27); ctx.lineTo(a + dx, b + dy); } ctx.stroke();
+      for (const [dx, dy, c] of B) ell(a + dx, b + dy, 4, 4, c);
+    } },
+    kandelaber: { blokk: true, tegn(x, y, _, t) {
+      const [a, b] = P(x + 0.5, y + 0.5);
+      ell(a, b, 10, 4.5, "#8a6f33"); rk(a - 1.5, b - 48, 3, 48, "#c9a24a"); rk(a - 14, b - 40, 28, 2.5, "#c9a24a");
+      for (const dx of [-13, 0, 13]) { const h = dx ? 46 : 54; rk(a + dx - 1.5, b - h, 3, dx ? 8 : 6, "#c9a24a"); rk(a + dx - 3.5, b - h - 2, 7, 2.5, "#e2c174"); rk(a + dx - 1.5, b - h - 8, 3, 6, "#ece4d2"); glod(a + dx, b - h - 13, 16, 0.3); flamme(a + dx, b - h - 13, t, x + dx, 0.55); }
+    } },
+    ildskal: { blokk: true, tegn(x, y, _, t) {
+      const [a, b] = P(x + 0.5, y + 0.5);
+      ctx.strokeStyle = "#8a6f33"; ctx.lineWidth = 3; ctx.beginPath(); for (const dx of [-11, 0, 11]) { ctx.moveTo(a + dx * 0.5, b - 24); ctx.lineTo(a + dx, b + (dx ? 0 : 4)); } ctx.stroke();
+      ell(a, b - 26, 15, 7, "#8a6f33"); ell(a, b - 28, 15, 7, "#b08d57"); ell(a, b - 28, 11, 4.5, "#3a2a18");
+      glod(a, b - 38, 48); flamme(a - 4, b - 36, t, y); flamme(a + 4, b - 35, t, y + 3, 0.8); flamme(a, b - 40, t, y + 5, 1.1);
+    } },
+    laurbartre: { blokk: true, tegn(x, y) {
+      kloss(x, y, 0.28, 0.28, 0.72, 0.72, 0, 16, "#ece4d2"); kloss(x, y, 0.24, 0.24, 0.76, 0.76, 16, 19, "#c9a24a");
+      const [a, b] = P(x + 0.5, y + 0.5, 19);
+      rk(a - 2, b - 26, 4, 26, "#5a4630");
+      ell(a, b - 40, 19, 19, "#3f5a2e"); ell(a - 5, b - 45, 12, 11, "#4f6a34"); ell(a + 6, b - 36, 8, 7, "#35502a");
+      for (const [dx, dy] of [[-9, -48], [4, -52], [10, -40], [-3, -36], [-12, -38]]) ell(a + dx, b + dy, 2.2, 2.2, "#7a9a52");
+    } },
+    druestokk: { blokk: true, tegn(x, y) {
+      kloss(x, y, 0.12, 0.44, 0.2, 0.56, 0, 62, "#6b4a2a"); kloss(x, y, 0.8, 0.44, 0.88, 0.56, 0, 62, "#6b4a2a"); kloss(x, y, 0.08, 0.42, 0.92, 0.58, 62, 66, "#6b4a2a");
+      const [a, b] = P(x + 0.5, y + 0.5);
+      for (const [dx, dy, r, c] of [[-11, -68, 9, "#4f6a34"], [0, -64, 10, "#5f7d3d"], [11, -58, 9, "#4f6a34"], [-5, -56, 7, "#6b8a45"], [7, -50, 7, "#5f7d3d"]]) ell(a + dx, b + dy, r, r * 0.8, c);
+      for (const [dx, dy] of [[-8, -46], [3, -40], [13, -38]]) for (const [ex, ey] of [[0, 0], [-3, -4], [3, -4], [0, -8], [-2, 4], [2, 4]]) ell(a + dx + ex, b + dy + ey, 2.8, 2.8, "#6b2f6e");
+    } },
+    fontene: { blokk: true, tegn(x, y, _, t) {
+      const [a, b] = P(x + 0.5, y + 0.5);
+      ell(a, b, 26, 13, "#b9ae97"); ell(a, b - 6, 26, 13, "#ece4d2"); ell(a, b - 6, 21, 10, `hsl(198 55% ${44 + Math.sin(t * 2) * 3}%)`);
+      rk(a - 3.5, b - 34, 7, 28, "#d8cdb4"); ell(a, b - 34, 12, 5.5, "#ece4d2"); ell(a, b - 35, 9, 3.6, "hsl(198 55% 50%)"); rk(a - 2, b - 46, 4, 11, "#d8cdb4");
+      ctx.fillStyle = "rgba(190,230,245,.9)";
+      for (let i = 0; i < 6; i++) for (let k = 0; k < 4; k++) { const f = (t * 0.9 + k / 4 + i * 0.13) % 1, v = (i / 6) * Math.PI * 2, r = f * 19; ctx.beginPath(); ctx.arc(a + Math.cos(v) * r, b - 48 + Math.sin(v) * r * 0.5 - Math.sin(f * Math.PI) * 14 + f * 40, 1.6, 0, 7); ctx.fill(); }
+    } },
+    // ----- Tepper og fliser (ligger på gulvet, under alt annet) -----
+    delfin: { gulv: true, tegn(x, y) {
+      rombe(x, y, 0.04, "#ece4d2"); rombe(x, y, 0.1, "#2f6f8e"); rombe(x, y, 0.16, "#3a80a0");
+      const [a, b] = P(x + 0.5, y + 0.5);
+      ctx.save(); ctx.translate(a, b); ctx.scale(1, 0.5); ctx.fillStyle = "#ece4d2"; ctx.beginPath();
+      ctx.moveTo(-15, 6); ctx.quadraticCurveTo(-4, -18, 13, -2); ctx.lineTo(17, -7); ctx.lineTo(16, 3); ctx.quadraticCurveTo(2, -6, -8, 4); ctx.lineTo(-13, 12); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-1, -9); ctx.lineTo(4, -18); ctx.lineTo(6, -7); ctx.fill(); ctx.restore();
+    } },
+    dansegulv: { gulv: true, tegn(x, y, _, t) { rombe(x, y, 0.03, "#1c1612"); rombe(x, y, 0.08, `hsl(${(x * 70 + y * 45 + Math.floor(t * 1.6) * 55) % 360} 60% 46%)`); rombe(x, y, 0.3, "rgba(255,255,255,.14)"); } },
+    tetristeppe: { gulv: true, tegn(x, y) {
+      rombe(x, y, 0.04, "#1c1c22");
+      const F = { I: TETRIS[0], O: TETRIS[1], L: TETRIS[3], J: TETRIS[6] }, M = ["LLLI", "OOLI", "OOJI", "JJJI"];
+      for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { const fx = x + 0.1 + i * 0.2, fy = y + 0.1 + j * 0.2; flate([P(fx + 0.01, fy + 0.01), P(fx + 0.19, fy + 0.01), P(fx + 0.19, fy + 0.19), P(fx + 0.01, fy + 0.19)], F[M[j][i]]); }
+    } },
+    slangeteppe: { gulv: true, tegn(x, y) {
+      rombe(x, y, 0.04, "#c9a24a"); rombe(x, y, 0.09, "#3f6a2e");
+      for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) { const fx = x + 0.26 + i * 0.24, fy = y + 0.26 + j * 0.24, r = 0.1; flate([P(fx - r, fy), P(fx, fy - r), P(fx + r, fy), P(fx, fy + r)], (i + j) % 2 ? "#7fb04f" : "#d9c96a"); }
+    } },
+    basseng: { gulv: true, vann: true, tegn(x, y, _, t) { rombe(x, y, 0, "#ece4d2"); rombe(x, y, 0.07, `hsl(198 ${52 + Math.sin(t * 2 + x + y) * 6}% ${38 + Math.sin(t * 1.5 + x * 2 - y) * 3}%)`); } },
+    // ----- Veggpynt (henger på veggen bak flisa; side er veggen, p posisjonen bortover) -----
+    freske: { vegg: true, tegn(x, y, side) { const p = side === "v" ? y : x;
+      vf(side, p + 0.08, p + 0.92, 44, 96, "#c9a24a"); vf(side, p + 0.13, p + 0.87, 48, 92, "#d9c9a0");
+      paVegg(side, p + 0.5, 70, () => { rk(-11.5, 4, 23, 17.5, "#9db36a"); ell(6, -12, 4, 4, "#e0843d"); rk(-9, -6, 3, 14, "#ece4d2"); rk(-10, -8, 5, 2, "#ece4d2"); rk(-3, -2, 3, 10, "#ece4d2"); rk(-4, -4, 5, 2, "#ece4d2"); ctx.fillStyle = "#8e2f52"; ctx.beginPath(); ctx.moveTo(2, 9); ctx.lineTo(6, -1); ctx.lineTo(10, 9); ctx.fill(); ell(6, -3, 2.2, 2.2, "#d19f76"); });
+    } },
+    vindu: { vegg: true, tegn(x, y, side, t) { const p = side === "v" ? y : x;
+      paVegg(side, p + 0.5, 66, () => {
+        ctx.fillStyle = "#d8cdb4"; ctx.beginPath(); ctx.moveTo(-12, 20); ctx.lineTo(-12, -10); ctx.arc(0, -10, 12, Math.PI, 0); ctx.lineTo(12, 20); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = "#7fb6d9"; ctx.beginPath(); ctx.moveTo(-9, 17); ctx.lineTo(-9, -10); ctx.arc(0, -10, 9, Math.PI, 0); ctx.lineTo(9, 17); ctx.closePath(); ctx.fill();
+        ell(1 + Math.sin(t * 0.3) * 2.5, -7, 4.5, 2.2, "rgba(255,255,255,.8)"); rk(-9, 9, 18, 8, "#6b8a45");
+        rk(-0.8, -19, 1.6, 36, "#d8cdb4"); rk(-9, 0, 18, 1.6, "#d8cdb4"); rk(-13, 19, 26, 3, "#ece4d2");
+      });
+    } },
+    vegglampe: { vegg: true, tegn(x, y, side, t) { const [a, b] = veggP(side, (side === "v" ? y : x) + 0.5, 70);
+      rk(a - 2, b, 4, 10, "#8a6f33"); rk(a - 6, b - 3, 12, 4, "#c9a24a"); glod(a, b - 12, 34, 0.35); flamme(a, b - 11, t, x + y, 0.8);
+    } },
+    speil: { vegg: true, tegn(x, y, side) {
+      paVegg(side, (side === "v" ? y : x) + 0.5, 68, () => { ell(0, 0, 11, 20, "#c9a24a"); ell(0, 0, 8.5, 17, "#a9cfe0"); ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.beginPath(); ctx.moveTo(-5, 6); ctx.lineTo(1, -12); ctx.lineTo(4, -12); ctx.lineTo(-2, 6); ctx.fill(); ell(0, -21, 3, 3, "#e2c174"); });
+    } },
+    skjold: { vegg: true, tegn(x, y, side) {
+      paVegg(side, (side === "v" ? y : x) + 0.5, 68, () => { ell(0, 0, 13, 13, "#8a6f33"); ell(0, 0, 11.5, 11.5, "#b08d57"); ell(0, 0, 9, 9, "#8e2f2f"); ctx.strokeStyle = "#e2c174"; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(-5, 5); ctx.lineTo(0, -6); ctx.lineTo(5, 5); ctx.stroke(); });
+    } },
+    spyd: { vegg: true, tegn(x, y, side) {
+      paVegg(side, (side === "v" ? y : x) + 0.5, 68, () => { for (const s of [-1, 1]) { ctx.strokeStyle = "#8a6a45"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-12 * s, 22); ctx.lineTo(10 * s, -18); ctx.stroke(); ctx.fillStyle = "#d8d8de"; ctx.beginPath(); ctx.moveTo(8 * s, -17); ctx.lineTo(13.5 * s, -25); ctx.lineTo(12 * s, -15); ctx.fill(); } ell(0, 2, 4, 4, "#c9a24a"); });
+    } },
+    dolksamling: { vegg: true, tegn(x, y, side) {
+      paVegg(side, (side === "v" ? y : x) + 0.5, 70, () => { rk(-14, -14, 28, 5, "#6b4a2a"); for (const dx of [-9, 0, 9]) { rk(dx - 1.5, -11, 3, 7, "#3a2a18"); rk(dx - 4, -4, 8, 2, "#c9a24a"); ctx.fillStyle = "#d8d8de"; ctx.beginPath(); ctx.moveTo(dx - 2.5, -2); ctx.lineTo(dx + 2.5, -2); ctx.lineTo(dx, 17); ctx.fill(); } });
+    } },
+    veggskinn: { vegg: true, tegn(x, y, side) {
+      paVegg(side, (side === "v" ? y : x) + 0.5, 70, () => {
+        ctx.fillStyle = "#4f7a3a"; ctx.beginPath(); ctx.moveTo(-3, -24); ctx.quadraticCurveTo(-11, 0, -4, 24); ctx.lineTo(4, 24); ctx.quadraticCurveTo(11, 0, 3, -24); ctx.closePath(); ctx.fill();
+        for (let i = 0; i < 6; i++) { const yy = -18 + i * 7.5; ctx.fillStyle = i % 2 ? "#d9c96a" : "#2f4a22"; ctx.beginPath(); ctx.moveTo(0, yy - 3.5); ctx.lineTo(3.5, yy); ctx.lineTo(0, yy + 3.5); ctx.lineTo(-3.5, yy); ctx.fill(); }
+        for (const [dx, dy] of [[-5, -23], [5, -23], [-6, 23], [6, 23]]) ell(dx, dy, 1.5, 1.5, "#c9a24a");
+      });
+    } },
+    relieff: { vegg: true, tegn(x, y, side) { const p = side === "v" ? y : x;
+      vf(side, p + 0.06, p + 0.94, 46, 94, "#8f8672"); vf(side, p + 0.1, p + 0.9, 49, 91, "#a39a84");
+      paVegg(side, p + 0.5, 70, () => { const M = ["..TTT.", "...T..", "L....I", "L.OO.I", "LLOO.I", ".....I"]; for (let j = 0; j < 6; j++) for (let i = 0; i < 6; i++) if (M[j][i] !== ".") { rk(-12 + i * 4, -20 + j * 6.6, 4, 6.6, "#c9c0a8"); rk(-12 + i * 4, -20 + j * 6.6 + 5.4, 4, 1.2, "#7a7262"); } });
+    } },
+    // ----- Trofeer -----
+    t2048: { blokk: true, tegn(x, y, _, t) {
+      sokkel(x, y); kloss(x, y, 0.28, 0.28, 0.72, 0.72, 14, 42, "#e2c174");
+      const [a, b] = P(x + 0.5, y + 0.5, 14);
+      ctx.fillStyle = "#5a3d10"; ctx.font = "700 9px Cinzel, Georgia, serif"; ctx.textAlign = "center"; ctx.fillText("2048", a, b - 5);
+      ctx.fillStyle = `rgba(255,250,220,${0.5 + Math.sin(t * 3) * 0.5})`; ctx.beginPath();
+      for (const [dx, dy] of [[10, -44], [12, -38], [18, -36], [12, -34], [10, -28], [8, -34], [2, -36], [8, -38]]) ctx.lineTo(a + dx, b + dy);
+      ctx.fill();
+    } },
+    ttetris: { blokk: true, tegn(x, y) {
+      sokkel(x, y, 8);
+      for (const [fx, fy, z, c] of [[0.25, 0.25, 8, 0], [0.47, 0.25, 8, 5], [0.25, 0.47, 8, 1], [0.47, 0.47, 8, 4], [0.25, 0.25, 22, 2], [0.25, 0.47, 22, 6], [0.47, 0.47, 22, 3], [0.36, 0.36, 36, 1], [0.36, 0.36, 50, 5], [0.36, 0.36, 64, 0]]) kloss(x, y, fx, fy, fx + 0.22, fy + 0.22, z, z + 14, TETRIS[c]);
+    } },
+    tsnake: { blokk: true, tegn(x, y, _, t) {
+      const [a, b] = P(x + 0.5, y + 0.5);
+      ell(a, b, 17, 8, "rgba(0,0,0,.25)"); ell(a, b - 3, 15, 7, "#8a6038"); rk(a - 15, b - 20, 30, 17, "#a9763f");
+      ctx.strokeStyle = "#7a5530"; ctx.lineWidth = 1; for (const dy of [-7, -12, -17]) { ctx.beginPath(); ctx.ellipse(a, b + dy, 15, 7, 0, 0, Math.PI); ctx.stroke(); }
+      ell(a, b - 20, 15, 7, "#c08a4c"); ell(a, b - 20, 11, 5, "#2b2118");
+      const s = Math.sin(t * 2) * 5, hx = a + s * 0.6, hy = b - 60;
+      ctx.strokeStyle = "#5f8f3a"; ctx.lineWidth = 6; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(a, b - 20); ctx.bezierCurveTo(a - 12 - s, b - 34, a + 12 + s, b - 44, hx, b - 58); ctx.stroke(); ctx.lineCap = "butt";
+      ell(hx, hy, 6, 5, "#7fb04f"); rk(hx - 3.5, hy - 2, 1.8, 1.8, "#1c1612"); rk(hx + 1.7, hy - 2, 1.8, 1.8, "#1c1612");
+      if (Math.sin(t * 3) > 0.3) rk(hx - 0.5, hy + 4, 1, 4, "#b5282a");
+    } },
+    tmur: { blokk: true, tegn(x, y, _, t) {
+      const [a, b] = P(x + 0.5, y + 0.5), s = Math.sin(t * 1.5) * 3;
+      ctx.strokeStyle = "#5a4630"; ctx.lineWidth = 3.5; ctx.lineCap = "round"; ctx.beginPath();
+      for (const [dx, dy] of [[-12, -6], [12, 6]]) { ctx.moveTo(a + dx - 8, b + dy + 2); ctx.lineTo(a + dx, b + dy - 44); ctx.lineTo(a + dx + 8, b + dy + 2); }
+      ctx.moveTo(a - 12, b - 50); ctx.lineTo(a + 12, b - 38); ctx.stroke();
+      ctx.strokeStyle = "#c9a24a"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(a - 8, b - 47); ctx.lineTo(a - 8 + s, b - 27); ctx.moveTo(a + 8, b - 39); ctx.lineTo(a + 8 + s, b - 19); ctx.stroke();
+      ctx.strokeStyle = "#7a5532"; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(a - 16 + s, b - 30); ctx.lineTo(a + 14 + s, b - 15); ctx.stroke(); ctx.lineCap = "butt";
+      ell(a + 17 + s, b - 13.5, 6, 6, "#b08d57"); ell(a + 19 + s, b - 12.5, 3, 3, "#8a6f33");
+    } },
+    tidus: { blokk: true, tegn(x, y) {
+      sokkel(x, y, 20);
+      const [a, b] = P(x + 0.5, y + 0.5, 20);
+      rk(a - 11, b - 12, 22, 12, "#ece4d2"); rk(a + 4, b - 12, 7, 12, "#cfc5ad"); rk(a - 4, b - 17, 8, 6, "#ddd4be"); ell(a + 1, b - 26, 9, 11, "#d8cdb4"); ell(a - 1, b - 27, 8, 10.5, "#ece4d2");
+      rk(a - 5, b - 28, 2, 1.5, "#9a917b"); rk(a + 1, b - 28, 2, 1.5, "#9a917b"); rk(a - 2, b - 22, 4, 1, "#9a917b");
+      for (const [dx, dy] of [[-9, -32], [-6, -36], [-1, -38], [4, -36], [7, -32]]) ell(a + dx, b + dy, 3, 2, "#6b8a45");
+      rk(a + 10, b - 9, 7, 2, "#d8d8de"); rk(a + 16, b - 11, 2, 6, "#c9a24a"); rk(a + 18, b - 9, 4, 2, "#3a2a18");
+    } },
+    ttartaros: { blokk: true, tegn(x, y, _, t) {
+      sokkel(x, y, 8);
+      const [a, b] = P(x + 0.5, y + 0.5, 8), f = (t * 0.15) % 1;
+      glod(a, b - 28, 40, 0.18); ell(a, b - 2, 13, 5.5, "#c9a24a");
+      ctx.fillStyle = "rgba(190,215,230,.45)"; ctx.beginPath(); for (const [dx, dy] of [[-11, -52], [11, -52], [2, -28], [11, -4], [-11, -4], [-2, -28]]) ctx.lineTo(a + dx, b + dy); ctx.fill();
+      ctx.fillStyle = "#b07cf0"; ctx.beginPath(); ctx.moveTo(a - 9 + f * 7, b - 48 + f * 18); ctx.lineTo(a + 9 - f * 7, b - 48 + f * 18); ctx.lineTo(a + 1.5, b - 29); ctx.lineTo(a - 1.5, b - 29); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(a - 10, b - 5); ctx.lineTo(a + 10, b - 5); ctx.lineTo(a + 2 + f * 5, b - 6 - f * 13); ctx.lineTo(a - 2 - f * 5, b - 6 - f * 13); ctx.fill();
+      rk(a - 0.6, b - 29, 1.2, 24, "#b07cf0");
+      ell(a, b - 53, 13, 5.5, "#e2c174"); rk(a - 12.5, b - 53, 2, 50, "#c9a24a"); rk(a + 10.5, b - 53, 2, 50, "#c9a24a");
+    } },
+    tsymposion: { blokk: true, tegn(x, y, _, t) {
+      const [a, b] = P(x + 0.5, y + 0.5);
+      ell(a, b, 14, 6, "rgba(0,0,0,.25)"); rk(a - 4, b - 46, 8, 46, "#8a6f33"); glod(a, b - 62, 52, 0.22);
+      for (const [dx, dy, r, c] of [[-16, -50, 17, "#b08d37"], [15, -54, 18, "#c9a24a"], [0, -72, 20, "#e2c174"], [-6, -48, 13, "#c9a24a"], [8, -82, 11, "#f2dc9a"]]) ell(a + dx, b + dy, r, r, c);
+      for (let i = 0; i < 5; i++) { const g = Math.max(0, Math.sin(t * 2 + i * 1.7)) * 2; ell(a + [-18, 12, -4, 20, 4][i], b + [-56, -64, -84, -46, -50][i], g, g, "#fffbe6"); }
+    } },
+    trone: { sete: 17, tegn(x, y, mot) {
+      klm(x, y, mot, 0.12, 0.06, 0.88, 0.24, 0, 70, "#c9a24a"); klm(x, y, mot, 0.2, 0.06, 0.8, 0.245, 26, 62, "#8e2f52");
+      klm(x, y, mot, 0.12, 0.24, 0.88, 0.92, 0, 14, "#c9a24a"); klm(x, y, mot, 0.18, 0.26, 0.82, 0.9, 14, 17, "#8e2f52");
+      klm(x, y, mot, 0.08, 0.24, 0.2, 0.92, 14, 30, "#e2c174"); klm(x, y, mot, 0.8, 0.24, 0.92, 0.92, 14, 30, "#e2c174");
+      const [a, b] = mot === "v" ? P(x + 0.15, y + 0.5, 70) : P(x + 0.5, y + 0.15, 70);
+      ell(a, b - 5, 6, 6, "#e2c174"); ell(a, b - 5, 3, 3, "#6fc3c9");
+    } },
+  };
+
+  // Stiler for hele rommet, kjøpt i butikken. Uten stil følger gulv og vegger villaen i Symposion.
+  const GULVSTIL = {
+    gulv_sjakk: (x, y) => ((x + y) % 2 ? "#ece4d2" : "#2b2b2e"),
+    gulv_hav: (x, y, t) => `hsl(${196 + ((x * 3 + y * 5) % 4) * 4} 48% ${34 + ((x * 7 + y * 3) % 5) * 3 + Math.sin(t + x - y) * 1.5}%)`,
+    gulv_tegl: (x, y) => ["#b5623a", "#a85832", "#c06c42"][(x + y * 2) % 3],
+    gulv_tetris: (x, y) => mork(TETRIS[Math.floor(hs(x, y) * 7)], 0.72),
+    gulv_slange: (x, y) => ((x + y) % 2 ? "#4f7a3a" : (x * y) % 3 === 0 ? "#b5a84a" : "#3f6a2e"),
+    gulv_senat: (x, y) => (x % 2 === 0 && y % 2 === 0 ? "#7a1f2a" : (x + y) % 2 ? "#d8cdb4" : "#ece4d2"),
+    gulv_lava: (x, y, t) => (hs(x, y) > 0.8 ? `hsl(${14 + hs(y, x) * 12} 80% ${30 + Math.sin(t * 1.6 + x * 3 + y) * 8}%)` : ["#231d1b", "#2b2523", "#1c1817", "#262020"][Math.floor(hs(y, x + 3) * 4)]),
+  };
+  const hverVegg = (rom, tegn) => { for (const side of ["v", "h"]) tegn(side, side === "v" ? rom.d : rom.b); };
+  const VEGGSTIL = {
+    vegg_pompeii: { farge: ["#7d2a1f", "#93352a"], pynt(rom) { hverVegg(rom, (side, n) => { for (let i = 0; i < n; i++) { vf(side, i + 0.08, i + 0.92, 42, 102, side === "v" ? "#8c3024" : "#a33c2f"); vf(side, i + 0.08, i + 0.92, 100, 102, "#c9a24a"); } }); } },
+    vegg_natt: { farge: ["#141a3a", "#1b2350"], pynt(rom, t) { hverVegg(rom, (side, n) => { for (let i = 0; i < n * 6; i++) { const [a, b] = veggP(side, hs(i, side === "v" ? 1 : 6) * n, 40 + hs(i, 2) * 66); ctx.globalAlpha = 0.4 + 0.6 * Math.abs(Math.sin(t * 0.8 + i)); rk(a, b, i % 5 ? 1.5 : 2.5, i % 5 ? 1.5 : 2.5, "#f2e3b4"); } ctx.globalAlpha = 1; }); } },
+    vegg_elfenben: { farge: ["#cfc5ad", "#e2d9c2"], pynt(rom) { hverVegg(rom, (side, n) => { vf(side, 0, n, 92, 93.5, "#c9a24a"); vf(side, 0, n, 105, 106.5, "#c9a24a"); for (let i = 0; i < n * 4; i++) { vf(side, i / 4 + 0.03, i / 4 + 0.19, 95.5, 103, "#c9a24a"); vf(side, i / 4 + 0.08, i / 4 + 0.14, 97.5, 103, side === "v" ? "#cfc5ad" : "#e2d9c2"); } }); } },
+    vegg_vin: { farge: ["#4a1830", "#5c2040"], pynt(rom) { hverVegg(rom, (side, n) => { vf(side, 0, n, 98, 100, "#c9a24a"); vf(side, 0, n, 38, 39.5, "#c9a24a"); }); } },
+    vegg_mosaikk: { farge: ["#2a6480", "#34789a"], pynt(rom) { hverVegg(rom, (side, n) => { for (let i = 0; i < n * 2; i++) for (let j = 0; j < 6; j++) if (hs(i + (side === "v" ? 50 : 0), j) > 0.45) vf(side, i / 2 + 0.03, i / 2 + 0.47, 38 + j * 12, 48.5 + j * 12, `hsl(${188 + hs(j, i) * 26} 45% ${36 + hs(i, j * 3) * 22}%)`); }); } },
+    vegg_tetris: { farge: ["#26262e", "#30303a"], pynt(rom) { hverVegg(rom, (side, n) => { for (let i = 0; i < n * 3; i++) { const p = hs(i, side === "v" ? 7 : 9) * (n - 0.3), z = 40 + Math.floor(hs(i, 3) * 7) * 9; vf(side, p, p + 0.25, z, z + 8, TETRIS[i % 7]); } }); } },
+    vegg_jungel: { farge: ["#2a5234", "#346340"], pynt(rom) { hverVegg(rom, (side, n) => { for (let i = 0; i < n * 2; i++) { const p = i / 2 + 0.1 + hs(i, side === "v" ? 4 : 8) * 0.3, l = 20 + hs(i, 5) * 45; vf(side, p, p + 0.04, 112 - l, 112, "#1f3d26"); for (let k = 0; k < l / 9; k++) vf(side, p + (k % 2 ? 0.04 : -0.1), p + (k % 2 ? 0.14 : 0), 106 - k * 9, 110 - k * 9, "#5f8f3a"); } }); } },
   };
 
   // Rommet til en bror. Størrelse og stil følger villanivået hans i Symposion.
   function lagHjem(id, h) {
     const n = h.storrelse, trinn = h.niva <= 2 ? 0 : h.niva <= 4 ? 1 : h.niva <= 7 ? 2 : 3;
+    const gs = GULVSTIL[h.gulv], vs = VEGGSTIL[h.vegg];
     return {
       navn: romNavn(id), b: n, d: n, start: [1, 1], vegg: 112, bakgrunn: ["#141110", "#0b0b0a"],
-      veggfarge: [["#75624a", "#8a7458"], ["#8c4a2f", "#a25a3a"], ["#9a917b", "#b0a68e"], ["#5a1d2c", "#6f2638"]][trinn],
-      gulv: [
+      veggfarge: vs ? vs.farge : [["#75624a", "#8a7458"], ["#8c4a2f", "#a25a3a"], ["#9a917b", "#b0a68e"], ["#5a1d2c", "#6f2638"]][trinn],
+      veggpynt: vs && vs.pynt,
+      gulv: gs ? (x, y, t) => gs(x, y, t) : [
         (x, y) => (y % 2 ? "#6b4f36" : "#62482f"),
         (x, y) => ((x + y) % 2 ? "#b5623a" : "#a85832"),
         (x, y) => ((x + y) % 2 ? "#d8cdb4" : "#c2b697"),
         (x, y) => (x === 0 || y === 0 || x === n - 1 || y === n - 1 ? "#c9a24a" : (x + y) % 2 ? "#ece4d2" : "#d8cdb4"),
       ][trinn],
-      skilt: { side: "v", pos: n / 2, z: 64, tekst: h.eier.toUpperCase(), font: "600 16px Cinzel, Georgia, serif" },
+      skilt: { side: "v", pos: n / 2, z: 96, tekst: h.eier.replace(/ \(gjest\)$/, "").toUpperCase(), font: "600 12px Cinzel, Georgia, serif", plakett: true },
       dorer: [{ x: 1, y: 0, side: "h", til: "lobbyen" }],
       mobler: h.mobler.map((m) => [m.type, m.x, m.y, m.x === 0 ? "v" : "h"]),
       npc: [],
@@ -211,10 +489,12 @@
 
   function lagRuter() {
     ruter = Array.from({ length: R.b }, (_, x) => Array.from({ length: R.d }, (_, y) => ({ vann: !!(R.vann && R.vann(x, y)) })));
-    mobler = [];
+    mobler = []; veggting = [];
     for (const [type, x, y, mot] of R.mobler) {
       const m = MOBEL[type];
       if (!m || !rute(x, y)) continue;
+      if (m.vegg) { if (x === 0 || y === 0) veggting.push({ type, x, y, mot: x === 0 ? "v" : "h" }); continue; }
+      if (m.vann) ruter[x][y].vann = true;
       if (m.blokk) ruter[x][y].blokk = true;
       if (m.sete) ruter[x][y].sete = { h: m.sete };
       mobler.push({ type, x, y, mot, dybde: x + y, gulv: !!m.gulv });
@@ -265,6 +545,10 @@
     if (o.flip) c.scale(-1, 1);
     const px = (x, y, w, h, f) => { c.fillStyle = f; c.fillRect(x * u, y * u, w * u, h * u); };
 
+    // Det som henger bak figuren tegnes først
+    const ned = o.sitter ? 4 : 0;
+    if (a.pynt === "pynt_vinger") { const v = Math.sin(t * 3); for (const [x1, x2, x3] of [[-12, -14, -11], [6, 7, 6]]) { px(x1, -29 + ned - v, 6, 4, "#f5efe0"); px(x2, -25 + ned - v, 7, 6, "#ece4d2"); px(x3, -19 + ned, 5, 5, "#d8cdb4"); } }
+    if (a.pynt === "pynt_kappe" && !o.bak) px(-8, -24 + ned, 16, o.sitter ? 14 : 19, "#6b1f3a");
     if (a.har === "langt") px(-7, -36 + (o.sitter ? 4 : 0), 14, 14, har);
     if (o.sitter) { px(-5, -5, 4, 5, hud); px(1, -5, 4, 5, hudM); px(-5, -1, 5, 1, "#6b4a2a"); px(1, -1, 5, 1, "#6b4a2a"); c.translate(0, 4 * u); }
     else {
@@ -284,6 +568,8 @@
       else if (o.gest === "skal") { px(6, -22, 3, 3, togaM); px(7, -30, 3, 8, hudM); px(6, -35, 5, 5, "#e2c174"); px(7, -36, 3, 1, "#8e2f52"); }
       else { px(6, -22, 3, 4, togaM); px(6, -18, 3, 6, hudM); }
     }
+    if (a.pynt === "pynt_kappe") { if (o.bak) { px(-7, -24, 14, o.sitter ? 13 : 18, "#8e2f52"); px(-7, -24, 14, 2, "#c9a24a"); } else { px(-6, -24, 12, 2, "#8e2f52"); px(-1, -24, 2, 2, "#e2c174"); } }
+    if (a.pynt === "pynt_dolk") { if (o.bak) { px(-1, -25, 2, 5, "#3a2a18"); px(-3, -20, 6, 1, "#c9a24a"); } else { px(5, -29, 2, 5, "#3a2a18"); px(4, -25, 4, 1, "#c9a24a"); } }
     // Hode, ansikt og hår
     px(-2, -25, 4, 2, hudM);
     px(-6, -36, 12, 11, hud); px(4, -36, 2, 11, hudM);
@@ -297,6 +583,47 @@
     else if (a.har === "krøller") { px(-7, -39, 14, 4, har); px(-8, -37, 2, 5, har); px(6, -37, 2, 5, har); px(-5, -40, 3, 1, har); px(1, -40, 4, 1, har); }
     else if (a.har === "knute") { px(-6, -38, 12, 3, har); px(-2, -41, 4, 3, har); }
     else { px(-6, -34, 1, 3, har); px(5, -34, 1, 3, har); }
+    // Hodeplagg fra butikken
+    const h = a.hode;
+    if (h === "hode_krans") { px(-7, -38, 14, 2, "#5f7d3d"); for (const x of [-8, -4, 2, 6]) px(x, -39, 2, 2, "#7a9a52"); px(-1, -39, 2, 1, "#e2c174"); }
+    else if (h === "hode_hjelm") { px(-7, -41, 14, 7, "#b08d57"); px(-7, -41, 14, 1, "#c9a66a"); px(-7, -34, 2, 7, "#b08d57"); px(5, -34, 2, 7, "#9a7a48"); if (!o.bak) px(-1, -34, 2, 3, "#b08d57"); px(-3, -45, 7, 4, "#b5282a"); px(-1, -48, 3, 3, "#b5282a"); }
+    else if (h === "hode_krone") { px(-6, -39, 12, 2, "#e2c174"); px(-6, -41, 2, 2, "#e2c174"); px(-1, -42, 2, 3, "#e2c174"); px(4, -41, 2, 2, "#e2c174"); px(-1, -39, 2, 1, "#b5282a"); }
+    else if (h === "hode_hatt") { px(-10, -38, 20, 2, "#d9b96a"); px(-5, -42, 10, 4, "#e6c97a"); px(-5, -39, 10, 1, "#8e2f52"); }
+    else if (h === "hode_vinlov") { px(-7, -38, 14, 2, "#4f6a34"); px(-8, -37, 3, 3, "#6b2f6e"); px(5, -37, 3, 3, "#6b2f6e"); px(-3, -40, 3, 2, "#6b8a45"); px(1, -40, 3, 2, "#5f7d3d"); }
+    else if (h === "hode_medusa") { for (let i = 0; i < 6; i++) { const x = -7 + i * 2.5, l = 4 + Math.sin(t * 5 + i * 1.3) * 1.5; px(x, -38 - l, 2, l + 1, i % 2 ? "#5f8f3a" : "#7fb04f"); px(x + (Math.sin(t * 5 + i) > 0 ? 1 : -1), -39 - l, 2, 1.5, "#9ad15a"); } }
+  }
+
+  // Kjæledyrene. Tegnes med føttene i origo og snuten mot høyre.
+  function dyr(c, id, t, gaar) {
+    const u = 2, px = (x, y, w, h, f) => { c.fillStyle = f; c.fillRect(x * u, y * u, w * u, h * u); };
+    const l = gaar ? (Math.sin(t * 11) > 0 ? 1 : 0) : 0;   // annethvert bein løftes
+    if (id === "dyr_slange") {
+      for (let i = 0; i < 8; i++) px(-9 + i * 2, -2 - Math.sin(t * (gaar ? 10 : 3) + i * 0.9) * 1.2, 2.2, 2, i % 2 ? "#5f8f3a" : "#7fb04f");
+      px(6, -6, 4, 4, "#7fb04f"); px(8, -5, 1, 1, "#1c1612");
+      if (Math.sin(t * 3) > 0.5) px(10, -4, 2, 0.6, "#b5282a");
+    } else if (id === "dyr_ugle") {
+      const b = Math.sin(t * 3) * 1.5 - 12, v = Math.sin(t * 12) * 2;
+      px(-7, b - 6 + v, 3, 5, "#6b4f36"); px(4, b - 6 + v, 3, 5, "#6b4f36");
+      px(-4, b - 9, 8, 9, "#8a6a45"); px(-2, b - 5, 4, 4, "#d9c9a0"); px(-4, b - 10, 1, 1, "#8a6a45"); px(3, b - 10, 1, 1, "#8a6a45");
+      px(-3, b - 8, 2.5, 2.5, "#f2e36a"); px(0.5, b - 8, 2.5, 2.5, "#f2e36a"); px(-2, b - 7, 1, 1, "#1c1612"); px(1.5, b - 7, 1, 1, "#1c1612"); px(-0.5, b - 5.5, 1, 1, "#c9a24a");
+    } else if (id === "dyr_kerberos") {
+      px(-8, -9, 2, 2, "#3a2f32"); px(-6, -8, 10, 5, "#3a2f32"); px(-5, -3 - l, 2, 3 + l, "#2a2224"); px(1, -3 - (1 - l) * (gaar ? 1 : 0), 2, 3, "#2a2224");
+      for (const [hx, hy] of [[0, -14], [4, -12], [5, -8]]) { px(hx, hy, 4, 4, "#4a3d40"); px(hx + 3, hy + 2, 2, 1.5, "#3a2f32"); px(hx + 2, hy + 1, 1, 1, "#ff4a2a"); }
+    } else if (id === "dyr_geit") {
+      px(-7, -11, 1, 2, "#ece4d2"); px(-6, -10, 11, 6, "#ece4d2"); px(-5, -4 - l, 2, 4 + l, "#cfc5ad"); px(2, -4, 2, 4, "#cfc5ad");
+      px(4, -14, 5, 5, "#ece4d2"); px(5, -17, 1, 3, "#8a6a45"); px(7, -17, 1, 3, "#8a6a45"); px(8, -9, 1, 2, "#cfc5ad"); px(7, -13, 1, 1, "#1c1612");
+    } else if (id === "dyr_skilpadde") {
+      px(-5, -2, 2, 2, "#9db36a"); px(3, -2 - l * 0.5, 2, 2, "#9db36a"); px(5, -5, 3, 3, "#9db36a"); px(7, -4.5, 0.8, 0.8, "#1c1612");
+      px(-6, -6, 11, 4, "#4f7a3a"); px(-4, -8, 7, 2, "#5f8f3a"); px(-2, -7, 3, 2, "#3f6a2e"); px(-5, -5, 2, 2, "#3f6a2e"); px(2, -5, 2, 2, "#3f6a2e");
+    } else if (id === "dyr_vaer") {
+      px(-4, -4 - l, 2, 4 + l, "#3a2f28"); px(2, -4, 2, 4, "#3a2f28");
+      px(-6, -11, 11, 7, "#e8dfc8"); px(-5, -12, 9, 1, "#e8dfc8"); px(-7, -9, 1, 3, "#e8dfc8");
+      px(4, -12, 5, 5, "#3a2f28"); px(3, -13, 4, 4, "#c9a24a"); px(4, -12, 2, 2, "#8a6f33"); px(7, -10, 1, 1, "#ece4d2");
+    } else if (id === "dyr_ravn") {
+      const h = gaar ? Math.abs(Math.sin(t * 10)) * 2 : 0;
+      px(-1, -3, 1, 3, "#4a4a55"); px(2, -3, 1, 3, "#4a4a55");
+      px(-7, -7 - h, 3, 2, "#23232e"); px(-4, -8 - h, 8, 5, "#34343f"); px(-3, -7 - h, 5, 2, "#4a4a5a"); px(2, -11 - h, 4, 4, "#34343f"); px(6, -10 - h, 3, 1.2, "#8a8a96"); px(4, -10 - h, 1, 1, "#ece4d2");
+    }
   }
 
   function tegnFigur(f, t) {
@@ -317,6 +644,14 @@
     ctx.restore();
     if (vann) { ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(sx, sy0 - 4, 16 + Math.sin(t * 4) * 2, 6, 0, 0, 7); ctx.stroke(); }
     f.topp = sy0 - (sitter ? rt.sete.h - 8 : 0) + (vann ? 16 : 0) - 84;
+  }
+
+  function tegnDyr(f, t) {
+    const k = f.kjael, [sx, sy] = P(k.x + 0.5, k.y + 0.5);
+    ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.beginPath(); ctx.ellipse(sx, sy, 10, 4, 0, 0, 7); ctx.fill();
+    ctx.save(); ctx.translate(sx, sy); if (k.flip) ctx.scale(-1, 1);
+    dyr(ctx, f.utseende.dyr, t, k.gaar);
+    ctx.restore();
   }
 
   function tegnNavnOgBoble(f, t) {
@@ -360,8 +695,6 @@
     ctx.fillText(tekst, (side === "h" ? 1 : -1) * pos * TW / 2, -z);
     ctx.restore();
   }
-  const veggP = (side, pos, z) => (side === "h" ? P(pos, 0, z) : P(0, pos, z));
-
   function tegn(tMs) {
     const t = tMs / 1000;
     const k = lerret.width / logW;
@@ -395,9 +728,13 @@
       flate([P(0, 0), P(0, R.d), P(0, R.d, 34), P(0, 0, 34)], mork(R.veggfarge[0], 0.8));
       flate([P(0, 0), P(R.b, 0), P(R.b, 0, 34), P(0, 0, 34)], mork(R.veggfarge[1], 0.8));
     }
+    if (R.veggpynt) R.veggpynt(R, t);
     ctx.strokeStyle = "#c9a24a"; ctx.lineWidth = 2; ctx.beginPath();
     let p = P(0, R.d, V); ctx.moveTo(p[0], p[1]); p = P(0, 0, V); ctx.lineTo(p[0], p[1]); p = P(R.b, 0, V); ctx.lineTo(p[0], p[1]); ctx.stroke();
-    if (R.skilt) veggTekst(R.skilt.side, R.skilt.pos, R.skilt.z, R.skilt.tekst, R.skilt.font, "#c9a24a");
+    if (R.skilt) {
+      if (R.skilt.plakett) { ctx.font = R.skilt.font; const b = (ctx.measureText(R.skilt.tekst).width / 2 + 9) / (TW / 2); vf(R.skilt.side, R.skilt.pos - b, R.skilt.pos + b, R.skilt.z - 6, R.skilt.z + 13, "#c9a24a"); vf(R.skilt.side, R.skilt.pos - b + 0.04, R.skilt.pos + b - 0.04, R.skilt.z - 4.5, R.skilt.z + 11.5, "#1c1612"); }
+      veggTekst(R.skilt.side, R.skilt.pos, R.skilt.z, R.skilt.tekst, R.skilt.font, "#c9a24a");
+    }
     for (const d of R.dorer) {
       const pos = d.side === "h" ? d.x : d.y;
       if (V < 90) flate([veggP(d.side, pos - 0.1, 0), veggP(d.side, pos + 1.1, 0), veggP(d.side, pos + 1.1, 104), veggP(d.side, pos - 0.1, 104)], R.veggfarge[d.side === "h" ? 1 : 0]);
@@ -405,6 +742,7 @@
       flate([veggP(d.side, pos + 0.14, 0), veggP(d.side, pos + 0.86, 0), veggP(d.side, pos + 0.86, 80), veggP(d.side, pos + 0.14, 80)], "#0b0b0a");
       veggTekst(d.side, pos + 0.5, 90, romNavn(d.til).toUpperCase(), "600 10px Cinzel, Georgia, serif", "#e2c174");
     }
+    for (const m of veggting) MOBEL[m.type].tegn(m.x, m.y, m.mot, t);
     // Gulv, tepper og markeringer
     flate([P(0, R.d), P(R.b, R.d), P(R.b, R.d, -10), P(0, R.d, -10)], "#3a342a");
     flate([P(R.b, 0), P(R.b, R.d), P(R.b, R.d, -10), P(R.b, 0, -10)], "#4a4336");
@@ -421,14 +759,16 @@
     if (mal && meg && meg.sti.length) merk(mal, "rgba(236,228,210,.7)", 1.5);
 
     // Møbler og figurer, bakerst først
-    const ting = [...mobler.filter((m) => !m.gulv).map((m) => ({ d: m.dybde, m })), ...[...figurer.values()].map((f) => ({ d: f.x + f.y + 0.5, f }))].sort((a, b) => a.d - b.d);
+    const ting = [...mobler.filter((m) => !m.gulv).map((m) => ({ d: m.dybde, m })), ...[...figurer.values()].map((f) => ({ d: f.x + f.y + 0.5, f })),
+      ...[...figurer.values()].filter((f) => f.kjael).map((f) => ({ d: f.kjael.x + f.kjael.y + 0.45, k: f }))].sort((a, b) => a.d - b.d);
     for (const e of ting) {
       if (e.m) MOBEL[e.m.type].tegn(e.m.x, e.m.y, e.m.mot, t);
+      else if (e.k) tegnDyr(e.k, t);
       else tegnFigur(e.f, t);
     }
     // Når du innreder: vis møbelet du holder, der pekeren er
     const holder = innred && valgt && hjem && hjem.lager.find((m) => m.id === valgt);
-    if (holder && pr && MOBEL[holder.type] && !mobler.some((m) => m.x === peker[0] && m.y === peker[1])) {
+    if (holder && pr && MOBEL[holder.type] && kanSettes(holder.type, peker[0], peker[1])) {
       ctx.globalAlpha = 0.6;
       MOBEL[holder.type].tegn(peker[0], peker[1], peker[0] === 0 ? "v" : "h", t);
       ctx.globalAlpha = 1;
@@ -443,10 +783,19 @@
       while (f.sti.length && igjen > 0) {
         const [tx, ty] = f.sti[0];
         const dx = tx - f.x, dy = ty - f.y, lengde = Math.hypot(dx, dy);
-        if (dx || dy) { f.flip = dx - dy < 0; f.bak = dx + dy < 0; }
+        if (dx || dy) { f.flip = dx - dy < 0; f.bak = dx + dy < 0; f.rx = -Math.sign(dx) * 0.8; f.ry = -Math.sign(dy) * 0.8; }
         if (lengde <= igjen) { f.x = tx; f.y = ty; f.sti.shift(); igjen -= lengde; }
         else { f.x += (dx / lengde) * igjen; f.y += (dy / lengde) * igjen; igjen = 0; }
       }
+      // Kjæledyret holder seg et skritt bak
+      if (f.utseende && f.utseende.dyr && !f.npc) {
+        const k = f.kjael || (f.kjael = { x: f.x, y: f.y, flip: false, gaar: false });
+        const tx = Math.max(0, Math.min(R.b - 1, f.x + (f.rx ?? -0.7))), ty = Math.max(0, Math.min(R.d - 1, f.y + (f.ry ?? 0.4)));
+        const dx = tx - k.x, dy = ty - k.y, l = Math.hypot(dx, dy);
+        k.gaar = l > 0.06;
+        if (k.gaar) { const s = Math.min(l, FART * 1.15 * dt); k.x += (dx / l) * s; k.y += (dy / l) * s; k.flip = dx - dy < 0; }
+        else k.flip = f.flip;
+      } else f.kjael = null;
       if (f === meg && !f.sti.length && !bytter) {
         const r = rute(Math.round(f.x), Math.round(f.y));
         if (r && r.dor) gaTil(r.dor.til, rom);
@@ -486,7 +835,7 @@
       byggRom(til, def);
       meg = { navn: MEG, x: pos[0], y: pos[1], sti: [], utseende: look };
       figurer.set(MEG, meg);
-      visRomliste(); visInnred();
+      visRomliste(); visInnred(); butikkNokkel = ""; visButikk();
       leggILogg(null, ROM[til] ? `Du er i ${R.navn.toLowerCase()}.` : til === mittRom() ? "Du er i rommet ditt." : `Du er på besøk hos ${til.slice(5)}.`, "info");
     } catch (e) {
       feilet = true;
@@ -547,8 +896,15 @@
   }
 
   // ---------- Innredning av eget rom ----------
+  const lagAv = (type) => (MOBEL[type] ? (MOBEL[type].vegg ? "vegg" : MOBEL[type].gulv ? "gulv" : "") : "");
+  // Ett møbel per flis, pluss ett teppe under og én ting på veggen bak. Døra og flisa foran den holdes fri.
+  function kanSettes(type, x, y) {
+    if (!hjem || !rute(x, y) || (x === 1 && y <= 1)) return false;
+    if (lagAv(type) === "vegg" && x !== 0 && y !== 0) return false;
+    return !hjem.mobler.some((m) => m.x === x && m.y === y && lagAv(m.type) === lagAv(type));
+  }
   function oppdaterHjem(h) {
-    const nokkel = (x) => JSON.stringify([x.mobler, x.storrelse, x.niva]);
+    const nokkel = (x) => JSON.stringify([x.mobler, x.storrelse, x.niva, x.gulv, x.vegg]);
     const endret = !hjem || nokkel(hjem) !== nokkel(h);
     hjem = h;
     if (endret) { R = lagHjem(rom, h); lagRuter(); }
@@ -559,39 +915,152 @@
       const s = await api(sti, post(kropp));
       melding = "";
       if (etterpa) etterpa(s);
+      if (s.butikk) butikk = s.butikk;
       oppdaterHjem(s.hjem);
+      visButikk();
     } catch (e) { melding = e.message; visInnred(); }
   }
   function innredKlikk(x, y) {
     if (!rute(x, y)) return;
-    const star = hjem.mobler.find((m) => m.x === x && m.y === y);
+    const pa = hjem.mobler.filter((m) => m.x === x && m.y === y);
+    const holder = valgt && hjem.lager.find((m) => m.id === valgt);
+    if (holder && kanSettes(holder.type, x, y)) return innredning("hotell/mobel", { id: valgt, x, y }, () => { valgt = null; });
+    const star = pa.find((m) => !lagAv(m.type)) || pa.find((m) => lagAv(m.type) === "gulv") || pa[0];
     if (star) innredning("hotell/mobel", { id: star.id, x: null }, () => { valgt = star.id; });
-    else if (valgt) innredning("hotell/mobel", { id: valgt, x, y }, () => { valgt = null; });
+    else if (holder) { melding = lagAv(holder.type) === "vegg" ? "Veggpynt må henge på en flis inntil veggen." : "Der er det ikke plass."; visInnred(); }
   }
-  const prisTekst = (pris) => Object.entries(pris).map(([r, n]) => `${n} ${r}`).join(", ");
+  const eide = (slag) => (butikk ? butikk.eid.filter((id) => butikk.katalog[id] && butikk.katalog[id].slag === slag) : []);
+  const varenavn = (id) => (butikk && butikk.katalog[id] ? butikk.katalog[id].navn : id);
   function visInnred() {
     const boks = document.getElementById("h-innred");
     if (!boks) return;
-    if (!erMitt() || !hjem || !hjem.katalog) { if (innredNokkel) { boks.innerHTML = ""; innredNokkel = ""; } return; }
-    const nokkel = JSON.stringify([hjem.lager, hjem.beholdning, hjem.niva, innred, valgt, melding]);
+    if (!erMitt() || !hjem || !hjem.lager) { if (innredNokkel) { boks.innerHTML = ""; innredNokkel = ""; } return; }
+    const nokkel = JSON.stringify([hjem.lager, hjem.niva, hjem.storrelse, innred, valgt, melding, butikk && [butikk.eid, butikk.gulv, butikk.vegg]]);
     if (nokkel === innredNokkel) return;
     innredNokkel = nokkel;
-    const b = hjem.beholdning, K = hjem.katalog;
-    const rad = (v) => Object.entries(v.pris).every(([r, n]) => b[r] >= n);
+    const stiler = (slag, tittel) => {
+      const l = eide(slag);
+      return l.length ? `<div class="h-rad"><span>${tittel}</span><div><button type="button" class="h-valg${butikk[slag] ? "" : " valgt"}" data-stil="${slag}" data-verdi="">følger villaen</button>${l.map((id) => `<button type="button" class="h-valg${butikk[slag] === id ? " valgt" : ""}" data-stil="${slag}" data-verdi="${id}">${esc(varenavn(id))}</button>`).join("")}</div></div>` : "";
+    };
     boks.innerHTML = `<section class="h-boks h-innred">
       <div class="h-innredhode">
         <div><p class="h-etikett">Rommet ditt</p>
-          <p>${hjem.harGods ? `Villaen din i Symposion er på nivå ${hjem.niva}, og det gir et rom på ${hjem.storrelse} × ${hjem.storrelse} fliser. <a href="symposion.html">Bygg ut villaen</a> for å få større rom.` : `Du har ikke flyttet inn i <a href="symposion.html">Symposion</a> ennå. Der høster du oliven, vin og marmor, som du handler møbler for.`}</p>
-          <p class="h-saldo">Du har <strong>${b.oliven.toLocaleString("nb-NO")}</strong> oliven · <strong>${b.vin.toLocaleString("nb-NO")}</strong> vin · <strong>${b.marmor.toLocaleString("nb-NO")}</strong> marmor</p></div>
+          <p>Rommet er ${hjem.storrelse} × ${hjem.storrelse} fliser. ${hjem.harGods ? `Villaen din i Symposion er på nivå ${hjem.niva}. <a href="symposion.html">Bygg ut villaen</a> eller kjøp en utvidelse i butikken for å få større rom.` : `Flytt inn i <a href="symposion.html">Symposion</a> og bygg villa, eller kjøp en utvidelse i butikken, for å få større rom.`}</p></div>
         <button class="knapp${innred ? "" : " sekundar"}" type="button" data-innred>${innred ? "Ferdig" : "Innred rommet"}</button>
       </div>
       ${melding ? `<p class="melding feil">${esc(melding)}</p>` : ""}
       ${innred ? `<p class="h-etikett">På lager</p>
-        <div class="h-lager">${hjem.lager.length ? hjem.lager.map((m) => `<button type="button" class="h-valg${m.id === valgt ? " valgt" : ""}" data-velg="${m.id}">${esc(K[m.type] ? K[m.type].navn : m.type)}</button>`).join("") : `<span class="dempet">Tomt. Kjøp noe i butikken under.</span>`}</div>
-        <p class="dempet h-hjelp">Velg et møbel og trykk på en ledig flis for å sette det ut. Trykk på et møbel i rommet for å ta det ned igjen.</p>` : ""}
-      <p class="h-etikett" style="margin-top:16px">Møbelbutikken</p>
-      <div class="h-butikk">${Object.entries(K).map(([id, v]) => `<div class="h-vare"><strong>${esc(v.navn)}</strong><span>${prisTekst(v.pris)}</span><button class="liten-knapp" type="button" data-kjop="${id}" ${rad(v) ? "" : "disabled"}>Kjøp</button></div>`).join("")}</div>
+        <div class="h-lager">${hjem.lager.length ? hjem.lager.map((m) => `<button type="button" class="h-valg${m.id === valgt ? " valgt" : ""}" data-velg="${m.id}">${esc(varenavn(m.type))}</button>`).join("") : `<span class="dempet">Tomt. Kjøp noe i butikken under.</span>`}</div>
+        <p class="dempet h-hjelp">Velg noe og trykk på en ledig flis for å sette det ut. Veggpynt henger på flisene inntil veggen. Trykk på et møbel i rommet for å ta det ned igjen.</p>` : ""}
+      ${stiler("gulv", "Gulv")}${stiler("vegg", "Vegger")}
     </section>`;
+  }
+
+  // ---------- Butikken ----------
+  // Et lite bilde av varen, tegnet med de samme tegningene som i rommet.
+  // Varen tegnes først på et prøvelerret, så måles den og skaleres til å fylle ruta.
+  let prove = null;
+  function ikon(lerretet, id) {
+    const v = butikk.katalog[id], g = lerretet.getContext("2d"), ekte = ctx, N = 640;
+    g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 160, 152);
+    if (v.slag === "utvidelse") {
+      g.fillStyle = "#e2c174"; g.textAlign = "center"; g.font = "700 44px Cinzel, Georgia, serif"; g.fillText("+1", 80, 78); g.font = "600 17px Cinzel, Georgia, serif"; g.fillText("FLIS HVER VEI", 80, 108);
+      return;
+    }
+    if (!prove) { prove = document.createElement("canvas"); prove.width = prove.height = N; }
+    const pg = prove.getContext("2d", { willReadFrequently: true });
+    pg.setTransform(1, 0, 0, 1, 0, 0); pg.clearRect(0, 0, N, N); pg.setTransform(2, 0, 0, 2, N / 2, N * 0.75);
+    ctx = pg;
+    try {
+      if (MOBEL[id]) MOBEL[id].tegn(0, 0, MOBEL[id].vegg ? "v" : "h", 1);
+      else if (v.slag === "gulv") { for (let x = 0; x < 3; x++) for (let y = 0; y < 3; y++) rombe(x, y - 3, 0, GULVSTIL[id](x, y, 1)); }
+      else if (v.slag === "vegg") {
+        const stil = VEGGSTIL[id];
+        flate([P(0, 0), P(0, 2), P(0, 2, 112), P(0, 0, 112)], stil.farge[0]); flate([P(0, 0), P(2, 0), P(2, 0, 112), P(0, 0, 112)], stil.farge[1]);
+        flate([P(0, 0), P(0, 2), P(0, 2, 34), P(0, 0, 34)], mork(stil.farge[0], 0.8)); flate([P(0, 0), P(2, 0), P(2, 0, 34), P(0, 0, 34)], mork(stil.farge[1], 0.8));
+        stil.pynt({ b: 2, d: 2 }, 1);
+      }
+      else if (v.slag === "hode" || v.slag === "pynt") figur(pg, { ...look, hode: null, pynt: null, [v.slag]: id }, { t: 1, gaar: false, sitter: false, gest: null, flip: false, bak: false });
+      else if (v.slag === "dyr") dyr(pg, id, 1, false);
+    } catch (_) {}
+    ctx = ekte;
+    const d = pg.getImageData(0, 0, N, N).data;
+    let x0 = N, y0 = N, x1 = -1, y1 = -1;
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (d[(y * N + x) * 4 + 3] > 24) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    if (x1 < 0) return;
+    const w = x1 - x0 + 1, h = y1 - y0 + 1, s = Math.min(150 / w, 144 / h, v.slag === "dyr" ? 2 : 1.25);
+    g.imageSmoothingEnabled = v.slag !== "dyr";
+    const m = 70;   // tar med litt rundt, så lysskjær toner ut i stedet for å kuttes
+    g.drawImage(prove, x0 - m, y0 - m, w + 2 * m, h + 2 * m, (160 - w * s) / 2 - m * s, (152 - h * s) / 2 - m * s, (w + 2 * m) * s, (h + 2 * m) * s);
+  }
+  function visButikk() {
+    const boks = document.getElementById("h-butikk");
+    if (!boks || !butikk) return;
+    const nokkel = JSON.stringify([butikk.lommebok, butikk.eid, butikk.gulv, butikk.vegg, butikk.krav, butikk.mobler, fane, kvittering, look.hode, look.pynt, look.dyr]);
+    if (nokkel === butikkNokkel) return;
+    butikkNokkel = nokkel;
+    const B = butikk.lommebok, V = butikk.valuta, K = butikk.katalog, tall = (n) => n.toLocaleString("nb-NO");
+    const pris = (p) => Object.entries(p).map(([v, n]) => `<span class="h-pris${B[v] < n ? " mangler" : ""}"><i style="background:${V[v].farge}"></i>${tall(n)} ${V[v].navn}</span>`).join("");
+    const kort = ([id, v]) => {
+      const eid = butikk.eid.includes(id), rad = Object.entries(v.pris).every(([r, n]) => B[r] >= n), krav = v.krav && butikk.krav[v.krav];
+      const laast = (krav && !krav.ok) || (v.etter && !butikk.eid.includes(v.etter));
+      let knapp;
+      if (!v.slag) knapp = `<button class="liten-knapp" type="button" data-kjop="${id}" ${rad && !laast ? "" : "disabled"}>Kjøp</button>`;
+      else if (!eid) knapp = `<button class="liten-knapp" type="button" data-kjop="${id}" ${rad && !laast ? "" : "disabled"}>Kjøp</button>`;
+      else if (v.slag === "utvidelse") knapp = `<span class="h-eid">Kjøpt</span>`;
+      else if (v.slag === "gulv" || v.slag === "vegg") knapp = butikk[v.slag] === id ? `<span class="h-eid">I bruk</span>` : `<button class="liten-knapp" type="button" data-stil="${v.slag}" data-verdi="${id}">Bruk</button>`;
+      else knapp = look[v.slag] === id ? `<button class="liten-knapp" type="button" data-felt="${v.slag}" data-verdi="">${v.slag === "dyr" ? "La bli hjemme" : "Ta av"}</button>` : `<button class="liten-knapp" type="button" data-felt="${v.slag}" data-verdi="${id}">${v.slag === "dyr" ? "Ta med" : "Ta på"}</button>`;
+      return `<div class="h-vare${eid ? " eid" : ""}"><canvas class="h-ikon" width="160" height="152" data-ikon="${id}" aria-hidden="true"></canvas><strong>${esc(v.navn)}</strong>
+        ${eid ? "" : `<div class="h-priser">${pris(v.pris)}</div>`}
+        ${krav && !eid ? `<p class="h-krav${krav.ok ? " ok" : ""}">${krav.ok ? "Bragden er i boks" : esc(krav.tekst)}</p>` : ""}
+        ${v.etter && !eid && !butikk.eid.includes(v.etter) ? `<p class="h-krav">Krever «${esc(K[v.etter].navn)}» først</p>` : ""}
+        ${knapp}</div>`;
+    };
+    boks.innerHTML = `<section class="h-boks h-butikkboks">
+      <p class="h-etikett">Butikken</p>
+      <p class="h-butikktekst">Hvert spill gir sin egen premie, og alle brukes her. Dagens første spill i hvert spill gir dobbelt.</p>
+      <div class="h-lommebok">${Object.entries(V).map(([id, v]) => `<a class="h-mynt" href="${v.side}" title="${esc(v.slik)}"><i style="background:${v.farge}"></i><strong>${tall(B[id])}</strong> ${v.navn}<span>${esc(v.fra)}</span></a>`).join("")}</div>
+      ${kvittering ? `<p class="melding${kvittering.feil ? " feil" : " h-kvittering"}">${esc(kvittering.tekst)}</p>` : ""}
+      <div class="h-faner" role="tablist">${Object.entries(butikk.kategorier).map(([id, navn]) => `<button type="button" role="tab" class="h-fane${id === fane ? " aktiv" : ""}" aria-selected="${id === fane}" data-fane="${id}">${esc(navn)}</button>`).join("")}</div>
+      <div class="h-butikk">${Object.entries(K).filter(([, v]) => v.kat === fane).map(kort).join("")}</div>
+      ${fane === "trofe" ? "" : ["mobler", "pynt", "gulv", "vegg"].includes(fane) ? `<p class="dempet h-hjelp">Du har ${butikk.mobler} av ${butikk.maksMobler} møbler. ${erMitt() ? "Det du kjøper, kan settes rett ut i rommet." : "Det du kjøper, legges på lageret. Gå til rommet ditt for å sette det ut."}</p>` : ""}
+    </section>`;
+    for (const c of boks.querySelectorAll("[data-ikon]")) ikon(c, c.dataset.ikon);
+  }
+  async function kjop(id) {
+    try {
+      const s = await api("hotell/kjop", post({ type: id }));
+      butikk = s.butikk;
+      const navn = varenavn(id);
+      let tekst;
+      if (s.slag === "mobel") {
+        if (erMitt()) { innred = true; valgt = s.id; visRommet(); tekst = `${navn} er kjøpt. Trykk på en ledig flis i rommet for å sette den ut.`; }
+        else tekst = `${navn} er kjøpt og ligger på lageret. Gå til rommet ditt for å sette den ut.`;
+      } else if (BARES.includes(s.slag)) { baer(s.slag, id); tekst = s.slag === "dyr" ? `${navn} er din, og følger deg fra nå av.` : `${navn} er kjøpt og tatt på.`; }
+      else tekst = s.slag === "utvidelse" ? "Rommet ditt er utvidet med en flis hver vei." : `${navn} er kjøpt og tatt i bruk i rommet ditt.`;
+      kvittering = { tekst };
+      if (erMitt() && hjem) oppdaterHjem(s.hjem);
+    } catch (e) { kvittering = { tekst: e.message, feil: true }; }
+    visButikk(); visGarderobe(); visInnred();
+  }
+  async function velgStil(slag, id) {
+    try {
+      const s = await api("hotell/stil", post({ [slag]: id }));
+      butikk = s.butikk;
+      if (erMitt() && hjem) oppdaterHjem(s.hjem);
+    } catch (e) { kvittering = { tekst: e.message, feil: true }; }
+    visButikk(); visInnred();
+  }
+  // Ta på eller av noe fra garderoben, og si fra til serveren
+  function baer(felt, verdi) {
+    look = { ...look, [felt]: verdi };
+    if (meg) meg.utseende = look;
+    visGarderobe(); visButikk();
+    clearTimeout(lagreTid);
+    if (meg) lagreTid = setTimeout(() => api("hotell/utseende", post(look)).catch(() => {}), 500);
+  }
+  async function lastButikk() {
+    try { butikk = await api("hotell/butikk"); visButikk(); visGarderobe(); visInnred(); } catch (_) {}
   }
 
   // ---------- Det rundt lerretet ----------
@@ -624,12 +1093,18 @@
     const a = look;
     const farger = (felt, liste) => liste.map((f) => `<button type="button" class="h-farge${a[felt] === f ? " valgt" : ""}" data-felt="${felt}" data-verdi="${f}" style="background:${f}" aria-label="${felt}"></button>`).join("");
     const valg = (felt, liste) => liste.map((v) => `<button type="button" class="h-valg${a[felt] === v ? " valgt" : ""}" data-felt="${felt}" data-verdi="${v}">${v}</button>`).join("");
+    // Det som er kjøpt i butikken
+    const kjopt = (felt, tittel) => {
+      const l = eide(felt);
+      return l.length ? `<div class="h-rad"><span>${tittel}</span><div><button type="button" class="h-valg${a[felt] ? "" : " valgt"}" data-felt="${felt}" data-verdi="">ingen</button>${l.map((id) => `<button type="button" class="h-valg${a[felt] === id ? " valgt" : ""}" data-felt="${felt}" data-verdi="${id}">${esc(varenavn(id))}</button>`).join("")}</div></div>` : "";
+    };
     g.innerHTML = `
       <div class="h-rad"><span>Toga</span><div>${farger("toga", TOGA)}</div></div>
       <div class="h-rad"><span>Hud</span><div>${farger("hud", HUD)}</div></div>
       <div class="h-rad"><span>Hår</span><div>${valg("har", HAR)}</div></div>
       <div class="h-rad"><span>Hårfarge</span><div>${farger("harfarge", HARFARGE)}</div></div>
-      <div class="h-rad"><span>Skjegg</span><div>${valg("skjegg", ["ja", "nei"])}</div></div>`;
+      <div class="h-rad"><span>Skjegg</span><div>${valg("skjegg", ["ja", "nei"])}</div></div>
+      ${kjopt("hode", "Hodeplagg")}${kjopt("pynt", "Tilbehør")}${kjopt("dyr", "Kjæledyr")}`;
   }
 
   function tilpass() {
@@ -658,16 +1133,12 @@
     if (k.dataset.info !== undefined) visInfo("Slik fungerer Tafse Hotell", INFO);
     else if (k.dataset.gest) send("gest", k.dataset.gest);
     else if (k.dataset.rom && k.dataset.rom !== rom) gaTil(k.dataset.rom, null);
-    else if (k.dataset.felt && look) {
-      look = { ...look, [k.dataset.felt]: k.dataset.verdi };
-      if (meg) meg.utseende = look;
-      visGarderobe();
-      clearTimeout(lagreTid);
-      if (meg) lagreTid = setTimeout(() => api("hotell/utseende", post(look)).catch(() => {}), 500);
-    }
+    else if (k.dataset.felt && look) baer(k.dataset.felt, k.dataset.verdi);
+    else if (k.dataset.fane) { fane = k.dataset.fane; kvittering = null; visButikk(); }
+    else if (k.dataset.stil) velgStil(k.dataset.stil, k.dataset.verdi);
     else if (k.dataset.innred !== undefined) { innred = !innred; valgt = null; melding = ""; visInnred(); }
     else if (k.dataset.velg) { valgt = valgt === Number(k.dataset.velg) ? null : Number(k.dataset.velg); visInnred(); if (valgt) visRommet(); }
-    else if (k.dataset.kjop) innredning("hotell/kjop", { type: k.dataset.kjop }, (s) => { innred = true; valgt = s.id; visRommet(); });
+    else if (k.dataset.kjop) kjop(k.dataset.kjop);
   });
   rot.addEventListener("change", (e) => { if (e.target.id === "h-besok" && e.target.value) gaTil(e.target.value, null); });
 
@@ -685,7 +1156,8 @@
         <section class="h-boks"><p class="h-etikett">Praten</p><ul class="h-logg" id="h-logg"></ul></section>
         <section class="h-boks"><p class="h-etikett">Garderoben</p><div id="h-garderobe"></div>
           <p class="dempet h-hjelp">Trykk på gulvet for å gå, på en stol for å sette deg og på en dør for å bytte rom.</p></section>
-      </div>`;
+      </div>
+      <div id="h-butikk"></div>`;
     lerret = document.getElementById("h-lerret");
     ctx = lerret.getContext("2d");
     tilpass();
@@ -759,6 +1231,7 @@
 
   function start() {
     bygg();
+    lastButikk();
     const onsket = new URLSearchParams(location.search).get("rom") || "";
     gaTil(ROM[onsket] || onsket.startsWith("hjem:") ? onsket : "lobbyen", null);
   }

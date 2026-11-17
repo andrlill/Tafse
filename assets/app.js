@@ -599,6 +599,13 @@ hvemErJeg();
 
 // ---------- Infoboks: «Slik spiller du» ----------
 // Viser en forklaring over siden. Lukkes med knappen, Escape eller ved å trykke utenfor.
+// Premien et spill ga, til sluttskjermen. svar er det serveren sendte da resultatet ble lagret.
+function premieTekst(svar) {
+  const p = svar && svar.premie;
+  if (!p) return "";
+  return ` Du fikk <strong>${p.antall.toLocaleString("nb-NO")} ${esc(p.navn)}</strong> til <a href="hotell.html">Tafse Hotell</a>${p.dobbel ? ", dobbelt opp for dagens første spill" : ""}.`;
+}
+
 function visInfo(tittel, innhold) {
   let d = document.getElementById("infoboks");
   if (!d) {

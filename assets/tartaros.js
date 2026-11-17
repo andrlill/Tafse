@@ -813,7 +813,8 @@
     leir.innerHTML = `<div class="ta-leirhode"><h2 class="t-tittel">Leiren</h2><p class="ta-saldo"><strong>${tall(PROFIL.drakmer)}</strong> drakmer</p></div>
       <dl class="ta-regler"><dt>Beholdes for alltid</dt><dd>Drakmene dine, alt du kjøper her i leiren, heltene du har låst opp og plassen på tavlen.</dd>
         <dt>Nullstilles hvert tokt</dt><dd>Våpen, gudegaver og nivå. Du starter alltid med heltens ene våpen og bygger opp på nytt.</dd>
-        <dt>Slik tjener du drakmer</dt><dd>Mynter på bakken, 20 for hver boss, 1 for hvert 20. sekund du holder ut og 50 for daggry.</dd></dl>
+        <dt>Slik tjener du drakmer</dt><dd>Mynter på bakken, 20 for hver boss, 1 for hvert 20. sekund du holder ut og 50 for daggry.</dd>
+        <dt>Også til hotellet</dt><dd>Drakmene kan brukes i <a href="hotell.html">Tafse Hotell</a>, på møbler, klær og kjæledyr.</dd></dl>
       <p class="melding feil" id="ta-leirfeil" hidden></p>
       <div class="ta-gunst">${Object.entries(GUNST).map(([id, v]) => {
         const n = g[id] || 0, regel = PRISER ? PRISER.gunst[id] : { maks: 0, pris: 0 }, full = n >= regel.maks, pris = regel.pris * (n + 1);

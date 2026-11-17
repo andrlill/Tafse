@@ -71,7 +71,7 @@ window.lastToppliste = async () => {
         <td>${r.seier ? "Overlevde" : "Falt"}</td>
         <td>${Math.floor(r.sekunder)} s</td><td>${r.sar}</td><td>${r.kolleger}</td></tr>`).join("")}</tbody>
     </table></div>
-    <p class="dempet" style="font-size:15px">Beste forsøk per spiller. Poeng = sekunder + kolleger truffet − sår. ${antallSpill} forsøk totalt.</p>`;
+    <p class="dempet" style="font-size:15px">Beste forsøk per spiller. Poeng = sekunder + kolleger truffet − sår. ${antallSpill} forsøk totalt. Hver 2 poeng gir en dolk til <a href="hotell.html">Tafse Hotell</a>.</p>`;
   } catch (err) {
     boks.innerHTML = `<p class="melding feil">${esc(err.message)}</p>`;
   }

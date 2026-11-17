@@ -179,9 +179,9 @@
     lagret = true;
     lagreLokalt();
     try {
-      await api("2048", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ poeng, brikke: storst(), trekk }) });
+      const svar = await api("2048", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ poeng, brikke: storst(), trekk }) });
       const l = document.getElementById("t-lagret");
-      if (l) l.textContent = "Ført i protokollen.";
+      if (l) l.innerHTML = "Ført i protokollen." + premieTekst(svar);
       lastTavle();
     } catch (_) {
       lagret = false;

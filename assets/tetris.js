@@ -342,9 +342,9 @@
     if (typeof MEG === "undefined" || !MEG) return false;
     lagret = true;
     try {
-      await api("tetris", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ poeng, linjer, niva }) });
+      const svar = await api("tetris", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ poeng, linjer, niva }) });
       lastTavle();
-      return true;
+      return svar || true;
     } catch (_) { lagret = false; return false; }
   }
   async function slutt() {
@@ -357,7 +357,7 @@
     meldingEl.hidden = false;
     const ok = await lagre();
     const l = document.getElementById("te-lagret");
-    if (l) l.innerHTML = ok ? "Ført i protokollen." : (typeof MEG === "undefined" || !MEG) ? `<a href="salongen.html">Logg inn</a> for å komme på tavlen.` : "";
+    if (l) l.innerHTML = ok ? "Ført i protokollen." + premieTekst(ok) : (typeof MEG === "undefined" || !MEG) ? `<a href="salongen.html">Logg inn</a> for å komme på tavlen.` : "";
   }
   async function avbryt() {
     if (tilstand !== "over" && poeng >= 500) await lagre();

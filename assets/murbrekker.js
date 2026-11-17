@@ -232,9 +232,9 @@
     if (typeof MEG === "undefined" || !MEG) return false;
     lagret = true;
     try {
-      await api("murbrekker", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ poeng, niva }) });
+      const svar = await api("murbrekker", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ poeng, niva }) });
       lastTavle();
-      return true;
+      return svar || true;
     } catch (_) { lagret = false; return false; }
   }
   async function slutt() {
@@ -245,7 +245,7 @@
     meldingEl.hidden = false;
     const ok = await lagre();
     const l = document.getElementById("m-lagret");
-    if (l) l.innerHTML = ok ? "Ført i protokollen." : (typeof MEG === "undefined" || !MEG) ? `<a href="salongen.html">Logg inn</a> for å komme på tavlen.` : "";
+    if (l) l.innerHTML = ok ? "Ført i protokollen." + premieTekst(ok) : (typeof MEG === "undefined" || !MEG) ? `<a href="salongen.html">Logg inn</a> for å komme på tavlen.` : "";
   }
   // Et spill som avbrytes teller også, hvis det er verdt noe
   async function avbryt() {

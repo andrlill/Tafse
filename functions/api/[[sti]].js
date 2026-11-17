@@ -4,6 +4,7 @@
 //   - en hemmelighet (secret) TAFSE_PASSORD. Den brukes til å signere innlogginger
 //     og invitasjonslenker, og fungerer som reservepassord ved registrering.
 
+import { premie, SKJEMA as PREMIE_SKJEMA } from "../../lib/premier.js";
 import { tartaros, SKJEMA as TARTAROS_SKJEMA } from "../../lib/tartaros.js";
 import { hotell, SKJEMA as HOTELL_SKJEMA } from "../../lib/hotell.js";
 import { symposion, SKJEMA as SYMPOSION_SKJEMA, MIGRERING as SYMPOSION_MIGRERING } from "../../lib/symposion.js";
@@ -135,6 +136,7 @@ async function sikreSkjema(db) {
     ...SYMPOSION_SKJEMA.map((sql) => db.prepare(sql)),
     ...HOTELL_SKJEMA.map((sql) => db.prepare(sql)),
     ...TARTAROS_SKJEMA.map((sql) => db.prepare(sql)),
+    ...PREMIE_SKJEMA.map((sql) => db.prepare(sql)),
     db.prepare(`CREATE TABLE IF NOT EXISTS tall2048 (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       navn TEXT NOT NULL,
@@ -729,7 +731,7 @@ export async function onRequest({ request, env, params }) {
       const kol = Math.max(0, Math.min(500, Math.round(Number(b.kolleger) || 0)));
       const seier = b.seier && sek >= 300 && sar < 23 ? 1 : 0;
       await db.prepare("INSERT INTO spillresultater (navn, sekunder, sar, kolleger, seier, opprettet) VALUES (?, ?, ?, ?, ?, ?)").bind(meg, sek, sar, kol, seier, naa()).run();
-      return json({ ok: true }, 201);
+      return json({ ok: true, premie: await premie(db, meg, "spill", Math.floor(sek) + kol - sar) }, 201);
     }
   }
 
@@ -791,9 +793,10 @@ export async function onRequest({ request, env, params }) {
       const heltall = (v, min, maks) => Math.max(min, Math.min(maks, Math.round(Number(v) || 0)));
       const brikke = heltall(b.brikke, 2, 131072);
       if (brikke & (brikke - 1)) return feil(400, "Ugyldig brikke.");
+      const poeng = heltall(b.poeng, 0, 4000000);
       await db.prepare("INSERT INTO tall2048 (navn, poeng, brikke, trekk, opprettet) VALUES (?, ?, ?, ?, ?)")
-        .bind(meg, heltall(b.poeng, 0, 4000000), brikke, heltall(b.trekk, 0, 100000), naa()).run();
-      return json({ ok: true }, 201);
+        .bind(meg, poeng, brikke, heltall(b.trekk, 0, 100000), naa()).run();
+      return json({ ok: true, premie: await premie(db, meg, "2048", poeng) }, 201);
     }
   }
 
@@ -813,9 +816,10 @@ export async function onRequest({ request, env, params }) {
     if (metode === "POST") {
       const b = await lesJson(request);
       const heltall = (v, min, maks) => Math.max(min, Math.min(maks, Math.round(Number(v) || 0)));
+      const poeng = heltall(b.poeng, 0, 2000000);
       await db.prepare("INSERT INTO murbrekker (navn, poeng, niva, opprettet) VALUES (?, ?, ?, ?)")
-        .bind(meg, heltall(b.poeng, 0, 2000000), heltall(b.niva, 1, 999), naa()).run();
-      return json({ ok: true }, 201);
+        .bind(meg, poeng, heltall(b.niva, 1, 999), naa()).run();
+      return json({ ok: true, premie: await premie(db, meg, "murbrekker", poeng) }, 201);
     }
   }
 
@@ -843,9 +847,10 @@ export async function onRequest({ request, env, params }) {
       const b = await lesJson(request);
       const heltall = (v, min, mx) => Math.max(min, Math.min(mx, Math.round(Number(v) || 0)));
       const verdier = felt.map((f) => heltall(b[f], min[f], maks[f]));
+      const poeng = heltall(b.poeng, 0, maks.poeng);
       await db.prepare(`INSERT INTO ${tabell} (navn, poeng, ${felt.join(", ")}, opprettet) VALUES (?, ?, ${felt.map(() => "?").join(", ")}, ?)`)
-        .bind(meg, heltall(b.poeng, 0, maks.poeng), ...verdier, naa()).run();
-      return json({ ok: true }, 201);
+        .bind(meg, poeng, ...verdier, naa()).run();
+      return json({ ok: true, premie: await premie(db, meg, ressurs, poeng) }, 201);
     }
   }
 

@@ -542,8 +542,8 @@
     const lagret = document.getElementById("lagret");
     if (typeof MEG !== "undefined" && MEG) {
       try {
-        await api("spill", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sekunder: Math.min(tid, SEIERSTID), sar, kolleger, seier }) });
-        lagret.textContent = `Resultatet er lagret på tavlen for ${MEG}.`;
+        const svar = await api("spill", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sekunder: Math.min(tid, SEIERSTID), sar, kolleger, seier }) });
+        lagret.innerHTML = `Resultatet er lagret på tavlen for ${esc(MEG)}.` + premieTekst(svar);
         window.lastToppliste && window.lastToppliste();
       } catch (_) {
         lagret.textContent = "Klarte ikke å lagre resultatet.";

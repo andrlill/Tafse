@@ -219,9 +219,9 @@
     if (typeof MEG === "undefined" || !MEG) return false;
     lagret = true;
     try {
-      await api("snake", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ poeng, lengde: slange.length }) });
+      const svar = await api("snake", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ poeng, lengde: slange.length }) });
       lastTavle();
-      return true;
+      return svar || true;
     } catch (_) { lagret = false; return false; }
   }
   async function slutt(arsak) {
@@ -233,7 +233,7 @@
     meldingEl.hidden = false;
     const ok = await lagre();
     const l = document.getElementById("s-lagret");
-    if (l) l.innerHTML = ok ? "Ført i protokollen." : (typeof MEG === "undefined" || !MEG) ? `<a href="salongen.html">Logg inn</a> for å komme på tavlen.` : "";
+    if (l) l.innerHTML = ok ? "Ført i protokollen." + premieTekst(ok) : (typeof MEG === "undefined" || !MEG) ? `<a href="salongen.html">Logg inn</a> for å komme på tavlen.` : "";
   }
   async function avbryt() {
     if (tilstand !== "over" && poeng >= 50) await lagre();
