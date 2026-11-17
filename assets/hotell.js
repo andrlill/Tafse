@@ -64,7 +64,7 @@
   };
 
   const INFO = `
-    <p>Tafse Hotell er et sted der brødrene og gjestene deres kan møtes, prate og vise frem rommene sine. Hver figur styres av den som eier den.</p>
+    <p>Tafse Hotell er et sted der alle kan møtes, prate og vise frem rommene sine. Hver figur styres av den som eier den.</p>
     <h3>Gå og sitte</h3>
     <p>Trykk på gulvet, så går figuren dit og finner veien rundt møblene selv. Trykk på en sofa, krakk, seng eller solseng for å sette deg. Gå gjennom en dør, eller bruk knappene over rommet, for å bytte rom.</p>
     <h3>Prat</h3>
@@ -73,7 +73,7 @@
     <ul>
       <li><strong>Lobbyen</strong>, <strong>baren</strong> med dansegulv og <strong>terrassen</strong> med basseng er felles for alle.</li>
       <li><strong>Rommet mitt</strong> er ditt eget. Tallet på knappene viser hvor mange som er inne.</li>
-      <li><strong>Besøk noen</strong> tar deg til rommet til en bror eller en gjest.</li>
+      <li><strong>Besøk noen</strong> tar deg til rommet til en av de andre.</li>
     </ul>
     <h3>Rommet ditt</h3>
     <p>Størrelsen følger villaen din i Symposion. Uten gods er rommet 4 × 4 fliser, og en villa på høyeste nivå gir 8 × 8. Bygg ut villaen i <a href="symposion.html">Symposion</a>, eller kjøp en utvidelse i butikken, for å få større rom. Med begge utvidelsene kan rommet bli 10 × 10.</p>
@@ -129,7 +129,9 @@
   const eier = (navn) => (/[sxz]$/i.test(navn) ? `${navn}'` : `${navn}s`);
   const mittRom = () => `hjem:${MEG}`;
   const erMitt = () => rom === mittRom();
-  const romNavn = (id) => (ROM[id] ? ROM[id].navn : id === mittRom() ? "Rommet ditt" : id.endsWith(")") ? `Rommet til ${id.slice(5)}` : `${eier(id.slice(5))} rom`);
+  // Hotellet er for alle, så «(gjest)» vises ikke. Unntaket er en gjest som heter det samme som en bror.
+  const vis = (navn) => { const kort = String(navn || "").replace(/ \(gjest\)$/, ""); return kort !== navn && medlemmer.includes(kort) ? navn : kort; };
+  const romNavn = (id) => (ROM[id] ? ROM[id].navn : id === mittRom() ? "Rommet ditt" : `${eier(vis(id.slice(5)))} rom`);
   const post = (kropp) => ({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(kropp) });
 
   // ---------- Møbler ----------
@@ -480,7 +482,7 @@
         (x, y) => ((x + y) % 2 ? "#d8cdb4" : "#c2b697"),
         (x, y) => (x === 0 || y === 0 || x === n - 1 || y === n - 1 ? "#c9a24a" : (x + y) % 2 ? "#ece4d2" : "#d8cdb4"),
       ][trinn],
-      skilt: { side: "v", pos: n / 2, z: 96, tekst: h.eier.replace(/ \(gjest\)$/, "").toUpperCase(), font: "600 12px Cinzel, Georgia, serif", plakett: true },
+      skilt: { side: "v", pos: n / 2, z: 96, tekst: vis(h.eier).toUpperCase(), font: "600 12px Cinzel, Georgia, serif", plakett: true },
       dorer: [{ x: 1, y: 0, side: "h", til: "lobbyen" }],
       mobler: h.mobler.map((m) => [m.type, m.x, m.y, m.x === 0 ? "v" : "h"]),
       npc: [],
@@ -659,9 +661,9 @@
     ctx.textAlign = "center";
     ctx.font = `600 ${Math.round(11 * TK)}px Cinzel, Georgia, serif`;
     ctx.lineWidth = 3; ctx.strokeStyle = "rgba(11,11,10,.85)";
-    ctx.strokeText(f.navn, sx, sy + 13 + 4 * TK);
+    ctx.strokeText(vis(f.navn), sx, sy + 13 + 4 * TK);
     ctx.fillStyle = f === meg ? "#e2c174" : f.npc ? "#b9ae97" : "#ece4d2";
-    ctx.fillText(f.navn, sx, sy + 13 + 4 * TK);
+    ctx.fillText(vis(f.navn), sx, sy + 13 + 4 * TK);
     if (!f.boble || f.boble.til < t) return;
     ctx.font = `${Math.round(16 * TK)}px 'EB Garamond', Georgia, serif`;
     const b = Math.max(...f.boble.linjer.map((l) => ctx.measureText(l).width)) + 20, lh = 19 * TK, h = f.boble.linjer.length * lh + 12;
@@ -836,7 +838,7 @@
       meg = { navn: MEG, x: pos[0], y: pos[1], sti: [], utseende: look };
       figurer.set(MEG, meg);
       visRomliste(); visInnred(); butikkNokkel = ""; visButikk();
-      leggILogg(null, ROM[til] ? `Du er i ${R.navn.toLowerCase()}.` : til === mittRom() ? "Du er i rommet ditt." : `Du er på besøk hos ${til.slice(5)}.`, "info");
+      leggILogg(null, ROM[til] ? `Du er i ${R.navn.toLowerCase()}.` : til === mittRom() ? "Du er i rommet ditt." : `Du er på besøk hos ${vis(til.slice(5))}.`, "info");
     } catch (e) {
       feilet = true;
       leggILogg(null, e.message, "info");
@@ -1069,7 +1071,7 @@
     if (logg.length > 40) logg.shift();
     const l = document.getElementById("h-logg");
     if (!l) return;
-    l.innerHTML = logg.map((m) => m.type === "info" ? `<li class="info">${esc(m.tekst)}</li>` : m.type === "gest" ? `<li class="gest">${esc(m.navn)} ${esc(m.tekst)}</li>` : `<li><strong>${esc(m.navn)}</strong> ${esc(m.tekst)}</li>`).join("");
+    l.innerHTML = logg.map((m) => m.type === "info" ? `<li class="info">${esc(m.tekst)}</li>` : m.type === "gest" ? `<li class="gest">${esc(vis(m.navn))} ${esc(m.tekst)}</li>` : `<li><strong>${esc(vis(m.navn))}</strong> ${esc(m.tekst)}</li>`).join("");
     l.scrollTop = l.scrollHeight;
   }
   function visRomliste() {
@@ -1079,13 +1081,12 @@
     if (nokkel === romNokkel) return;
     romNokkel = nokkel;
     const knapp = (id, navn) => `<button type="button" class="h-romknapp${id === rom ? " aktiv" : ""}" data-rom="${esc(id)}">${esc(navn)}<span>${antall[id] || 0}</span></button>`;
-    const valg = (n) => `<option value="hjem:${esc(n)}"${rom === `hjem:${n}` ? " selected" : ""}>${esc(n)}${antall[`hjem:${n}`] ? ` (${antall[`hjem:${n}`]} inne)` : ""}</option>`;
-    const brodre = medlemmer.filter((n) => n !== MEG), gjester = gjesterom.filter((n) => n !== MEG);
+    const valg = (n) => `<option value="hjem:${esc(n)}"${rom === `hjem:${n}` ? " selected" : ""}>${esc(vis(n))}${antall[`hjem:${n}`] ? ` (${antall[`hjem:${n}`]} inne)` : ""}</option>`;
+    // Brødre og gjester i én liste, sortert på navn
+    const alle = [...medlemmer, ...gjesterom].filter((n) => n !== MEG).sort((a, b) => vis(a).localeCompare(vis(b), "nb"));
     l.innerHTML = Object.entries(ROM).map(([id, r]) => knapp(id, r.navn)).join("") + knapp(mittRom(), "Rommet mitt") +
-      (brodre.length || gjester.length ? `<select id="h-besok" class="h-besok${rom.startsWith("hjem:") && !erMitt() ? " aktiv" : ""}" aria-label="Besøk noen">
-        <option value="">Besøk noen …</option>
-        ${brodre.length ? `<optgroup label="Brødrene">${brodre.map(valg).join("")}</optgroup>` : ""}
-        ${gjester.length ? `<optgroup label="Gjestene">${gjester.map(valg).join("")}</optgroup>` : ""}</select>` : "");
+      (alle.length ? `<select id="h-besok" class="h-besok${rom.startsWith("hjem:") && !erMitt() ? " aktiv" : ""}" aria-label="Besøk noen">
+        <option value="">Besøk noen …</option>${alle.map(valg).join("")}</select>` : "");
   }
   function visGarderobe() {
     const g = document.getElementById("h-garderobe");
@@ -1202,7 +1203,7 @@
         <h2>Lag figuren din</h2>
         <p>Før portieren slipper deg inn, må du bestemme hvordan du ser ut. Du kan bytte om i garderoben senere.</p>
         <div id="h-garderobe"></div>
-        <button class="knapp" type="button" id="h-sjekkinn">Sjekk inn som ${esc(MEG)}</button>
+        <button class="knapp" type="button" id="h-sjekkinn">Sjekk inn som ${esc(vis(MEG))}</button>
         <p class="melding feil" id="h-innfeil" hidden></p>
       </div></div>`;
     visGarderobe();
@@ -1238,7 +1239,7 @@
 
   (async () => {
     if (!(await hvemErJeg())) {
-      rot.innerHTML = `<p class="tomt">Hotellet er bare for brødrene. <a href="salongen.html">Logg inn</a> for å sjekke inn.</p>`;
+      rot.innerHTML = `<p class="tomt">Du må <a href="salongen.html">logge inn</a> for å sjekke inn på hotellet.</p>`;
       return;
     }
     let profil = null;
