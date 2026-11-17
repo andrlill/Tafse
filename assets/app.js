@@ -151,7 +151,7 @@ function mesterTekst(m) {
 let MEG = null; // navnet til den som er logget inn
 let ADMIN = false;
 let GJEST = false; // gjester er bare innlogget på spillsidene, som «Navn (gjest)»
-const GJESTESPILL = [["symposion", "Symposion"], ["spill", "Idus Martiae"], ["2048", "2048"], ["murbrekker", "Murbrekker"], ["tetris", "Tetris"], ["snake", "Snake"], ["honningfella", "Honningfella"], ["hotell", "Tafse Hotell"]];
+const GJESTESPILL = [["symposion", "Symposion"], ["spill", "Idus Martiae"], ["2048", "2048"], ["murbrekker", "Murbrekker"], ["tetris", "Tetris"], ["snake", "Snake"], ["hotell", "Tafse Hotell"]];
 const paaGjesteside = () => GJESTESPILL.some(([s]) => s === (location.pathname.split("/").pop() || "").replace(/\.html$/, ""));
 
 async function api(sti, valg = {}) {

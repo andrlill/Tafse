@@ -14,7 +14,7 @@ const SAKSTYPER = ["Vedtektsendring", "Medlemsopptak", "Møtested", "Annen sak"]
 const STEMMER = ["for", "mot", "avstar"];
 const OKT_DAGER = 365;
 // Spillene gjester kan spille
-const GJESTESPILL = ["spill", "honningfella", "2048", "murbrekker", "tetris", "snake", "hotell", "symposion"];
+const GJESTESPILL = ["spill", "2048", "murbrekker", "tetris", "snake", "hotell", "symposion"];
 const MAKS_GJESTER = 500;
 
 let skjemaKlart = false;
