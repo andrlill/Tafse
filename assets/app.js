@@ -39,19 +39,25 @@ function esc(s) {
 // Gjester ser bare spillhallen. Et lite merke i nettleseren gjør at menyen og
 // omdirigeringen er på plass før siden tegnes; serveren stenger uansett alt annet.
 const herSide = () => (location.pathname.split("/").pop() || "index").replace(/\.html$/, "");
-const erGjestemerke = () => /(?:^|;\s*)tafserolle=gjest/.test(document.cookie);
-function settGjestemerke(pa) {
-  document.cookie = pa ? "tafserolle=gjest; Path=/; Max-Age=31536000; SameSite=Lax" : "tafserolle=; Path=/; Max-Age=0; SameSite=Lax";
+// Rollen huskes i et lite merke («bror» eller «gjest») så menyen blir riktig med en gang.
+// Serveren (functions/_middleware.js) stenger uansett alle andre sider enn spillhallen for ikke-brødre.
+const rolle = () => (document.cookie.match(/(?:^|;\s*)tafserolle=(bror|gjest)/) || [])[1] || "";
+const erGjestemerke = () => rolle() === "gjest";
+function settRolle(r) {
+  document.cookie = r ? `tafserolle=${r}; Path=/; Max-Age=31536000; SameSite=Lax` : "tafserolle=; Path=/; Max-Age=0; SameSite=Lax";
 }
+const settGjestemerke = (pa) => settRolle(pa ? "gjest" : "");
 const visningsnavn = (navn) => String(navn || "").replace(/ \(gjest\)$/, "");
 const gjestTillatt = () => herSide() === "gjest" || GJESTESPILL.some(([s]) => s === herSide());
+// Full meny bare for brødre. Sider utenfor spillhallen slipper serveren bare brødre inn på.
+const visBrorside = () => rolle() === "bror" || (!gjestTillatt() && rolle() !== "gjest");
 
 function menyHtml() {
   const her = herSide();
-  const sider = erGjestemerke() ? [["gjest.html", "Spillhallen"], ...GJESTESPILL.map(([s, n]) => [`${s}.html`, n])] : SIDER;
+  const sider = !visBrorside() ? [["gjest.html", "Spillhallen"], ...GJESTESPILL.map(([s, n]) => [`${s}.html`, n])] : SIDER;
   return sider.map(([fil, navn]) => {
     const stamme = fil.replace(/\.html$/, "");
-    const aktiv = stamme === her || (!erGjestemerke() && ((her === "mote" && stamme === "moter") || (["spill", "honningfella", "2048", "murbrekker", "tetris", "snake", "hotell", "tartaros", "gjest"].includes(her) && stamme === "symposion") || (her === "bror" && stamme === "medlemmer")));
+    const aktiv = stamme === her || (visBrorside() && ((her === "mote" && stamme === "moter") || (["spill", "honningfella", "2048", "murbrekker", "tetris", "snake", "hotell", "tartaros", "gjest"].includes(her) && stamme === "symposion") || (her === "bror" && stamme === "medlemmer")));
     return `<a href="${fil}"${aktiv ? ' class="aktiv" aria-current="page"' : ""}>${navn}</a>`;
   }).join("");
 }
@@ -60,9 +66,9 @@ function oppdaterMeny() {
   const nav = document.getElementById("hovedmeny");
   if (nav) nav.innerHTML = menyHtml();
   const merke = document.querySelector(".topp .merke");
-  if (merke) merke.href = erGjestemerke() ? "gjest.html" : "index.html";
+  if (merke) merke.href = visBrorside() ? "index.html" : "gjest.html";
   const bunntekst = document.querySelector(".bunn .bunn-tekst");
-  if (bunntekst && !bunntekst.classList.contains("bunn-status")) bunntekst.textContent = erGjestemerke() ? "" : "Taffelakademiet for Samvær og Etegilder";
+  if (bunntekst && !bunntekst.classList.contains("bunn-status")) bunntekst.textContent = visBrorside() ? "Taffelakademiet for Samvær og Etegilder" : "";
 }
 
 function byggRamme() {
@@ -71,7 +77,7 @@ function byggRamme() {
   topp.className = "topp";
   topp.innerHTML = `<div class="meander" aria-hidden="true"></div>
   <div class="topp-inner">
-    <a class="merke" href="${erGjestemerke() ? "gjest.html" : "index.html"}">${LOGO}<span>TAFSE</span></a>
+    <a class="merke" href="${visBrorside() ? "index.html" : "gjest.html"}">${LOGO}<span>TAFSE</span></a>
     <nav class="meny" id="hovedmeny" aria-label="Hovedmeny">${meny}</nav>
     <div class="varsel" id="varsel" hidden>
       <button class="varsel-knapp" type="button" aria-expanded="false" aria-controls="varsel-panel" aria-label="Varsler"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15L6 16z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><span class="varsel-tall" hidden></span></button>
@@ -93,7 +99,7 @@ function byggRamme() {
   const bunn = document.createElement("footer");
   bunn.className = "bunn";
   bunn.innerHTML = `<div class="meander" aria-hidden="true"></div>
-  <p class="bunn-tekst">${erGjestemerke() ? "" : "Taffelakademiet for Samvær og Etegilder"}</p>
+  <p class="bunn-tekst">${visBrorside() ? "Taffelakademiet for Samvær og Etegilder" : ""}</p>
   <p class="bunn-tekst bunn-status" style="padding-top:0; font-style:normal"></p>`;
   document.body.append(bunn);
 }
@@ -171,7 +177,8 @@ async function hvemErJeg() {
     const m = await api("meg");
     const gjestOkt = !m.innlogget && !!m.gjest;
     if (gjestOkt && !gjestTillatt()) { settGjestemerke(true); location.replace("gjest.html"); return null; }
-    if (gjestOkt !== erGjestemerke()) { settGjestemerke(gjestOkt); oppdaterMeny(); }
+    const ny = m.innlogget ? "bror" : gjestOkt ? "gjest" : "";
+    if (ny !== rolle()) { settRolle(ny); oppdaterMeny(); }
     GJEST = gjestOkt && paaGjesteside();
     MEG = m.innlogget || GJEST ? m.navn : null;
     ADMIN = !!m.admin;
@@ -267,6 +274,7 @@ function visInnloggetLinje() {
   if (l) l.addEventListener("click", async (e) => {
     e.preventDefault();
     await api("loggut", { method: "POST" });
+    settRolle("");
     location.reload();
   });
 }

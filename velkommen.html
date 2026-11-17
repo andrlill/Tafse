@@ -24,9 +24,8 @@
   const navn = q.get("navn") || "";
   const kode = q.get("kode") || "";
   const boks = document.getElementById("innhold");
-  const { medlemmer } = await hentData();
-
-  if (!medlemmer.includes(navn)) {
+  // Medlemslisten er stengt for andre enn brødre; invitasjonskoden sjekkes av serveren.
+  if (!navn) {
     boks.innerHTML = `<p>Denne lenken ser ikke riktig ut. Be den som sendte den om en ny, eller <a href="salongen.html">logg inn</a> hvis du allerede har bruker.</p>`;
     return;
   }

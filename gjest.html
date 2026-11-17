@@ -96,7 +96,7 @@ function visInnlogging() {
   boks.innerHTML = `
     <p>Logg inn for å spille. Har du fått en invitasjonslenke, åpner du den for å lage bruker.</p>
     <form class="skjema" id="gjest-inn">
-      <div class="felt"><label for="g-navn">Navnet ditt</label><input id="g-navn" maxlength="24" autocomplete="username" required></div>
+      <div class="felt"><label for="g-navn">Navnet ditt</label><input id="g-navn" maxlength="60" autocomplete="username" required></div>
       <div class="felt"><label for="g-pass">Passord</label><input id="g-pass" type="password" autocomplete="current-password" required></div>
       <button class="knapp" type="submit">Logg inn</button>
       <div id="g-melding" role="status"></div>
@@ -108,6 +108,7 @@ function visInnlogging() {
     knapp.disabled = true;
     try {
       const svar = await api("gjest/logginn", json({ navn: boks.querySelector("#g-navn").value, passord: boks.querySelector("#g-pass").value }));
+      if (svar.bror) { settRolle("bror"); location.href = "index.html"; return; }
       settGjestemerke(true); oppdaterMeny();
       visInnloggetGjest(svar.navn, false);
     } catch (err) {

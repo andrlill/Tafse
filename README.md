@@ -97,7 +97,10 @@ Bjellen i toppmenyen viser varsler til den som er logget inn: svar på egne post
 man har kommentert, skåler, nye saker, stemmer og kommentarer på egne saker, og utfallet av egne saker.
 Varslene lages i `functions/api/` (søk etter `varsle(`). Leste varsler eldre enn 90 dager ryddes bort.
 
-## Personvern
+## Personvern og tilgang
 
-Forside, kalender, vedtekter, fortellingen og navnelisten over brødrene er åpne for alle.
-Salongen, bilder, profilbilder, saker og presentasjoner krever innlogging.
+Hele nettstedet er stengt for alle som ikke er innlogget som bror. Porten ligger i
+`functions/_middleware.js` og gjelder alle sider og filer, også vedtektene, forsiden og `data/`.
+Andre (gjester og ukjente) slipper bare inn i spillhallen (`gjest.html` og spillene i `GJESTESPILL`),
+og sendes dit fra alt annet. Brødre og gjester logger inn i samme skjema i spillhallen; er navnet en
+bror, havner man på forsiden. Invitasjonslenkene til nye brødre (`velkommen.html`) er åpne.

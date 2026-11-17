@@ -16,7 +16,7 @@ const SAKSTYPER = ["Vedtektsendring", "Medlemsopptak", "Møtested", "Annen sak"]
 const STEMMER = ["for", "mot", "avstar"];
 const OKT_DAGER = 365;
 // Spillene gjester kan spille
-const GJESTESPILL = ["tartaros", "spill", "2048", "murbrekker", "tetris", "snake", "hotell", "symposion"];
+export const GJESTESPILL = ["tartaros", "spill", "2048", "murbrekker", "tetris", "snake", "hotell", "symposion"];
 const MAKS_GJESTER = 500;
 
 let skjemaKlart = false;
@@ -257,7 +257,7 @@ async function hvemErGjest(request, env, db) {
 }
 
 // Returnerer navnet til den innloggede, eller null.
-async function hvemErInnlogget(request, env, db) {
+export async function hvemErInnlogget(request, env, db) {
   const c = lesCookie(request);
   if (!c) return null;
   const [n64, utloper, sig] = c.split(".");
@@ -340,6 +340,7 @@ export async function onRequest({ request, env, params }) {
 
   // --- Innlogging og brukere ---
   if (ressurs === "brukere" && metode === "GET") {
+    if (!(await hvemErInnlogget(request, env, db))) return feil(401, "Ikke innlogget");
     const { results } = await db.prepare("SELECT navn FROM brukere").all();
     return json(results.map((r) => r.navn));
   }
@@ -381,6 +382,12 @@ export async function onRequest({ request, env, params }) {
   }
   if (ressurs === "gjest" && id === "logginn" && metode === "POST") {
     const b = await lesJson(request);
+    // Samme skjema for alle: er navnet en bror, logges han inn som bror.
+    const bror = await db.prepare("SELECT navn, salt, hash FROM brukere WHERE navn = ? COLLATE NOCASE").bind(tekst(b.navn, 60)).first();
+    if (bror) {
+      if (!likt(await hashPassord(String(b.passord || ""), bror.salt), bror.hash)) { await vent(600); return feil(401, "Feil navn eller passord."); }
+      return json({ bror: true, navn: bror.navn }, 200, { "Set-Cookie": await lagOkt(env, bror, url) });
+    }
     const gjest = await db.prepare("SELECT navn, salt, hash FROM gjester WHERE navn = ?").bind(tekst(b.navn, 24)).first();
     if (!gjest || !likt(await hashPassord(String(b.passord || ""), gjest.salt), gjest.hash)) {
       await vent(600);
