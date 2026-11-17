@@ -64,7 +64,7 @@
   // ---------- Tilstand ----------
   let rom = "lobbyen", R = ROM[rom], ruter = [], mobler = [];
   let figurer = new Map();   // navn → figur (brødre og hotellets egne)
-  let meg = null, look = null, etter = 0, forste = true, antall = {}, medlemmer = [], logg = [];
+  let meg = null, look = null, etter = 0, forste = true, antall = {}, medlemmer = [], gjesterom = [], logg = [];
   let hjem = null, innred = false, valgt = null, melding = "";   // rommet til en bror, og innredning av eget rom
   let bytter = false, romNokkel = "", innredNokkel = "";
   let lerret, ctx, logW = 960, logH = 600, kam = [0, 0], peker = null, mal = null;
@@ -83,7 +83,7 @@
   const eier = (navn) => (/[sxz]$/i.test(navn) ? `${navn}'` : `${navn}s`);
   const mittRom = () => `hjem:${MEG}`;
   const erMitt = () => rom === mittRom();
-  const romNavn = (id) => (ROM[id] ? ROM[id].navn : id === mittRom() ? "Rommet ditt" : `${eier(id.slice(5))} rom`);
+  const romNavn = (id) => (ROM[id] ? ROM[id].navn : id === mittRom() ? "Rommet ditt" : id.endsWith(")") ? `Rommet til ${id.slice(5)}` : `${eier(id.slice(5))} rom`);
   const post = (kropp) => ({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(kropp) });
 
   // ---------- Møbler ----------
@@ -509,7 +509,7 @@
         else { if (f && !s.forste) si(f, m.tekst, t); leggILogg(m.navn, m.tekst); }
       }
       etter = s.sisteId; forste = false;
-      antall = s.antall; medlemmer = s.medlemmer || medlemmer;
+      antall = s.antall; medlemmer = s.medlemmer || medlemmer; gjesterom = s.gjesterom || gjesterom;
       visRomliste();
     } catch (_) {
     } finally { henter = false; }
@@ -584,15 +584,17 @@
   function visRomliste() {
     const l = document.getElementById("h-rom");
     if (!l) return;
-    const nokkel = JSON.stringify([rom, antall, medlemmer]);
+    const nokkel = JSON.stringify([rom, antall, medlemmer, gjesterom]);
     if (nokkel === romNokkel) return;
     romNokkel = nokkel;
     const knapp = (id, navn) => `<button type="button" class="h-romknapp${id === rom ? " aktiv" : ""}" data-rom="${esc(id)}">${esc(navn)}<span>${antall[id] || 0}</span></button>`;
-    const andre = medlemmer.filter((n) => n !== MEG);
-    l.innerHTML = Object.entries(ROM).map(([id, r]) => knapp(id, r.navn)).join("") + (GJEST ? "" : knapp(mittRom(), "Rommet mitt")) +
-      (andre.length ? `<select id="h-besok" class="h-besok${rom.startsWith("hjem:") && !erMitt() ? " aktiv" : ""}" aria-label="Besøk en bror">
-        <option value="">Besøk en bror …</option>
-        ${andre.map((n) => `<option value="hjem:${esc(n)}"${rom === `hjem:${n}` ? " selected" : ""}>${esc(n)}${antall[`hjem:${n}`] ? ` (${antall[`hjem:${n}`]} inne)` : ""}</option>`).join("")}</select>` : "");
+    const valg = (n) => `<option value="hjem:${esc(n)}"${rom === `hjem:${n}` ? " selected" : ""}>${esc(n)}${antall[`hjem:${n}`] ? ` (${antall[`hjem:${n}`]} inne)` : ""}</option>`;
+    const brodre = medlemmer.filter((n) => n !== MEG), gjester = gjesterom.filter((n) => n !== MEG);
+    l.innerHTML = Object.entries(ROM).map(([id, r]) => knapp(id, r.navn)).join("") + knapp(mittRom(), "Rommet mitt") +
+      (brodre.length || gjester.length ? `<select id="h-besok" class="h-besok${rom.startsWith("hjem:") && !erMitt() ? " aktiv" : ""}" aria-label="Besøk noen">
+        <option value="">Besøk noen …</option>
+        ${brodre.length ? `<optgroup label="Brødrene">${brodre.map(valg).join("")}</optgroup>` : ""}
+        ${gjester.length ? `<optgroup label="Gjestene">${gjester.map(valg).join("")}</optgroup>` : ""}</select>` : "");
   }
   function visGarderobe() {
     const g = document.getElementById("h-garderobe");
