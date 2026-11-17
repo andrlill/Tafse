@@ -63,6 +63,10 @@
     fart: { navn: "Vind i ryggen", tekst: "+3 % fart per nivå" },
     visdom: { navn: "Athenes visdom", tekst: "+5 % sjeler per nivå" },
     magnet: { navn: "Sjelefanger", tekst: "+10 % rekkevidde på sjeler per nivå" },
+    rustning: { navn: "Hefaistos' rustning", tekst: "Du tar 4 % mindre skade per nivå" },
+    midas: { navn: "Midas' berøring", tekst: "+10 % drakmer fra hvert tokt per nivå" },
+    orakel: { navn: "Orakelet i Delfi", tekst: "Ett omkast per nivå: trekk tre nye kort når du ikke liker valget" },
+    arsenal: { navn: "Våpenbærer", tekst: "Du starter hvert tokt med ett tilfeldig våpen i tillegg" },
     fjaer: { navn: "Føniksfjær", tekst: "Du reiser deg én gang per tokt" },
   };
   // hp, fart, skade ved berøring, radius, sjeler, poeng
@@ -123,6 +127,8 @@
     regnUt();
     S.hp = S.st.maksLiv;
     S.vapen[HELTER[helt].vapen] = { l: 1, cd: 0.4, v: 0 };
+    S.omkast = PROFIL.gunst.orakel || 0;
+    if (PROFIL.gunst.arsenal && !meny) { const andre = Object.keys(VAPEN).filter((id) => !S.vapen[id]); S.vapen[andre[Math.floor(Math.random() * andre.length)]] = { l: 1, cd: 0.8, v: 0 }; }
   }
   function nyttTokt() {
     nyTilstand(valgtHelt, false);
@@ -263,7 +269,7 @@
 
   function skadHelt(skade) {
     if (S.usarbar > 0 || S.slutt) return;
-    S.hp -= skade; S.usarbar = 0.45; S.rist = 7;
+    S.hp -= skade * (1 - 0.04 * (PROFIL.gunst.rustning || 0)); S.usarbar = 0.45; S.rist = 7;
     lyd("stikk", 0.1);
     if (S.hp > 0) return;
     if (S.fjaer) {
@@ -450,11 +456,18 @@
   function visValg() {
     S.pause = true;
     S.valg = trekk(3);
+    tegnValg();
+    if (S.valgKo[0] !== "kiste") lyd("niva", 0.2);
+  }
+  function tegnValg() {
     const kiste = S.valgKo[0] === "kiste";
     lag.className = "ta-lag ta-valg";
-    lag.innerHTML = `<p class="overline">${kiste ? "Skattekiste" : `Nivå ${S.niva - S.valgKo.filter((k) => k === "niva").length + (kiste ? 0 : 1)}`}</p><h2>${kiste ? "Gudene belønner deg" : "Velg en gave"}</h2><div class="ta-kortliste">${S.valg.map(kort).join("")}</div>`;
+    lag.innerHTML = `<p class="overline">${kiste ? "Skattekiste" : `Nivå ${S.niva - S.valgKo.filter((k) => k === "niva").length + (kiste ? 0 : 1)}`}</p><h2>${kiste ? "Gudene belønner deg" : "Velg en gave"}</h2><div class="ta-kortliste">${S.valg.map(kort).join("")}</div>${S.omkast > 0 ? `<button type="button" class="liten-knapp" data-omkast>Spør orakelet om nye kort (${S.omkast} igjen) · R</button>` : ""}`;
     lag.hidden = false;
-    if (!kiste) lyd("niva", 0.2);
+  }
+  function omkast() {
+    if (!S || !S.valg || S.omkast <= 0) return;
+    S.omkast -= 1; S.valg = trekk(3); tegnValg(); lyd("klar", 0.1);
   }
   function taValg(i) {
     if (!S || !S.valg || !S.valg[i]) return;
@@ -748,7 +761,7 @@
     S.slutt = true; S.pause = true;
     const sekunder = Math.min(SEIERSTID, Math.floor(S.t));
     const poeng = Math.round(S.poeng + sekunder * 2 + (seier ? 2000 : 0));
-    const drakmer = S.drakmer + Math.floor(sekunder / 20) + (seier ? 50 : 0);
+    const drakmer = Math.round((S.drakmer + Math.floor(sekunder / 20) + (seier ? 50 : 0)) * (1 + 0.1 * (PROFIL.gunst.midas || 0)));
     lyd(seier ? "seier" : "dod", 0.1);
     lag.className = "ta-lag ta-slutt";
     lag.innerHTML = `<p class="overline">${seier ? "Daggry" : `Felt etter ${klokke(sekunder)}`}</p>
@@ -756,6 +769,7 @@
       <p class="ta-poeng">${tall(poeng)} <span>poeng</span></p>
       <p class="ta-tall">Nivå ${S.niva} · ${tall(S.drap)} felt · <strong>+${tall(drakmer)} drakmer</strong></p>
       <div class="ta-bygging">${bygging()}</div>
+      <p class="ta-beholder"><strong>Blir med videre:</strong> drakmene. <strong>Blir igjen her nede:</strong> våpen, gudegaver og nivå.</p>
       <p class="dempet" id="ta-lagret">${innlogget() ? "" : `<a href="gjest.html">Logg inn</a> for å komme på tavlen og beholde drakmene.`}</p>
       <div class="ta-rad"><button class="knapp" type="button" data-start>Nytt tokt</button><button class="knapp sekundar" type="button" data-leir>Til leiren</button></div>`;
     lag.hidden = false;
@@ -797,7 +811,9 @@
     if (!innlogget()) { leir.innerHTML = `<h2 class="t-tittel">Leiren</h2><p class="dempet">Du kan spille uten å være innlogget, men drakmer, oppgraderinger og tavlen krever at du <a href="gjest.html">logger inn</a>.</p>`; return; }
     const g = PROFIL.gunst;
     leir.innerHTML = `<div class="ta-leirhode"><h2 class="t-tittel">Leiren</h2><p class="ta-saldo"><strong>${tall(PROFIL.drakmer)}</strong> drakmer</p></div>
-      <p class="dempet ta-leirtekst">Drakmer finner du på hvert tokt. Det du kjøper her, varer for alltid.</p>
+      <dl class="ta-regler"><dt>Beholdes for alltid</dt><dd>Drakmene dine, alt du kjøper her i leiren, heltene du har låst opp og plassen på tavlen.</dd>
+        <dt>Nullstilles hvert tokt</dt><dd>Våpen, gudegaver og nivå. Du starter alltid med heltens ene våpen og bygger opp på nytt.</dd>
+        <dt>Slik tjener du drakmer</dt><dd>Mynter på bakken, 20 for hver boss, 1 for hvert 20. sekund du holder ut og 50 for daggry.</dd></dl>
       <p class="melding feil" id="ta-leirfeil" hidden></p>
       <div class="ta-gunst">${Object.entries(GUNST).map(([id, v]) => {
         const n = g[id] || 0, regel = PRISER ? PRISER.gunst[id] : { maks: 0, pris: 0 }, full = n >= regel.maks, pris = regel.pris * (n + 1);
@@ -851,7 +867,8 @@
     <h3>På bakken</h3>
     <p>Vinkrukker gir liv, mynter gir drakmer, og den grønne ringen trekker til seg alle sjeler på en gang.</p>
     <h3>Leiren</h3>
-    <p>Drakmene bruker du i leiren under spillet, på varige oppgraderinger og nye helter. Hver helt starter med sitt eget våpen. Første tokt hver dag gir også oliven til godset ditt i Symposion.</p>
+    <p>Våpen, gudegaver og nivå gjelder bare toktet du er på. Når du faller eller når daggry, starter neste tokt fra bunnen.</p>
+    <p>Det du beholder, er drakmene. De bruker du i leiren under spillet, og alt du kjøper der varer for alltid: mer skade, liv og fart, rustning, flere drakmer per tokt, omkast av kortene, et ekstra startvåpen, føniksfjæra og nye helter. Hver helt starter med sitt eget våpen. Første tokt hver dag gir også oliven til godset ditt i Symposion.</p>
     <h3>Poeng</h3>
     <p>Du får poeng for hver fiende, to poeng per sekund og 2 000 for å holde ut til daggry.</p>`;
 
@@ -862,6 +879,7 @@
     const k = e.key.toLowerCase();
     if (!S || S.meny) return;
     if (S.valg && /^[1-3]$/.test(k)) { e.preventDefault(); return taValg(Number(k) - 1); }
+    if (S.valg && k === "r") { e.preventDefault(); return omkast(); }
     if (TAST[k]) { taster[TAST[k]] = true; e.preventDefault(); }
     else if (k === "p" || k === "escape") { e.preventDefault(); if (S.pause && lag.classList.contains("ta-pausen")) fortsett(); else visPause(); }
   });
@@ -876,6 +894,7 @@
     const k = e.target.closest("button");
     if (!k || k.disabled) return;
     if (k.dataset.valg !== undefined) taValg(Number(k.dataset.valg));
+    else if (k.dataset.omkast !== undefined) omkast();
     else if (k.dataset.start !== undefined) nyttTokt();
     else if (k.dataset.leir !== undefined) visMeny();
     else if (k.dataset.fortsett !== undefined) fortsett();

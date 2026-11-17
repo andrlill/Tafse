@@ -1030,7 +1030,11 @@ a.liten-knapp { text-decoration: none; display: inline-flex; align-items: center
 .ta-leirhode { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
 .ta-saldo { margin: 0; color: var(--dempet); }
 .ta-saldo strong { font-family: var(--display); font-size: 1.5rem; color: var(--gull-lys); }
-.ta-leirtekst { margin: .2rem 0 1rem; }
+.ta-regler { margin: .4rem 0 1.1rem; border-left: 2px solid var(--gull); padding-left: .9rem; }
+.ta-regler dt { font-family: var(--display); font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--gull); margin-top: .55rem; }
+.ta-regler dd { margin: .1rem 0 0; color: var(--tekst); font-size: .98rem; }
+.ta-beholder { margin: 0; font-size: .95rem; color: var(--dempet); max-width: 34rem; }
+.ta-beholder strong { color: var(--gull-lys); font-weight: 500; }
 .ta-gunst { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; }
 .ta-vare { border: 1px solid var(--linje); background: var(--flate); padding: .8rem; display: flex; flex-direction: column; gap: .35rem; }
 .ta-vare h4 { margin: 0; font-family: var(--display); font-size: .95rem; letter-spacing: .05em; color: var(--gull-lys); }
