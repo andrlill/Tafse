@@ -12,9 +12,9 @@
   const tavle = document.getElementById("s-tavle");
 
   // ---------- Regler (endres her) ----------
-  const START_TAKT = 0.14;     // sekunder per steg i starten
-  const MIN_TAKT = 0.055;      // raskeste fart
-  const TAKT_PER_DRUE = 0.0028;
+  const START_TAKT = 0.15;     // sekunder per steg i starten
+  const MIN_TAKT = 0.09;       // raskeste fart (rundt elleve steg i sekundet)
+  const TAKT_PER_DRUE = 0.0012; // full fart nås etter femti druer
   const DRUE_POENG = 10;
   const DRAKME_HVER = 5;       // en drakme dukker opp etter hver femte drue
   const DRAKME_TID = 6;        // sekunder før drakmen forsvinner
