@@ -26,7 +26,7 @@ Nettsiden til Taffelakademiet for Samvær og Etegilder.
 | `2048.html`, `assets/2048.js` | Spillet 2048, med toppliste for uka og for alle tider |
 | `tetris.html`, `assets/tetris.js` | Spillet Tetris, med toppliste for uka og for alle tider |
 | `snake.html`, `assets/snake.js` | Spillet Snake, med toppliste for uka og for alle tider |
-| `honningfella.html`, `assets/honningfella.js` | Spillet Honningfella. Oppdragene ligger i `data/honningfella/oppdrag.json`, se `data/honningfella/OPPSKRIFT.md` |
+| `honningfella.html`, `assets/honningfella.js` | Spillet Honningfella (gjemt: ikke i spillmenyen og ikke for gjester, men siden virker). Oppdragene ligger i `data/honningfella/oppdrag.json`, se `data/honningfella/OPPSKRIFT.md` |
 | `verden.html`, `data/steder/` | «Hva skjer?»: ukens tilfeldige sted, med arkiv. Se `data/steder/OPPSKRIFT.md` |
 | `data/moter.json` | **Møtedatoer, Tafsemestere og medlemsliste. Endre her.** |
 | `assets/style.css` | Farger og utseende |
@@ -78,7 +78,7 @@ Profil og innhold blir liggende.
 
 Hver bror har en egen gjestelenke på `gjest.html` (lenken «Inviter en gjest» nederst på spillsidene).
 Den som åpner lenken, velger navn og passord og kan spille Symposion, Idus Martiae, 2048, Murbrekker,
-Tetris, Snake, Honningfella og Tafse Hotell. I Symposion har ingen fast tomt: man får plass på øya når man flytter inn. Gjester får også eget rom i Tafse Hotell, på lik linje med brødrene. Gjester står på tavlene som «Navn (gjest)». De har egen tabell (`gjester`) og egen
+Tetris, Snake og Tafse Hotell. I Symposion har ingen fast tomt: man får plass på øya når man flytter inn. Gjester får også eget rom i Tafse Hotell, på lik linje med brødrene. Gjester står på tavlene som «Navn (gjest)». De har egen tabell (`gjester`) og egen
 innloggingskapsel, og serveren avviser dem overalt ellers. Hvilke spill de slipper inn i, styres av
 `GJESTESPILL` i `functions/api/` og `assets/app.js`. Administratorer ser og fjerner gjester under Invitasjoner. Innloggede gjester ser bare spillhallen i menyen, og sendes til `gjest.html` hvis de åpner andre sider.
 
