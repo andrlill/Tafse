@@ -589,7 +589,7 @@
     romNokkel = nokkel;
     const knapp = (id, navn) => `<button type="button" class="h-romknapp${id === rom ? " aktiv" : ""}" data-rom="${esc(id)}">${esc(navn)}<span>${antall[id] || 0}</span></button>`;
     const andre = medlemmer.filter((n) => n !== MEG);
-    l.innerHTML = Object.entries(ROM).map(([id, r]) => knapp(id, r.navn)).join("") + knapp(mittRom(), "Rommet mitt") +
+    l.innerHTML = Object.entries(ROM).map(([id, r]) => knapp(id, r.navn)).join("") + (GJEST ? "" : knapp(mittRom(), "Rommet mitt")) +
       (andre.length ? `<select id="h-besok" class="h-besok${rom.startsWith("hjem:") && !erMitt() ? " aktiv" : ""}" aria-label="Besøk en bror">
         <option value="">Besøk en bror …</option>
         ${andre.map((n) => `<option value="hjem:${esc(n)}"${rom === `hjem:${n}` ? " selected" : ""}>${esc(n)}${antall[`hjem:${n}`] ? ` (${antall[`hjem:${n}`]} inne)` : ""}</option>`).join("")}</select>` : "");
