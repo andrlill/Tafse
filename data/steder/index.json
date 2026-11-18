@@ -1,6 +1,13 @@
 {
   "utgaver": [
     {
+      "id": "2026-11-18-differdange",
+      "dato": "2026-11-18",
+      "sted": "Differdange",
+      "land": "Luxemburg",
+      "landkode": "LU"
+    },
+    {
       "id": "2026-11-11-okahao",
       "dato": "2026-11-11",
       "sted": "Okahao",
