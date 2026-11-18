@@ -5,6 +5,7 @@
 //     og invitasjonslenker, og fungerer som reservepassord ved registrering.
 
 import { premie, SKJEMA as PREMIE_SKJEMA } from "../../lib/premier.js";
+import { innboks, SKJEMA as INNBOKS_SKJEMA } from "../../lib/innboks.js";
 import { tartaros, SKJEMA as TARTAROS_SKJEMA } from "../../lib/tartaros.js";
 import { hotell, SKJEMA as HOTELL_SKJEMA, MIGRERING as HOTELL_MIGRERING } from "../../lib/hotell.js";
 import { symposion, SKJEMA as SYMPOSION_SKJEMA, MIGRERING as SYMPOSION_MIGRERING } from "../../lib/symposion.js";
@@ -16,6 +17,8 @@ const SAKSTYPER = ["Vedtektsendring", "Medlemsopptak", "Møtested", "Annen sak"]
 const STEMMER = ["for", "mot", "avstar"];
 const OKT_DAGER = 365;
 // Spillene gjester kan spille
+// Det gjester får bruke av API-et utenom spillene
+const GJESTE_API = ["innboks"];
 export const GJESTESPILL = ["tartaros", "spill", "2048", "murbrekker", "tetris", "snake", "hotell", "symposion"];
 const MAKS_GJESTER = 500;
 
@@ -137,6 +140,7 @@ async function sikreSkjema(db) {
     ...HOTELL_SKJEMA.map((sql) => db.prepare(sql)),
     ...TARTAROS_SKJEMA.map((sql) => db.prepare(sql)),
     ...PREMIE_SKJEMA.map((sql) => db.prepare(sql)),
+    ...INNBOKS_SKJEMA.map((sql) => db.prepare(sql)),
     db.prepare(`CREATE TABLE IF NOT EXISTS tall2048 (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       navn TEXT NOT NULL,
@@ -312,6 +316,7 @@ export const gjesteNavn = (navn) => `${navn} (gjest)`;
 
 // Hvor en gjest finnes i spillene: tabell og kolonne med gjestens navn. Brukes når en gjest fjernes helt.
 const FJERN_GJEST = [
+  ["meldinger", "fra"], ["meldinger", "til"], ["hotell_romstjerne", "eier"], ["hotell_romstjerne", "fra"], ["hotell_bytte", "a"], ["hotell_bytte", "b"],
   ["hotell_gjest", "navn"], ["hotell_rom", "navn"], ["hotell_mobel", "eier"], ["hotell_prat", "navn"], ["hotell_gjestebok", "eier"], ["hotell_gjestebok", "navn"],
   ["hotell_gave", "fra"], ["hotell_gave", "til"], ["hotell_respekt", "fra"], ["hotell_respekt", "til"], ["hotell_skatt", "navn"], ["auditoriet_samtale", "navn"],
   ["symposion_gods", "navn"], ["symposion_logg", "navn"], ["symposion_bidrag", "navn"], ["symposion_handling", "fra"], ["symposion_handling", "til"],
@@ -550,13 +555,13 @@ export async function onRequest({ request, env, params }) {
   // Alt under krever innlogging
   // Gjester slipper bare inn til spillene, og spiller under navnet «Navn (gjest)»
   let meg = await hvemErInnlogget(request, env, db);
-  if (!meg && GJESTESPILL.includes(ressurs)) {
+  if (!meg && (GJESTESPILL.includes(ressurs) || GJESTE_API.includes(ressurs))) {
     const gjest = await hvemErGjest(request, env, db);
     if (gjest) meg = gjesteNavn(gjest);
   }
   if (!meg) return feil(401, "Ikke innlogget");
   const erGjest = meg.endsWith(" (gjest)");
-  if (erGjest && !GJESTESPILL.includes(ressurs)) return feil(403, "Ingen tilgang.");
+  if (erGjest && !GJESTESPILL.includes(ressurs) && !GJESTE_API.includes(ressurs)) return feil(403, "Ingen tilgang.");
 
   if (ressurs === "gjestelenke" && metode === "GET") {
     return json({ fra: meg, kode: await gjestekode(env, meg) });
@@ -884,6 +889,9 @@ export async function onRequest({ request, env, params }) {
   }
 
   // --- Tafse Hotell. Logikken ligger i lib/hotell.js ---
+  // --- Innboksen: private meldinger mellom spillerne. Logikken ligger i lib/innboks.js ---
+  if (ressurs === "innboks") return innboks({ db, meg, metode, id, request, url, json, feil, lesJson });
+
   // Gjester har ingen varselbjelle, så spillvarsler til dem sendes ikke
   const varsleBrodre = (d, mottakere, v) => varsle(d, mottakere.filter((n) => !n.endsWith(" (gjest)")), v);
 

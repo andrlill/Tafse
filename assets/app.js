@@ -88,6 +88,7 @@ function byggRamme() {
   <div class="topp-inner">
     <a class="merke" href="${visBrorside() ? "index.html" : "gjest.html"}">${LOGO}<span>${merkeTekst()}</span></a>
     <nav class="meny" id="hovedmeny" aria-label="Hovedmeny">${meny}</nav>
+    <button class="varsel-knapp post-knapp" id="post-knapp" type="button" aria-label="Innboks" hidden><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="13" rx="1"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/></svg><span class="varsel-tall" hidden></span></button>
     <div class="varsel" id="varsel" hidden>
       <button class="varsel-knapp" type="button" aria-expanded="false" aria-controls="varsel-panel" aria-label="Varsler"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15L6 16z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><span class="varsel-tall" hidden></span></button>
       <div class="varsel-panel" id="varsel-panel" hidden>
@@ -194,6 +195,13 @@ async function hvemErJeg() {
     ADMIN = !!m.admin;
   } catch (_) { MEG = null; ADMIN = false; GJEST = false; }
   visInnloggetLinje();
+  const pk = document.getElementById("post-knapp");
+  // Innboksen finnes bare på spillsiden, for både brødre og gjester
+  if (pk) {
+    pk.hidden = !(SPILLSIDE && MEG);
+    if (!pk.dataset.klar) { pk.dataset.klar = "1"; pk.addEventListener("click", () => visPost()); setInterval(tellPost, 45000); }
+    tellPost();
+  }
   return MEG;
 }
 
@@ -662,6 +670,81 @@ function visPlakat(vedLukk) {
     </div>`);
   const d = document.getElementById("infoboks");
   if (vedLukk) d.addEventListener("close", vedLukk, { once: true });
+}
+
+// ---------- Innboksen på spillsiden: private meldinger mellom spillerne (lib/innboks.js) ----------
+const ROMNAVN = { lobbyen: "Lobbyen", baren: "Baren", terrassen: "Terrassen", auditoriet: "Auditoriet" };
+const romTekst = (rom) => ROMNAVN[rom] || (rom && rom.startsWith("hjem:") ? (rom.slice(5) === MEG ? "rommet ditt" : `rommet til ${visningsnavn(rom.slice(5))}`) : "hotellet");
+let postMed = null, postTid = null, postNokkel = "";
+function postTall(n) {
+  const k = document.getElementById("post-knapp");
+  if (!k) return;
+  const tall = k.querySelector(".varsel-tall");
+  tall.hidden = !n; tall.textContent = n > 9 ? "9+" : n;
+  k.setAttribute("aria-label", n ? `Innboks, ${n} uleste` : "Innboks");
+}
+async function tellPost() {
+  if (!SPILLSIDE || !MEG || document.hidden) return;
+  try { postTall((await api("innboks?tell=1")).uleste); } catch (_) {}
+}
+async function tegnPost() {
+  const boks = document.getElementById("post");
+  if (!boks) return;
+  try {
+    if (postMed) {
+      const s = await api(`innboks/${encodeURIComponent(postMed)}`);
+      postTall(s.uleste);
+      const nokkel = JSON.stringify([postMed, s.meldinger.length, s.meldinger.at(-1)?.id]);
+      if (nokkel === postNokkel) return;
+      postNokkel = nokkel;
+      const utkast = document.getElementById("post-tekst")?.value || "";
+      boks.innerHTML = `<p><button class="lenkeknapp" type="button" data-post-tilbake>← Alle samtaler</button></p>
+        <h3 class="post-med">${esc(visningsnavn(postMed))}</h3>
+        <ol class="post-traad">${s.meldinger.length ? s.meldinger.map((m) => `<li class="${m.min ? "min" : ""}"><p>${esc(m.tekst)}</p><time>${esc(tidTekst(m.tid))}</time></li>`).join("") : `<li class="tom">Ingen meldinger ennå. Skriv den første.</li>`}</ol>
+        <form class="post-skjema" id="post-skjema"><textarea id="post-tekst" maxlength="500" rows="2" placeholder="Skriv til ${esc(visningsnavn(postMed))} …" aria-label="Melding"></textarea><button class="knapp" type="submit">Send</button></form>
+        <p class="melding feil" id="post-feil" hidden></p>`;
+      const felt = document.getElementById("post-tekst"); felt.value = utkast; felt.focus();
+      const traad = boks.querySelector(".post-traad"); traad.scrollTop = traad.scrollHeight;
+    } else {
+      const s = await api("innboks");
+      postTall(s.uleste);
+      const nokkel = JSON.stringify(s);
+      if (nokkel === postNokkel) return;
+      postNokkel = nokkel;
+      const inne = s.folk.filter((f) => f.rom), harSamtale = new Set(s.samtaler.map((x) => x.med));
+      const rom = Object.fromEntries(s.folk.map((f) => [f.navn, f.rom]));
+      boks.innerHTML = `
+        <p class="overline">På hotellet nå</p>
+        ${inne.length ? `<ul class="post-inne">${inne.map((f) => `<li><span class="post-prikk"></span><strong>${esc(visningsnavn(f.navn))}</strong> er i ${esc(romTekst(f.rom))} <a href="hotell.html?rom=${encodeURIComponent(f.rom)}">Gå dit</a></li>`).join("")}</ul>` : `<p class="dempet">Ingen andre er inne akkurat nå.</p>`}
+        <p class="overline">Samtaler</p>
+        ${s.samtaler.length ? `<ul class="post-liste">${s.samtaler.map((x) => `<li><button type="button" data-post-med="${esc(x.med)}" class="${x.uleste ? "ulest" : ""}"><strong>${rom[x.med] ? `<span class="post-prikk"></span>` : ""}${esc(visningsnavn(x.med))}${x.uleste ? `<em>${x.uleste}</em>` : ""}</strong><span>${x.min ? "Du: " : ""}${esc(x.tekst.slice(0, 80))}</span><time>${esc(tidTekst(x.tid))}</time></button></li>`).join("")}</ul>` : `<p class="dempet">Du har ingen samtaler ennå.</p>`}
+        <p class="overline">Skriv til noen</p>
+        <div class="post-folk">${s.folk.filter((f) => !harSamtale.has(f.navn)).map((f) => `<button type="button" class="liten-knapp" data-post-med="${esc(f.navn)}">${esc(visningsnavn(f.navn))}</button>`).join("") || `<span class="dempet">Du har en samtale med alle som har sjekket inn.</span>`}</div>`;
+    }
+  } catch (e) { boks.innerHTML = `<p class="melding feil">${esc(e.message)}</p>`; }
+}
+// Åpner innboksen. Med et navn åpnes samtalen med den personen.
+function visPost(med) {
+  postMed = med || null; postNokkel = "";
+  visInfo("Innboks", `<div class="post" id="post"><p class="dempet">Laster …</p></div>`);
+  const d = document.getElementById("infoboks"), boks = document.getElementById("post");
+  boks.addEventListener("click", (e) => {
+    const k = e.target.closest("button");
+    if (!k) return;
+    if (k.dataset.postMed) { postMed = k.dataset.postMed; postNokkel = ""; tegnPost(); }
+    else if (k.dataset.postTilbake !== undefined) { postMed = null; postNokkel = ""; tegnPost(); }
+  });
+  const sendPost = async () => {
+    const felt = document.getElementById("post-tekst"), tekst = felt.value.trim();
+    if (!tekst) return;
+    try { await api("innboks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ til: postMed, tekst }) }); felt.value = ""; postNokkel = ""; tegnPost(); }
+    catch (err) { const f = document.getElementById("post-feil"); f.textContent = err.message; f.hidden = false; }
+  };
+  boks.addEventListener("submit", (e) => { e.preventDefault(); sendPost(); });
+  boks.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey && e.target.id === "post-tekst") { e.preventDefault(); sendPost(); } });
+  clearInterval(postTid);
+  postTid = setInterval(() => { if (d.open && document.getElementById("post")) tegnPost(); else { clearInterval(postTid); tellPost(); } }, 5000);
+  tegnPost();
 }
 
 function visInfo(tittel, innhold) {

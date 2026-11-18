@@ -15,7 +15,8 @@
   const HARFARGE = ["#1c1612", "#4a2f1c", "#8a5a2b", "#c9a35a", "#b5482a", "#9a9a9a", "#ece4d2"];
   const TOGA = ["#ece4d2", "#8e2f52", "#2f5d8e", "#2f7d5b", "#c9a24a", "#5b3a8e", "#b5482a", "#2b2b2b"];
   const GESTER = { vink: "vinker", skal: "skåler", dans: "danser", klapp: "klapper", ler: "ler" };
-  const BARES = ["hode", "pynt", "dyr"];   // det figuren kan ha på seg eller med seg
+  const BARES = ["hode", "pynt", "dyr"];
+  const GRUNNTREKK = ["hud", "har", "harfarge", "toga", "skjegg"];   // koster oliven å bytte etter innsjekken   // det figuren kan ha på seg eller med seg
   const PROFESSOR = "Professor Lund", TALERSTOL = [3, 1];   // samme som i lib/auditoriet.js
 
   // ---------- Fellesrommene ----------
@@ -142,15 +143,24 @@
     </ul>
     <h3>Innredning</h3>
     <p>Gå til rommet ditt og trykk «Innred rommet». Velg noe fra lageret og trykk på en ledig flis for å sette det ut. Trykk på et møbel i rommet for å snu det, flytte det eller ta det ned igjen. Sofaer, senger, troner og annet med en tydelig forside kan snus i fire retninger. Døra kan ikke sperres.</p>
+    <h3>Lageret</h3>
+    <p>Knappen «Lager» under rommet åpner lageret ditt, med ett bilde per slags møbel. I rommet ditt tar du et møbel i hånden ved å trykke på det, og setter det ut med et trykk på en flis. Det du kjøper i butikken eller tar ned fra rommet, havner her.</p>
+    <h3>Bytte møbler</h3>
+    <p>Trykk på en annen gjest i samme rom og velg «Bytt møbler». Dere legger møbler fra lageret i hver deres skål. Byttet skjer først når begge har godtatt, og endrer noen innholdet, må begge godta på nytt.</p>
+    <h3>Stjerner</h3>
+    <p>Når du er på besøk, kan du gi rommet en stjerne. Antallet står ved navnet i «Besøk noen».</p>
+    <h3>Innboksen</h3>
+    <p>Konvolutten øverst på siden er innboksen. Der ser du hvem som er på hotellet nå, og kan sende meldinger også til dem som ikke er inne.</p>
     <h3>Garderoben</h3>
-    <p>Under rommet kan du når som helst bytte toga, hudfarge, hår og skjegg, og ta på det du har kjøpt.</p>`;
+    <p>Hud, hår, skjegg og toga velger du når du sjekker inn. Å bytte senere koster 100 oliven. Hodeplagg, tilbehør og kjæledyr fra butikken bytter du fritt.</p>`;
 
   // ---------- Tilstand ----------
   let rom = "lobbyen", R = ROM[rom], ruter = [], mobler = [];
   let figurer = new Map();   // navn → figur (brødre og hotellets egne)
   let meg = null, look = null, etter = 0, forste = true, antall = {}, medlemmer = [], gjesterom = [], logg = [];
   let hjem = null, innred = false, valgt = null, melding = "", merket = null;   // merket: møbelet i rommet man har trykket på   // rommet til en bror, og innredning av eget rom
-  let butikk = null, fane = "mobler", kvittering = null, veggting = [];   // butikken, og det som henger på veggene i rommet
+  let butikk = null, fane = "mobler", kvittering = null, veggting = [];
+  let panel = null, lagerFane = "alt", lagerNokkel = "", bytteNa = null, bytteNokkel = "", bytteFeil = "", utkast = null, stjerneTall = {};   // verktøylinja under rommet   // butikken, og det som henger på veggene i rommet
   let bytter = false, romNokkel = "", innredNokkel = "", butikkNokkel = "";
   let lerret, ctx, logW = 960, logH = 600, kam = [0, 0], peker = null, mal = null;
   let lagreTid = null;
@@ -982,6 +992,8 @@
           ${min ? `<p class="dempet">Dette er deg. Du har ${k.respektIgjen} respekt igjen å dele ut i dag.</p>` : `<div class="h-kortknapper">
             <button class="knapp" type="button" data-h-respekt ${k.gittIDag || k.respektIgjen <= 0 ? "disabled" : ""}>${k.gittIDag ? "Respekt gitt i dag" : `Gi respekt (${k.respektIgjen} igjen)`}</button>
             ${iRommet ? `<button class="knapp sekundar" type="button" data-h-hvisk>Hvisk</button>` : ""}
+            ${iRommet ? `<button class="knapp sekundar" type="button" data-h-bytt>Bytt møbler</button>` : ""}
+            <button class="knapp sekundar" type="button" data-h-post>Send melding</button>
             <button class="knapp sekundar" type="button" data-h-besok>Besøk rommet</button>
             ${iRommet ? `<button class="knapp sekundar" type="button" data-h-slibrig>Gi en slibrig kommentar (${k.slibrigPris} oliven)</button>` : ""}
           </div>`}
@@ -1015,6 +1027,8 @@
       if (d.hRespekt !== undefined) { await api("hotell/respekt", post({ til: kortNavn })); lukkInfo(); hent(); }
       else if (d.hHvisk !== undefined) { lukkInfo(); settHvisk(kortNavn); }
       else if (d.hBesok !== undefined) { lukkInfo(); gaTil(`hjem:${kortNavn}`, null); }
+      else if (d.hPost !== undefined) { const n = kortNavn; lukkInfo(); visPost(n); }
+      else if (d.hBytt !== undefined) { const s = await api("hotell/bytte", post({ gjor: "start", med: kortNavn })); lukkInfo(); settBytte(s.bytte); visRommet(); }
       else if (d.hGave) { const s = await api("hotell/gave", post({ til: kortNavn, id: Number(d.hGave) })); if (erMitt() && hjem) oppdaterHjem(s.hjem); lukkInfo(); lastButikk(); hent(); }
       else if (d.hSang) { await api("hotell/musikk", post({ sang: d.hSang })); lukkInfo(); hent(); }
       else if (d.hSlibrig !== undefined) { const s = await api("hotell/slibrig", post({ til: kortNavn })); lukkInfo(); si(meg, s.tekst, performance.now() / 1000); leggILogg(MEG, s.tekst); lastButikk(); }
@@ -1198,6 +1212,8 @@
       }
       etter = s.sisteId; forste = false;
       antall = s.antall; medlemmer = s.medlemmer || medlemmer; gjesterom = s.gjesterom || gjesterom;
+      stjerneTall = s.stjerner || stjerneTall;
+      settBytte(s.bytte); visVerktoy();
       visRomliste();
     } catch (_) {
     } finally { henter = false; }
@@ -1234,7 +1250,7 @@
     const endret = !hjem || nokkel(hjem) !== nokkel(h);
     hjem = h;
     if (endret) { R = lagHjem(rom, h); lagRuter(); }
-    visInnred();
+    visInnred(); visVerktoy();
   }
   async function innredning(sti, kropp, etterpa) {
     try {
@@ -1285,11 +1301,97 @@
       ${melding ? `<p class="melding feil">${esc(melding)}</p>` : ""}
       ${innred && merket ? (() => { const m = hjem.mobler.find((a) => a.id === merket); return `<div class="h-merket"><p><strong>${esc(varenavn(m.type))}</strong> er valgt. Trykk på en ledig flis for å flytte den dit.</p>
         <div class="h-merket-knapper">${MOBEL[m.type] && MOBEL[m.type].snu ? `<button class="liten-knapp" type="button" data-snu="${m.id}">Snu ↻</button>` : ""}<button class="liten-knapp" type="button" data-tened="${m.id}">Ta ned</button><button class="liten-knapp" type="button" data-avmerk>Ferdig</button></div></div>`; })() : ""}
-      ${innred ? `<p class="h-etikett">På lager</p>
-        <div class="h-lager">${hjem.lager.length ? hjem.lager.map((m) => `<button type="button" class="h-valg${m.id === valgt ? " valgt" : ""}" data-velg="${m.id}">${esc(varenavn(m.type))}</button>`).join("") : `<span class="dempet">Tomt. Kjøp noe i butikken under.</span>`}</div>
-        <p class="dempet h-hjelp">Velg noe og trykk på en ledig flis for å sette det ut. Veggpynt henger på flisene inntil veggen. Trykk på et møbel i rommet for å snu, flytte eller ta det ned.</p>` : ""}
+      ${innred && valgt ? `<p class="h-merket"><strong>${esc(varenavn((hjem.lager.find((m) => m.id === valgt) || {}).type))}</strong> er i hånden. Trykk på en ledig flis for å sette den ut.</p>` : ""}
+      ${innred ? `<p class="dempet h-hjelp">Åpne <strong>Lageret</strong> over for å hente fram møbler. Velg noe og trykk på en ledig flis for å sette det ut. Veggpynt henger på flisene inntil veggen. Trykk på et møbel i rommet for å snu, flytte eller ta det ned.</p>` : ""}
       ${stiler("gulv", "Gulv")}${stiler("vegg", "Vegger")}
     </section>`;
+  }
+
+  // ---------- Verktøylinja: lager, butikk og garderobe åpnes som vinduer under rommet ----------
+  let lagerMelding = "";
+  const mittLager = () => (erMitt() && hjem && hjem.lager) || (butikk && butikk.lager) || [];
+  function visVerktoy() {
+    const v = document.getElementById("h-verktoy");
+    if (!v) return;
+    const n = mittLager().length, hos = rom.startsWith("hjem:") && !erMitt() && hjem ? hjem : null;
+    const nokkel = JSON.stringify([panel, n, hos && [hos.eier, hos.stjerner, hos.minStjerne], erMitt() && hjem && hjem.stjerner]);
+    if (v.dataset.nokkel !== nokkel) {
+      v.dataset.nokkel = nokkel;
+      const knapp = (id, tekst) => `<button type="button" class="h-verktoyknapp${panel === id ? " aktiv" : ""}" data-panel="${id}" aria-expanded="${panel === id}">${tekst}</button>`;
+      v.innerHTML = knapp("lager", `Lager <span>${n}</span>`) + knapp("butikk", "Butikk") + knapp("garderobe", "Garderobe") +
+        (hos ? `<button type="button" class="h-verktoyknapp h-stjerne${hos.minStjerne ? " aktiv" : ""}" data-stjerne>★ ${hos.stjerner} · ${hos.minStjerne ? "Du har gitt en stjerne" : "Gi rommet en stjerne"}</button>` : "") +
+        (erMitt() && hjem ? `<span class="h-stjernetall">★ ${hjem.stjerner || 0} ${hjem.stjerner === 1 ? "stjerne" : "stjerner"} fra gjestene</span>` : "");
+    }
+    document.getElementById("h-lagerpanel").hidden = panel !== "lager";
+    document.getElementById("h-butikk").hidden = panel !== "butikk";
+    document.getElementById("h-garderobepanel").hidden = panel !== "garderobe";
+    if (panel === "lager") visLager();
+    if (panel === "butikk") visButikk();
+  }
+  // Lageret: ett bilde per slags møbel, med antall. Trykk for å ta møbelet i hånden.
+  const LAGERFANER = { alt: "Alt", mobler: "Møbler", pynt: "Planter og pynt", gulv: "Tepper", vegg: "Veggpynt", trofe: "Trofeer" };
+  function stabler(liste) {
+    const ut = new Map();
+    for (const m of liste) { if (!ut.has(m.type)) ut.set(m.type, []); ut.get(m.type).push(m.id); }
+    return [...ut.entries()];
+  }
+  const vareknapp = (type, ider, attr, valgtId) => `<button type="button" class="h-ting${ider.includes(valgtId) ? " valgt" : ""}" ${attr}="${ider[0]}" title="${esc(varenavn(type))}"><canvas width="160" height="152" data-ikon="${type}" aria-hidden="true"></canvas><span>${esc(varenavn(type))}</span>${ider.length > 1 ? `<em>×${ider.length}</em>` : ""}</button>`;
+  function tegnIkoner(boks) { if (butikk) for (const c of boks.querySelectorAll("[data-ikon]")) if (butikk.katalog[c.dataset.ikon]) ikon(c, c.dataset.ikon); }
+  function visLager() {
+    const boks = document.getElementById("h-lagerpanel");
+    if (!boks || !butikk) return;
+    const lager = mittLager(), iBytte = bytteNa && bytteNa.status === "apen" ? bytteNa.mine.map((m) => m.id) : [];
+    const nokkel = JSON.stringify([lager, lagerFane, valgt, lagerMelding, iBytte, erMitt()]);
+    if (nokkel === lagerNokkel) return;
+    lagerNokkel = nokkel;
+    const ledige = lager.filter((m) => !iBytte.includes(m.id) && (lagerFane === "alt" || (butikk.katalog[m.type] || {}).kat === lagerFane));
+    boks.innerHTML = `<section class="h-boks h-panel">
+      <p class="h-etikett">Lageret</p>
+      <div class="h-faner">${Object.entries(LAGERFANER).map(([id, navn]) => `<button type="button" class="h-fane${id === lagerFane ? " aktiv" : ""}" data-lagerfane="${id}">${navn}</button>`).join("")}</div>
+      ${lagerMelding ? `<p class="melding feil">${esc(lagerMelding)}</p>` : ""}
+      ${ledige.length ? `<div class="h-tinger">${stabler(ledige).map(([type, ider]) => vareknapp(type, ider, "data-velg", valgt)).join("")}</div>` : `<p class="dempet">${lager.length ? "Ingenting under denne fanen." : "Lageret er tomt. Det du kjøper i butikken, havner her."}</p>`}
+      <p class="dempet h-hjelp">${iBytte.length || (bytteNa && bytteNa.status === "apen") ? "Trykk på et møbel for å legge det i byttet." : erMitt() ? "Trykk på et møbel for å ta det i hånden, og så på en ledig flis i rommet. Møbler du tar ned, havner her igjen." : "Her ligger møblene dine som ikke står ute. Gå til rommet ditt for å sette dem ut."}</p>
+    </section>`;
+    lagerMelding = "";
+    tegnIkoner(boks);
+  }
+  async function giStjerne() {
+    if (!hjem || erMitt()) return;
+    try { const s = await api("hotell/stjerne", post({ eier: hjem.eier })); hjem.stjerner = s.stjerner; hjem.minStjerne = s.minStjerne; stjerneTall = { ...stjerneTall, [hjem.eier]: s.stjerner }; visVerktoy(); visRomliste(); } catch (e) { leggILogg(null, e.message, "info"); }
+  }
+
+  // ---------- Møbelbytte: to skåler, begge må godta ----------
+  function settBytte(b) {
+    const for_ = bytteNa;
+    bytteNa = b || null;
+    if (b && b.status === "apen" && (!for_ || for_.id !== b.id)) { panel = "lager"; bytteFeil = ""; visVerktoy(); }
+    // Når et bytte er gjennomført, er lageret endret
+    if (b && b.status === "ferdig" && for_ && for_.status === "apen") { lagerNokkel = ""; lastButikk(); if (erMitt()) api(`hotell?rom=${encodeURIComponent(rom)}&etter=${etter}`).then((s) => { if (s.hjem) oppdaterHjem(s.hjem); }).catch(() => {}); }
+    visBytte(); if (panel === "lager") visLager();
+  }
+  async function bytteGjor(gjor, id) {
+    try { bytteFeil = ""; settBytte((await api("hotell/bytte", post({ gjor, id }))).bytte); }
+    catch (e) { bytteFeil = e.message; bytteNokkel = ""; visBytte(); }
+  }
+  function visBytte() {
+    const boks = document.getElementById("h-bytte");
+    if (!boks) return;
+    const b = bytteNa;
+    const nokkel = JSON.stringify([b, bytteFeil]);
+    if (nokkel === bytteNokkel) return;
+    bytteNokkel = nokkel;
+    if (!b) { boks.innerHTML = ""; return; }
+    const skal = (tittel, ting, ok, mine) => `<div class="h-skal${ok ? " ok" : ""}"><p class="h-etikett">${tittel}${ok ? " · har godtatt" : ""}</p>
+      <div class="h-tinger">${ting.length ? stabler(ting).map(([type, ider]) => mine && b.status === "apen" ? vareknapp(type, ider, 'data-bytte="fjern" data-id', null) : `<div class="h-ting"><canvas width="160" height="152" data-ikon="${type}" aria-hidden="true"></canvas><span>${esc(varenavn(type))}</span>${ider.length > 1 ? `<em>×${ider.length}</em>` : ""}</div>`).join("") : `<span class="dempet">Ingenting ennå</span>`}</div></div>`;
+    boks.innerHTML = `<section class="h-boks h-bytte">
+      <p class="h-etikett">Bytte med ${esc(vis(b.med))}</p>
+      ${b.status === "ferdig" ? `<p class="melding h-kvittering">Byttet er gjennomført. Det du fikk, ligger på lageret.</p>` : b.status === "avbrutt" ? `<p class="melding feil">Byttet ble avbrutt.</p>` : ""}
+      <div class="h-skaler">${skal("Du gir", b.mine, b.minOk, true)}${skal(`${esc(vis(b.med))} gir`, b.deres, b.deresOk, false)}</div>
+      ${bytteFeil ? `<p class="melding feil">${esc(bytteFeil)}</p>` : ""}
+      ${b.status === "apen" ? `<p class="h-merket-knapper"><button class="knapp" type="button" data-bytte="${b.minOk ? "angre" : "ok"}" ${!b.mine.length && !b.deres.length ? "disabled" : ""}>${b.minOk ? "Angre" : b.deresOk ? "Godta og bytt" : "Godta"}</button><button class="knapp sekundar" type="button" data-bytte="avbryt">Avbryt byttet</button></p>
+        <p class="dempet h-hjelp">Legg til møbler fra lageret under. Trykk på et møbel i din skål for å ta det ut igjen. Byttet skjer når begge har godtatt. Endrer noen innholdet, må begge godta på nytt.</p>` : ""}
+    </section>`;
+    tegnIkoner(boks);
   }
 
   // ---------- Butikken ----------
@@ -1372,6 +1474,7 @@
       if (s.slag === "mobel") {
         if (erMitt()) { innred = true; valgt = s.id; visRommet(); tekst = `${navn} er kjøpt. Trykk på en ledig flis i rommet for å sette den ut.`; }
         else tekst = `${navn} er kjøpt og ligger på lageret. Gå til rommet ditt for å sette den ut.`;
+        lagerNokkel = "";
       } else if (BARES.includes(s.slag)) { baer(s.slag, id); tekst = s.slag === "dyr" ? `${navn} er din, og følger deg fra nå av.` : `${navn} er kjøpt og tatt på.`; }
       else tekst = s.slag === "utvidelse" ? "Rommet ditt er utvidet med en flis hver vei." : `${navn} er kjøpt og tatt i bruk i rommet ditt.`;
       kvittering = { tekst };
@@ -1389,6 +1492,9 @@
   }
   // Ta på eller av noe fra garderoben, og si fra til serveren
   function baer(felt, verdi) {
+    // Hud, hår, skjegg og toga koster å bytte: de prøves først, og betales med knappen i garderoben
+    if (look.klar !== "ja") { look = { ...look, [felt]: verdi }; return visGarderobe(); }   // innsjekken: fritt valg
+    if (GRUNNTREKK.includes(felt)) { utkast = { ...(utkast || {}), [felt]: verdi }; return visGarderobe(); }
     look = { ...look, [felt]: verdi };
     if (meg) meg.utseende = look;
     visGarderobe(); visButikk();
@@ -1396,7 +1502,7 @@
     if (meg) lagreTid = setTimeout(() => api("hotell/utseende", post(look)).catch(() => {}), 500);
   }
   async function lastButikk() {
-    try { butikk = await api("hotell/butikk"); visButikk(); visGarderobe(); visInnred(); } catch (_) {}
+    try { butikk = await api("hotell/butikk"); lagerNokkel = ""; visButikk(); visGarderobe(); visInnred(); visVerktoy(); visBytte(); } catch (_) {}
   }
 
   // ---------- Det rundt lerretet ----------
@@ -1411,11 +1517,11 @@
   function visRomliste() {
     const l = document.getElementById("h-rom");
     if (!l) return;
-    const nokkel = JSON.stringify([rom, antall, medlemmer, gjesterom]);
+    const nokkel = JSON.stringify([rom, antall, medlemmer, gjesterom, stjerneTall]);
     if (nokkel === romNokkel) return;
     romNokkel = nokkel;
     const knapp = (id, navn) => `<button type="button" class="h-romknapp${id === rom ? " aktiv" : ""}" data-rom="${esc(id)}">${esc(navn)}<span>${antall[id] || 0}</span></button>`;
-    const valg = (n) => `<option value="hjem:${esc(n)}"${rom === `hjem:${n}` ? " selected" : ""}>${esc(vis(n))}${antall[`hjem:${n}`] ? ` (${antall[`hjem:${n}`]} inne)` : ""}</option>`;
+    const valg = (n) => `<option value="hjem:${esc(n)}"${rom === `hjem:${n}` ? " selected" : ""}>${esc(vis(n))}${stjerneTall[n] ? ` ★${stjerneTall[n]}` : ""}${antall[`hjem:${n}`] ? ` (${antall[`hjem:${n}`]} inne)` : ""}</option>`;
     // Brødre og gjester i én liste, sortert på navn
     const alle = [...medlemmer, ...gjesterom].filter((n) => n !== MEG).sort((a, b) => vis(a).localeCompare(vis(b), "nb"));
     l.innerHTML = Object.entries(ROM).map(([id, r]) => knapp(id, r.navn)).join("") + knapp(mittRom(), "Rommet mitt") +
@@ -1425,7 +1531,8 @@
   function visGarderobe() {
     const g = document.getElementById("h-garderobe");
     if (!g || !look) return;
-    const a = look;
+    const a = { ...look, ...(utkast || {}) };
+    const endret = utkast && GRUNNTREKK.some((k) => utkast[k] !== look[k]);
     const farger = (felt, liste) => liste.map((f) => `<button type="button" class="h-farge${a[felt] === f ? " valgt" : ""}" data-felt="${felt}" data-verdi="${f}" style="background:${f}" aria-label="${felt}"></button>`).join("");
     const valg = (felt, liste) => liste.map((v) => `<button type="button" class="h-valg${a[felt] === v ? " valgt" : ""}" data-felt="${felt}" data-verdi="${v}">${v}</button>`).join("");
     // Det som er kjøpt i butikken
@@ -1433,13 +1540,35 @@
       const l = eide(felt);
       return l.length ? `<div class="h-rad"><span>${tittel}</span><div><button type="button" class="h-valg${a[felt] ? "" : " valgt"}" data-felt="${felt}" data-verdi="">ingen</button>${l.map((id) => `<button type="button" class="h-valg${a[felt] === id ? " valgt" : ""}" data-felt="${felt}" data-verdi="${id}">${esc(varenavn(id))}</button>`).join("")}</div></div>` : "";
     };
+    const pris = (butikk && butikk.byttepris && butikk.byttepris.oliven) || 100;
     g.innerHTML = `
       <div class="h-rad"><span>Toga</span><div>${farger("toga", TOGA)}</div></div>
       <div class="h-rad"><span>Hud</span><div>${farger("hud", HUD)}</div></div>
       <div class="h-rad"><span>Hår</span><div>${valg("har", HAR)}</div></div>
       <div class="h-rad"><span>Hårfarge</span><div>${farger("harfarge", HARFARGE)}</div></div>
       <div class="h-rad"><span>Skjegg</span><div>${valg("skjegg", ["ja", "nei"])}</div></div>
-      ${kjopt("hode", "Hodeplagg")}${kjopt("pynt", "Tilbehør")}${kjopt("dyr", "Kjæledyr")}`;
+      ${kjopt("hode", "Hodeplagg")}${kjopt("pynt", "Tilbehør")}${kjopt("dyr", "Kjæledyr")}
+      ${look.klar !== "ja" ? "" : `<div class="h-utkast">
+        <canvas id="h-utkastbilde" width="120" height="150" aria-hidden="true"></canvas>
+        <div>${endret ? `<p>Slik blir du. Å bytte hud, hår, skjegg eller toga koster <strong>${pris} oliven</strong>.</p>
+          <p class="h-merket-knapper"><button class="knapp" type="button" data-utkast="betal">Bytt utseende · ${pris} oliven</button><button class="knapp sekundar" type="button" data-utkast="angre">Angre</button></p>`
+          : `<p class="dempet">Hud, hår, skjegg og toga valgte du da du sjekket inn. Å bytte koster ${pris} oliven. Hodeplagg, tilbehør og kjæledyr fra butikken bytter du fritt.</p>`}
+          <p class="melding feil" id="h-utkastfeil" hidden></p></div>
+      </div>`}`;
+    const c = document.getElementById("h-utkastbilde");
+    if (!c) return;
+    const k = c.getContext("2d");
+    k.translate(60, 138); k.scale(1.7, 1.7); figur(k, a, { t: 1, gaar: false, sitter: false, gest: null, flip: false, bak: false });
+  }
+  async function betalUtseende() {
+    if (!utkast) return;
+    try {
+      await api("hotell/utseende", post({ ...look, ...utkast }));
+      look = { ...look, ...utkast }; utkast = null;
+      if (meg) meg.utseende = look;
+      lastButikk();
+    } catch (e) { const f = document.getElementById("h-utkastfeil"); if (f) { f.textContent = e.message; f.hidden = false; } return; }
+    visGarderobe();
   }
 
   function tilpass() {
@@ -1472,11 +1601,22 @@
     else if (k.id === "h-hviskmerke") settHvisk(null);
     else if (k.dataset.slettbok) gjestebokSend({ slett: Number(k.dataset.slettbok) });
     else if (k.dataset.rom && k.dataset.rom !== rom) gaTil(k.dataset.rom, null);
+    else if (k.dataset.panel) { panel = panel === k.dataset.panel ? null : k.dataset.panel; visVerktoy(); }
+    else if (k.dataset.lagerfane) { lagerFane = k.dataset.lagerfane; visLager(); }
+    else if (k.dataset.stjerne !== undefined) giStjerne();
+    else if (k.dataset.bytte) bytteGjor(k.dataset.bytte, k.dataset.id ? Number(k.dataset.id) : undefined);
+    else if (k.dataset.utkast !== undefined) { if (k.dataset.utkast === "betal") betalUtseende(); else { utkast = null; visGarderobe(); } }
     else if (k.dataset.felt && look) baer(k.dataset.felt, k.dataset.verdi);
     else if (k.dataset.fane) { fane = k.dataset.fane; kvittering = null; visButikk(); }
     else if (k.dataset.stil) velgStil(k.dataset.stil, k.dataset.verdi);
     else if (k.dataset.innred !== undefined) { innred = !innred; valgt = null; merket = null; melding = ""; visInnred(); }
-    else if (k.dataset.velg) { valgt = valgt === Number(k.dataset.velg) ? null : Number(k.dataset.velg); merket = null; visInnred(); if (valgt) visRommet(); }
+    else if (k.dataset.velg) {
+      // Fra lageret: i eget rom settes møbelet ut, i et bytte legges det i skålen
+      const id = Number(k.dataset.velg);
+      if (bytteNa && bytteNa.status === "apen") return bytteGjor("legg", id);
+      if (!erMitt()) { melding = ""; kvittering = null; lagerMelding = "Gå til rommet ditt for å sette ut møbler."; return visLager(); }
+      valgt = valgt === id ? null : id; merket = null; innred = true; visInnred(); visLager(); if (valgt) visRommet();
+    }
     else if (k.dataset.snu) innredning("hotell/snu", { id: Number(k.dataset.snu) });
     else if (k.dataset.tened) { const id = Number(k.dataset.tened); innredning("hotell/mobel", { id, x: null }, () => { merket = null; }); }
     else if (k.dataset.avmerk !== undefined) { merket = null; visInnred(); }
@@ -1501,18 +1641,19 @@
         <button class="h-hviskmerke" type="button" id="h-hviskmerke" hidden></button>
         <div class="h-gester">${Object.keys(GESTER).map((g) => `<button class="liten-knapp" type="button" data-gest="${g}">${{ vink: "Vink", skal: "Skål", dans: "Dans", klapp: "Klapp", ler: "Le" }[g]}</button>`).join("")}<button class="liten-knapp" type="button" data-terning>Terning</button><button class="liten-knapp" type="button" data-lyd>${lydPa ? "Lyd på" : "Lyd av"}</button></div>
       </form>
+      <div class="h-verktoy" id="h-verktoy"></div>
+      <div id="h-bytte"></div>
+      <div id="h-lagerpanel" hidden></div>
+      <div id="h-butikk" hidden></div>
+      <section class="h-boks h-panel" id="h-garderobepanel" hidden><p class="h-etikett">Garderoben</p><div id="h-garderobe"></div></section>
       <div id="h-innred"></div>
       <div id="h-gjestebok"></div>
-      <div class="h-to">
-        <section class="h-boks"><p class="h-etikett">Praten</p><ul class="h-logg" id="h-logg"></ul></section>
-        <section class="h-boks"><p class="h-etikett">Garderoben</p><div id="h-garderobe"></div>
-          <p class="dempet h-hjelp">Trykk på gulvet for å gå, på en stol for å sette deg og på en dør for å bytte rom.</p></section>
-      </div>
-      <div id="h-butikk"></div>`;
+      <section class="h-boks h-pratboks"><p class="h-etikett">Praten</p><ul class="h-logg" id="h-logg"></ul>
+        <p class="dempet h-hjelp">Trykk på gulvet for å gå, på en stol for å sette deg og på en dør for å bytte rom.</p></section>`;
     lerret = document.getElementById("h-lerret");
     ctx = lerret.getContext("2d");
     tilpass();
-    visGarderobe();
+    visGarderobe(); visVerktoy();
 
     lerret.addEventListener("click", (e) => {
       const [x, y] = tilFlis(e);
@@ -1554,7 +1695,7 @@
         <p class="overline">Innsjekking</p>
         <h2>Lag figuren din</h2>
         ${new URLSearchParams(location.search).get("innsjekk") ? `<p><strong>Du må sjekke inn før du kan spille.</strong> Det gjør du bare én gang.</p>` : ""}
-        <p>Bestem hvordan du ser ut. Når du sjekker inn, får du et rom her på hotellet og et hus i Symposion, og du blir synlig for de andre i spillene. Du kan bytte klær i garderoben senere.</p>
+        <p>Bestem hvordan du ser ut. Når du sjekker inn, får du et rom her på hotellet og et hus i Symposion, og du blir synlig for de andre i spillene. Velg med omhu: å bytte hud, hår, skjegg eller toga senere koster 100 oliven.</p>
         <div id="h-garderobe"></div>
         <button class="knapp" type="button" id="h-sjekkinn">Sjekk inn som ${esc(vis(MEG))}</button>
         <p class="melding feil" id="h-innfeil" hidden></p>
