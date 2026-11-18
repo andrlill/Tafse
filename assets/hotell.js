@@ -141,7 +141,7 @@
       <li><strong>Garderoben</strong> har hodeplagg og tilbehør, og <strong>kjæledyrene</strong> følger deg rundt i hele hotellet.</li>
     </ul>
     <h3>Innredning</h3>
-    <p>Gå til rommet ditt og trykk «Innred rommet». Velg noe fra lageret og trykk på en ledig flis for å sette det ut. Trykk på et møbel i rommet for å ta det ned igjen. Døra kan ikke sperres.</p>
+    <p>Gå til rommet ditt og trykk «Innred rommet». Velg noe fra lageret og trykk på en ledig flis for å sette det ut. Trykk på et møbel i rommet for å snu det, flytte det eller ta det ned igjen. Sofaer, senger, troner og annet med en tydelig forside kan snus i fire retninger. Døra kan ikke sperres.</p>
     <h3>Garderoben</h3>
     <p>Under rommet kan du når som helst bytte toga, hudfarge, hår og skjegg, og ta på det du har kjøpt.</p>`;
 
@@ -149,7 +149,7 @@
   let rom = "lobbyen", R = ROM[rom], ruter = [], mobler = [];
   let figurer = new Map();   // navn → figur (brødre og hotellets egne)
   let meg = null, look = null, etter = 0, forste = true, antall = {}, medlemmer = [], gjesterom = [], logg = [];
-  let hjem = null, innred = false, valgt = null, melding = "";   // rommet til en bror, og innredning av eget rom
+  let hjem = null, innred = false, valgt = null, melding = "", merket = null;   // merket: møbelet i rommet man har trykket på   // rommet til en bror, og innredning av eget rom
   let butikk = null, fane = "mobler", kvittering = null, veggting = [];   // butikken, og det som henger på veggene i rommet
   let bytter = false, romNokkel = "", innredNokkel = "", butikkNokkel = "";
   let lerret, ctx, logW = 960, logH = 600, kam = [0, 0], peker = null, mal = null;
@@ -189,12 +189,35 @@
     flate([P(x1, y0, z1), P(x1, y1, z1), P(x1, y1, z0), P(x1, y0, z0)], mork(farge, 0.86));
     flate([P(x0, y0, z1), P(x1, y0, z1), P(x1, y1, z1), P(x0, y1, z1)], farge);
   }
-  // f er posisjonen langs veggen møbelet står mot, g er avstanden ut fra veggen
-  const klm = (x, y, mot, f0, g0, f1, g1, z0, z1, farge) => (mot === "v" ? kloss(x, y, g0, f0, g1, f1, z0, z1, farge) : kloss(x, y, f0, g0, f1, g1, z0, z1, farge));
-  // En flate på forsiden av et møbel, g ut fra veggen
-  const front = (x, y, mot, f0, f1, g, z0, z1, farge) => flate(mot === "v"
-    ? [P(x + g, y + f0, z0), P(x + g, y + f1, z0), P(x + g, y + f1, z1), P(x + g, y + f0, z1)]
-    : [P(x + f0, y + g, z0), P(x + f1, y + g, z0), P(x + f1, y + g, z1), P(x + f0, y + g, z1)], farge);
+  // Retningen et møbel står i, etter hvor ryggen vender: «h» mot høyre vegg (y = 0), «v» mot venstre
+  // vegg (x = 0), «hb» og «vb» motsatt, altså med ryggen mot den som ser på. Lagres som tallet 0–3.
+  const MOT = ["h", "v", "hb", "vb"];
+  // Fra møbelets egne mål til flisa: f er posisjonen langs ryggen, g avstanden ut fra ryggen
+  const kart = (mot, f, g) => (mot === "v" ? [g, f] : mot === "hb" ? [f, 1 - g] : mot === "vb" ? [1 - g, f] : [f, g]);
+  // Står ryggen mot oss, må delene tegnes bakfra og frem. Da samles de i «kø» og sorteres før de tegnes.
+  let ko = null, koNr = 0;
+  const legg = (dybde, z, tegn) => (ko ? ko.push({ dybde, z, nr: koNr++, tegn }) : tegn());
+  const klm = (x, y, mot, f0, g0, f1, g1, z0, z1, farge) => {
+    const [a0, b0] = kart(mot, f0, g0), [a1, b1] = kart(mot, f1, g1);
+    legg(Math.max(a0, a1) + Math.max(b0, b1), z0, () => kloss(x, y, Math.min(a0, a1), Math.min(b0, b1), Math.max(a0, a1), Math.max(b0, b1), z0, z1, farge));
+  };
+  const senere = (tegn) => legg(99, 99, tegn);   // pynt som skal ligge øverst
+  function tegnMobel(type, x, y, mot, t) {
+    const m = MOBEL[type];
+    if (!m.snu || (mot !== "hb" && mot !== "vb")) return m.tegn(x, y, mot, t);
+    ko = []; koNr = 0;
+    m.tegn(x, y, mot, t);
+    const deler = ko; ko = null;
+    deler.sort((a, b) => a.dybde - b.dybde || a.z - b.z || a.nr - b.nr).forEach((d) => d.tegn());
+  }
+  // En flate på forsiden av et møbel, g ut fra ryggen. Snur møbelet ryggen mot oss, synes ikke forsiden.
+  const front = (x, y, mot, f0, f1, g, z0, z1, farge) => {
+    if (mot === "hb" || mot === "vb") return;
+    const [a0, b0] = kart(mot, f0, g), [a1, b1] = kart(mot, f1, g);
+    flate([P(x + a0, y + b0, z0), P(x + a1, y + b1, z0), P(x + a1, y + b1, z1), P(x + a0, y + b0, z1)], farge);
+  };
+  // En vannrett flate oppå et møbel
+  const topp = (x, y, mot, f0, g0, f1, g1, z, farge) => legg(9, z, () => flate([kart(mot, f0, g0), kart(mot, f1, g0), kart(mot, f1, g1), kart(mot, f0, g1)].map(([a, b]) => P(x + a, y + b, z)), farge));
   const ell = (a, b, rx, ry, farge) => { ctx.fillStyle = farge; ctx.beginPath(); ctx.ellipse(a, b, rx, ry, 0, 0, 7); ctx.fill(); };
   const rk = (a, b, w, h, farge) => { ctx.fillStyle = farge; ctx.fillRect(a, b, w, h); };
   const flamme = (a, b, t, fro, s = 1) => { const f = 1 + Math.sin(t * 9 + fro) * 0.15; ell(a, b, 5 * s, 10 * s * f, "#f2c14e"); ell(a, b + 3 * s, 2.5 * s, 5 * s * f, "#fff0b8"); };
@@ -224,17 +247,21 @@
       flate([P(x + 0.3, y + 0.3, 39.5), P(x + 0.66, y + 0.3, 39.5), P(x + 0.66, y + 0.62, 39.5), P(x + 0.3, y + 0.62, 39.5)], "#ece4d2");
     } },
     disk: { blokk: true, tegn(x, y) { kloss(x, y, 0, 0.1, 1, 0.9, 0, 30, "#6b4a2a"); kloss(x, y, 0, 0.05, 1, 0.95, 30, 34, "#c9a24a"); } },
-    sofa: { sete: 15, tegn(x, y, mot) {
-      if (mot === "v") { kloss(x, y, 0, 0, 0.28, 1, 0, 36, "#7a2843"); kloss(x, y, 0.28, 0, 1, 1, 0, 15, "#8e2f52"); }
-      else { kloss(x, y, 0, 0, 1, 0.28, 0, 36, "#7a2843"); kloss(x, y, 0, 0.28, 1, 1, 0, 15, "#8e2f52"); }
+    // Møbler med «snu» kan snus i fire retninger når man innreder
+    sofa: { sete: 15, snu: true, tegn(x, y, mot) {
+      // Ryggen tegnes sist når den vender mot oss, så den dekker setet
+      const rygg = () => klm(x, y, mot, 0, 0, 1, 0.28, 0, 36, "#7a2843"), sete = () => klm(x, y, mot, 0, 0.28, 1, 1, 0, 15, "#8e2f52");
+      if (mot === "hb" || mot === "vb") { sete(); rygg(); } else { rygg(); sete(); }
     } },
-    seng: { sete: 14, tegn(x, y, mot) {
-      if (mot === "v") { kloss(x, y, 0, 0.06, 0.14, 0.94, 0, 30, "#5a4630"); kloss(x, y, 0.14, 0.06, 1, 0.94, 0, 13, "#ece4d2"); kloss(x, y, 0.18, 0.16, 0.42, 0.84, 13, 17, "#d8cdb4"); kloss(x, y, 0.55, 0.06, 1, 0.94, 13, 14.5, "#8e2f52"); }
-      else { kloss(x, y, 0.06, 0, 0.94, 0.14, 0, 30, "#5a4630"); kloss(x, y, 0.06, 0.14, 0.94, 1, 0, 13, "#ece4d2"); kloss(x, y, 0.16, 0.18, 0.84, 0.42, 13, 17, "#d8cdb4"); kloss(x, y, 0.06, 0.55, 0.94, 1, 13, 14.5, "#8e2f52"); }
+    seng: { sete: 14, snu: true, tegn(x, y, mot) {
+      const gavl = () => klm(x, y, mot, 0.06, 0, 0.94, 0.14, 0, 30, "#5a4630");
+      if (mot !== "hb" && mot !== "vb") gavl();
+      klm(x, y, mot, 0.06, 0.14, 0.94, 1, 0, 13, "#ece4d2"); klm(x, y, mot, 0.16, 0.18, 0.84, 0.42, 13, 17, "#d8cdb4"); klm(x, y, mot, 0.06, 0.55, 0.94, 1, 13, 14.5, "#8e2f52");
+      if (mot === "hb" || mot === "vb") gavl();
     } },
     krakk: { sete: 14, tegn(x, y) { kloss(x, y, 0.3, 0.3, 0.7, 0.7, 0, 11, "#5a4630"); kloss(x, y, 0.2, 0.2, 0.8, 0.8, 11, 14, "#c9a24a"); } },
     bord: { blokk: true, tegn(x, y) { kloss(x, y, 0.4, 0.4, 0.6, 0.6, 0, 18, "#5a4630"); kloss(x, y, 0.08, 0.08, 0.92, 0.92, 18, 22, "#ece4d2"); const [a, b] = P(x + 0.5, y + 0.5, 22); ctx.fillStyle = "#8e2f52"; ctx.fillRect(a - 3, b - 9, 6, 9); ctx.fillStyle = "#c9a24a"; ctx.fillRect(a - 4, b - 11, 8, 2); } },
-    solseng: { sete: 10, tegn(x, y) { kloss(x, y, 0.15, 0, 0.85, 1, 0, 9, "#ece4d2"); kloss(x, y, 0.15, 0, 0.85, 0.22, 9, 22, "#d8cdb4"); } },
+    solseng: { sete: 10, snu: true, tegn(x, y, mot) { klm(x, y, mot, 0.15, 0, 0.85, 1, 0, 9, "#ece4d2"); klm(x, y, mot, 0.15, 0, 0.85, 0.22, 9, 22, "#d8cdb4"); } },
     teppe: { gulv: true, tegn(x, y) { rombe(x, y, 0.06, "#c9a24a"); rombe(x, y, 0.13, "#8e2f52"); rombe(x, y, 0.36, "#c9a24a"); rombe(x, y, 0.42, "#7a2843"); } },
     soyle: { blokk: true, tegn(x, y) {
       kloss(x, y, 0.15, 0.15, 0.85, 0.85, 0, 7, "#d8cdb4"); kloss(x, y, 0.28, 0.28, 0.72, 0.72, 7, 94, "#ece4d2");
@@ -286,12 +313,12 @@
       ctx.fillStyle = "#fff0b8"; ctx.beginPath(); ctx.ellipse(a, b - 59, 2.5, 5 * f, 0, 0, 7); ctx.fill();
     } },
     // ----- Flere møbler -----
-    benk: { sete: 15, tegn(x, y, mot) { klm(x, y, mot, 0.12, 0.3, 0.26, 0.8, 0, 11, "#d8cdb4"); klm(x, y, mot, 0.74, 0.3, 0.88, 0.8, 0, 11, "#d8cdb4"); klm(x, y, mot, 0.05, 0.25, 0.95, 0.85, 11, 15, "#ece4d2"); } },
-    kline: { sete: 15, tegn(x, y, mot) {
+    benk: { sete: 15, snu: true, tegn(x, y, mot) { klm(x, y, mot, 0.12, 0.3, 0.26, 0.8, 0, 11, "#d8cdb4"); klm(x, y, mot, 0.74, 0.3, 0.88, 0.8, 0, 11, "#d8cdb4"); klm(x, y, mot, 0.05, 0.25, 0.95, 0.85, 11, 15, "#ece4d2"); } },
+    kline: { sete: 15, snu: true, tegn(x, y, mot) {
       klm(x, y, mot, 0.04, 0.1, 0.96, 0.9, 0, 11, "#5a4630"); klm(x, y, mot, 0.04, 0.1, 0.96, 0.9, 11, 15, "#2f5d8e");
       klm(x, y, mot, 0.04, 0.1, 0.24, 0.9, 15, 24, "#c9a24a"); klm(x, y, mot, 0.3, 0.2, 0.5, 0.8, 15, 18, "#ece4d2");
     } },
-    bokhylle: { blokk: true, tegn(x, y, mot) {
+    bokhylle: { blokk: true, snu: true, tegn(x, y, mot) {
       klm(x, y, mot, 0.06, 0.04, 0.94, 0.42, 0, 76, "#5a4630");
       const ruller = ["#ece4d2", "#d8cdb4", "#c9a24a", "#8e2f52", "#ece4d2", "#2f5d8e"];
       for (let h = 0; h < 3; h++) {
@@ -313,7 +340,7 @@
       const F = ["#eee4da", "#f2b179", "#edc22e", "#f67c5f", "#ede0c8", "#f59563", "#edcf72", "#f65e3b"];
       for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { const fx = x + 0.16 + i * 0.175, fy = y + 0.16 + j * 0.175; flate([P(fx, fy, 20), P(fx + 0.15, fy, 20), P(fx + 0.15, fy + 0.15, 20), P(fx, fy + 0.15, 20)], F[(i * 3 + j * 5) % F.length]); }
     } },
-    kiste: { blokk: true, tegn(x, y, mot) {
+    kiste: { blokk: true, snu: true, tegn(x, y, mot) {
       klm(x, y, mot, 0.12, 0.25, 0.88, 0.78, 0, 16, "#6b4a2a"); klm(x, y, mot, 0.12, 0.25, 0.88, 0.78, 16, 23, "#8a6038");
       for (const f of [0.12, 0.78]) klm(x, y, mot, f, 0.245, f + 0.1, 0.785, 0, 23.5, "#c9a24a");
       front(x, y, mot, 0.44, 0.56, 0.785, 11, 19, "#e2c174");
@@ -333,9 +360,9 @@
       ctx.strokeStyle = "#5a3a22"; ctx.lineWidth = 4; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(a - 9, b - 2); ctx.lineTo(a + 8, b - 7); ctx.moveTo(a - 8, b - 7); ctx.lineTo(a + 9, b - 2); ctx.stroke(); ctx.lineCap = "butt";
       glod(a, b - 14, 50); flamme(a - 5, b - 13, t, x); flamme(a + 5, b - 12, t, x + 2, 0.8); flamme(a, b - 17, t, x + 4, 1.2);
     } },
-    badekar: { blokk: true, tegn(x, y, mot, t) {
+    badekar: { blokk: true, snu: true, tegn(x, y, mot, t) {
       klm(x, y, mot, 0.06, 0.18, 0.94, 0.82, 0, 17, "#ece4d2");
-      flate(mot === "v" ? [P(x + 0.25, y + 0.12, 17), P(x + 0.75, y + 0.12, 17), P(x + 0.75, y + 0.88, 17), P(x + 0.25, y + 0.88, 17)] : [P(x + 0.12, y + 0.25, 17), P(x + 0.88, y + 0.25, 17), P(x + 0.88, y + 0.75, 17), P(x + 0.12, y + 0.75, 17)], `hsl(198 55% ${44 + Math.sin(t * 2 + x) * 3}%)`);
+      topp(x, y, mot, 0.12, 0.25, 0.88, 0.75, 17, `hsl(198 55% ${44 + Math.sin(t * 2 + x) * 3}%)`);
       klm(x, y, mot, 0.06, 0.18, 0.14, 0.3, 17, 27, "#c9a24a");
     } },
     // ----- Planter og pynt -----
@@ -491,12 +518,12 @@
       for (const [dx, dy, r, c] of [[-16, -50, 17, "#b08d37"], [15, -54, 18, "#c9a24a"], [0, -72, 20, "#e2c174"], [-6, -48, 13, "#c9a24a"], [8, -82, 11, "#f2dc9a"]]) ell(a + dx, b + dy, r, r, c);
       for (let i = 0; i < 5; i++) { const g = Math.max(0, Math.sin(t * 2 + i * 1.7)) * 2; ell(a + [-18, 12, -4, 20, 4][i], b + [-56, -64, -84, -46, -50][i], g, g, "#fffbe6"); }
     } },
-    trone: { sete: 17, tegn(x, y, mot) {
+    trone: { sete: 17, snu: true, tegn(x, y, mot) {
       klm(x, y, mot, 0.12, 0.06, 0.88, 0.24, 0, 70, "#c9a24a"); klm(x, y, mot, 0.2, 0.06, 0.8, 0.245, 26, 62, "#8e2f52");
       klm(x, y, mot, 0.12, 0.24, 0.88, 0.92, 0, 14, "#c9a24a"); klm(x, y, mot, 0.18, 0.26, 0.82, 0.9, 14, 17, "#8e2f52");
       klm(x, y, mot, 0.08, 0.24, 0.2, 0.92, 14, 30, "#e2c174"); klm(x, y, mot, 0.8, 0.24, 0.92, 0.92, 14, 30, "#e2c174");
-      const [a, b] = mot === "v" ? P(x + 0.15, y + 0.5, 70) : P(x + 0.5, y + 0.15, 70);
-      ell(a, b - 5, 6, 6, "#e2c174"); ell(a, b - 5, 3, 3, "#6fc3c9");
+      const [fa, fb] = kart(mot, 0.5, 0.15), [a, b] = P(x + fa, y + fb, 70);
+      senere(() => { ell(a, b - 5, 6, 6, "#e2c174"); ell(a, b - 5, 3, 3, "#6fc3c9"); });
     } },
   };
 
@@ -537,7 +564,7 @@
       ][trinn],
       skilt: { side: "v", pos: n / 2, z: 96, tekst: vis(h.eier).toUpperCase(), font: "600 12px Cinzel, Georgia, serif", plakett: true },
       dorer: [{ x: 1, y: 0, side: "h", til: "lobbyen" }],
-      mobler: h.mobler.map((m) => [m.type, m.x, m.y, m.x === 0 ? "v" : "h"]),
+      mobler: h.mobler.map((m) => [m.type, m.x, m.y, MOT[m.retning ?? (m.x === 0 ? 1 : 0)], m.id]),
       npc: [],
     };
   }
@@ -552,7 +579,7 @@
       if (m.vann) ruter[x][y].vann = true;
       if (m.blokk) ruter[x][y].blokk = true;
       if (m.klikk) ruter[x][y].klikk = m.klikk;
-      if (m.sete) ruter[x][y].sete = { h: m.sete };
+      if (m.sete) ruter[x][y].sete = { h: m.sete, mot: m.snu ? mot : null };
       mobler.push({ type, x, y, mot, dybde: x + y, gulv: !!m.gulv });
     }
     for (const d of R.dorer) ruter[d.x][d.y].dor = d;
@@ -684,6 +711,13 @@
     }
   }
 
+  // Sitter figuren på noe som har ryggen mot oss? Da tegnes møbelet etter figuren, så ryggen dekker.
+  function bakSete(f) {
+    if (f.sti.length) return false;
+    const rt = rute(Math.round(f.x), Math.round(f.y));
+    return !!(rt && rt.sete && (rt.sete.mot === "hb" || rt.sete.mot === "vb"));
+  }
+
   function tegnFigur(f, t) {
     const rt = rute(Math.round(f.x), Math.round(f.y));
     const [sx, sy0] = P(f.x + 0.5, f.y + 0.5);
@@ -698,7 +732,10 @@
     ctx.save();
     ctx.translate(sx, sy0 - (sitter ? rt.sete.h : 0) + (vann ? 16 : 0) - hopp);
     if (vann) { ctx.beginPath(); ctx.rect(-40, -130, 80, 130 - 20 + hopp); ctx.clip(); }
-    figur(ctx, f.utseende, { t, gaar, sitter: !!sitter, gest, flip: dans ? Math.floor(t * 2.5) % 2 === 0 : f.flip, bak: f.bak && gaar });
+    // Den som sitter, ser samme vei som møbelet
+    const seteMot = sitter && rt.sete.mot;
+    const flip = seteMot ? seteMot === "h" || seteMot === "vb" : f.flip, bak = seteMot ? seteMot === "hb" || seteMot === "vb" : f.bak && gaar;
+    figur(ctx, f.utseende, { t, gaar, sitter: !!sitter, gest, flip: dans ? Math.floor(t * 2.5) % 2 === 0 : flip, bak });
     ctx.restore();
     if (vann) { ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(sx, sy0 - 4, 16 + Math.sin(t * 4) * 2, 6, 0, 0, 7); ctx.stroke(); }
     f.topp = sy0 - (sitter ? rt.sete.h - 8 : 0) + (vann ? 16 : 0) - 84;
@@ -853,13 +890,15 @@
     };
     const pr = peker && rute(peker[0], peker[1]);
     if (pr && (innred || !pr.blokk || pr.npc)) merk(peker, "rgba(226,193,116,.9)", 2);
+    const mm = innred && merket && hjem && hjem.mobler.find((m) => m.id === merket);
+    if (mm) merk([mm.x, mm.y], `rgba(111,195,201,${0.6 + Math.sin(t * 5) * 0.3})`, 3);
     if (mal && meg && meg.sti.length) merk(mal, "rgba(236,228,210,.7)", 1.5);
 
     // Møbler og figurer, bakerst først
-    const ting = [...mobler.filter((m) => !m.gulv).map((m) => ({ d: m.dybde, m })), ...[...figurer.values()].map((f) => ({ d: f.x + f.y + 0.5, f })),
+    const ting = [...mobler.filter((m) => !m.gulv).map((m) => ({ d: m.dybde, m })), ...[...figurer.values()].map((f) => ({ d: f.x + f.y + (bakSete(f) ? -0.2 : 0.5), f })),
       ...[...figurer.values()].filter((f) => f.kjael).map((f) => ({ d: f.kjael.x + f.kjael.y + 0.45, k: f }))].sort((a, b) => a.d - b.d);
     for (const e of ting) {
-      if (e.m) MOBEL[e.m.type].tegn(e.m.x, e.m.y, e.m.mot, t);
+      if (e.m) tegnMobel(e.m.type, e.m.x, e.m.y, e.m.mot, t);
       else if (e.k) tegnDyr(e.k, t);
       else tegnFigur(e.f, t);
     }
@@ -1213,8 +1252,15 @@
     const holder = valgt && hjem.lager.find((m) => m.id === valgt);
     if (holder && kanSettes(holder.type, x, y)) return innredning("hotell/mobel", { id: valgt, x, y }, () => { valgt = null; });
     const star = pa.find((m) => !lagAv(m.type)) || pa.find((m) => lagAv(m.type) === "gulv") || pa[0];
-    if (star) innredning("hotell/mobel", { id: star.id, x: null }, () => { valgt = star.id; });
-    else if (holder) { melding = lagAv(holder.type) === "vegg" ? "Veggpynt må henge på en flis inntil veggen." : "Der er det ikke plass."; visInnred(); }
+    // Trykk på et møbel: velg det, så kan det snus, flyttes eller tas ned
+    if (star && !holder) { merket = merket === star.id ? null : star.id; valgt = null; melding = ""; return visInnred(); }
+    // Et valgt møbel flyttes dit man trykker
+    const m = merket && hjem.mobler.find((a) => a.id === merket);
+    if (m && !holder) {
+      if (kanSettes(m.type, x, y)) return innredning("hotell/mobel", { id: m.id, x, y });
+      melding = lagAv(m.type) === "vegg" ? "Veggpynt må henge på en flis inntil veggen." : "Der er det ikke plass."; return visInnred();
+    }
+    if (holder) { melding = lagAv(holder.type) === "vegg" ? "Veggpynt må henge på en flis inntil veggen." : "Der er det ikke plass."; visInnred(); }
   }
   const eide = (slag) => (butikk ? butikk.eid.filter((id) => butikk.katalog[id] && butikk.katalog[id].slag === slag) : []);
   const varenavn = (id) => (butikk && butikk.katalog[id] ? butikk.katalog[id].navn : id);
@@ -1222,7 +1268,8 @@
     const boks = document.getElementById("h-innred");
     if (!boks) return;
     if (!erMitt() || !hjem || !hjem.lager) { if (innredNokkel) { boks.innerHTML = ""; innredNokkel = ""; } return; }
-    const nokkel = JSON.stringify([hjem.lager, hjem.niva, hjem.storrelse, innred, valgt, melding, butikk && [butikk.eid, butikk.gulv, butikk.vegg]]);
+    if (merket && !hjem.mobler.some((m) => m.id === merket)) merket = null;
+    const nokkel = JSON.stringify([hjem.lager, hjem.niva, hjem.storrelse, innred, valgt, merket, melding, butikk && [butikk.eid, butikk.gulv, butikk.vegg]]);
     if (nokkel === innredNokkel) return;
     innredNokkel = nokkel;
     const stiler = (slag, tittel) => {
@@ -1236,9 +1283,11 @@
         <button class="knapp${innred ? "" : " sekundar"}" type="button" data-innred>${innred ? "Ferdig" : "Innred rommet"}</button>
       </div>
       ${melding ? `<p class="melding feil">${esc(melding)}</p>` : ""}
+      ${innred && merket ? (() => { const m = hjem.mobler.find((a) => a.id === merket); return `<div class="h-merket"><p><strong>${esc(varenavn(m.type))}</strong> er valgt. Trykk på en ledig flis for å flytte den dit.</p>
+        <div class="h-merket-knapper">${MOBEL[m.type] && MOBEL[m.type].snu ? `<button class="liten-knapp" type="button" data-snu="${m.id}">Snu ↻</button>` : ""}<button class="liten-knapp" type="button" data-tened="${m.id}">Ta ned</button><button class="liten-knapp" type="button" data-avmerk>Ferdig</button></div></div>`; })() : ""}
       ${innred ? `<p class="h-etikett">På lager</p>
         <div class="h-lager">${hjem.lager.length ? hjem.lager.map((m) => `<button type="button" class="h-valg${m.id === valgt ? " valgt" : ""}" data-velg="${m.id}">${esc(varenavn(m.type))}</button>`).join("") : `<span class="dempet">Tomt. Kjøp noe i butikken under.</span>`}</div>
-        <p class="dempet h-hjelp">Velg noe og trykk på en ledig flis for å sette det ut. Veggpynt henger på flisene inntil veggen. Trykk på et møbel i rommet for å ta det ned igjen.</p>` : ""}
+        <p class="dempet h-hjelp">Velg noe og trykk på en ledig flis for å sette det ut. Veggpynt henger på flisene inntil veggen. Trykk på et møbel i rommet for å snu, flytte eller ta det ned.</p>` : ""}
       ${stiler("gulv", "Gulv")}${stiler("vegg", "Vegger")}
     </section>`;
   }
@@ -1426,8 +1475,11 @@
     else if (k.dataset.felt && look) baer(k.dataset.felt, k.dataset.verdi);
     else if (k.dataset.fane) { fane = k.dataset.fane; kvittering = null; visButikk(); }
     else if (k.dataset.stil) velgStil(k.dataset.stil, k.dataset.verdi);
-    else if (k.dataset.innred !== undefined) { innred = !innred; valgt = null; melding = ""; visInnred(); }
-    else if (k.dataset.velg) { valgt = valgt === Number(k.dataset.velg) ? null : Number(k.dataset.velg); visInnred(); if (valgt) visRommet(); }
+    else if (k.dataset.innred !== undefined) { innred = !innred; valgt = null; merket = null; melding = ""; visInnred(); }
+    else if (k.dataset.velg) { valgt = valgt === Number(k.dataset.velg) ? null : Number(k.dataset.velg); merket = null; visInnred(); if (valgt) visRommet(); }
+    else if (k.dataset.snu) innredning("hotell/snu", { id: Number(k.dataset.snu) });
+    else if (k.dataset.tened) { const id = Number(k.dataset.tened); innredning("hotell/mobel", { id, x: null }, () => { merket = null; }); }
+    else if (k.dataset.avmerk !== undefined) { merket = null; visInnred(); }
     else if (k.dataset.kjop) kjop(k.dataset.kjop);
   });
   rot.addEventListener("submit", (e) => {

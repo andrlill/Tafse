@@ -1126,3 +1126,8 @@ details.glemt > summary:hover, details.glemt[open] > summary { color: var(--gull
 @media (max-width: 640px) { .plakat-to { grid-template-columns: 1fr; gap: 0; } .plakat-tabell td:last-child, .plakat-tabell th:last-child { display: none; } .plakat-slik { display: block; font-size: 14px; color: var(--dempet); margin-left: 18px; } }
 @media (max-width: 520px) { .spillside .merke span { font-size: 18px; letter-spacing: .16em; } .spillside .merke { gap: 8px; } .spillside .merke svg { width: 34px; height: 26px; } }
 @media (max-width: 360px) { .spillside .merke svg { display: none; } .spillside .merke span { font-size: 16px; } }
+
+/* Tafse Hotell: et møbel man har trykket på i rommet sitt */
+.h-merket { border: 1px solid rgba(111,195,201,.5); background: rgba(111,195,201,.06); padding: 10px 14px; margin: 10px 0 14px; }
+.h-merket p { margin: 0 0 8px; }
+.h-merket-knapper { display: flex; flex-wrap: wrap; gap: 8px; }

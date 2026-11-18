@@ -6,7 +6,7 @@
 
 import { premie, SKJEMA as PREMIE_SKJEMA } from "../../lib/premier.js";
 import { tartaros, SKJEMA as TARTAROS_SKJEMA } from "../../lib/tartaros.js";
-import { hotell, SKJEMA as HOTELL_SKJEMA } from "../../lib/hotell.js";
+import { hotell, SKJEMA as HOTELL_SKJEMA, MIGRERING as HOTELL_MIGRERING } from "../../lib/hotell.js";
 import { symposion, SKJEMA as SYMPOSION_SKJEMA, MIGRERING as SYMPOSION_MIGRERING } from "../../lib/symposion.js";
 
 const MAKS_BILDE = 1_900_000; // byte, D1 tåler rundt 2 MB per rad
@@ -177,6 +177,7 @@ async function sikreSkjema(db) {
   try { await db.prepare("ALTER TABLE forslag ADD COLUMN type TEXT").run(); } catch (_) {}
   try { await db.prepare("ALTER TABLE forslag ADD COLUMN mote TEXT").run(); } catch (_) {}
   for (const sql of SYMPOSION_MIGRERING) { try { await db.prepare(sql).run(); } catch (_) {} }
+  for (const sql of HOTELL_MIGRERING) { try { await db.prepare(sql).run(); } catch (_) {} }
   skjemaKlart = true;
 }
 
