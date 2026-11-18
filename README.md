@@ -56,7 +56,7 @@ Nettsiden til Taffelakademiet for Samvær og Etegilder.
 6. **Domene:** Pages-prosjektet › Custom domains › legg til `tafse.no` og følg instruksene.
 7. **Professoren i auditoriet:** Pages-prosjektet › Settings › Bindings › Add › Workers AI.
    Variable name: `AI`. Publiser på nytt (punkt 5). Gratiskvoten er 10 000 «Neurons» i døgnet,
-   og professoren stopper selv etter 500 svar i døgnet. Vil du prøve en annen språkmodell, legg til
+   og professoren stopper selv etter 300 svar i døgnet. Vil du prøve en annen språkmodell, legg til
    variabelen `PROFESSOR_MODELL` (for eksempel `@cf/zai-org/glm-4.7-flash`) under Variables and Secrets.
 
 Tabellene i databasen lages automatisk første gang noen logger inn.

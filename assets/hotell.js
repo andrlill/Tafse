@@ -710,16 +710,40 @@
       for (let i = 0; i < 3; i++) { ctx.globalAlpha = 0.3 + 0.7 * Math.max(0, Math.sin(t * 5 - i * 0.9)); ctx.beginPath(); ctx.arc(x + 12 + i * 10, y + 11, 2.6, 0, 7); ctx.fill(); }
       ctx.globalAlpha = 1;
     }
-    if (!f.boble || f.boble.til < t) return;
+  }
+
+  // Snakkeboblene tegnes til slutt og legges så de ikke dekker hverandre:
+  // den nyeste står over den som snakker, og eldre bobler skyves oppover.
+  function tegnBobler(t) {
+    const aktive = [...figurer.values()].filter((f) => f.boble && f.boble.til > t).sort((a, b) => b.boble.fra - a.boble.fra);
+    if (!aktive.length) return;
     ctx.font = `${Math.round(16 * TK)}px 'EB Garamond', Georgia, serif`;
-    const b = Math.max(...f.boble.linjer.map((l) => ctx.measureText(l).width)) + 20, lh = 19 * TK, h = f.boble.linjer.length * lh + 12;
-    const x = Math.max(-kam[0] + 6, Math.min(logW / zoom - kam[0] - b - 6, sx - b / 2)), y = f.topp - h;
-    ctx.globalAlpha = Math.min(1, (f.boble.til - t) / 0.4);
-    ctx.fillStyle = "#f5efe0"; ctx.strokeStyle = "#c9a24a"; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.roundRect(x, y, b, h, 8); ctx.fill(); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(sx - 6, y + h - 1); ctx.lineTo(sx, y + h + 7); ctx.lineTo(sx + 6, y + h - 1); ctx.fillStyle = "#f5efe0"; ctx.fill();
-    ctx.fillStyle = "#1c1612";
-    f.boble.linjer.forEach((l, i) => ctx.fillText(l, x + b / 2, y + 2 + lh * (i + 0.9)));
+    ctx.textAlign = "center";
+    const lh = 19 * TK, topp = -kam[1] + 4, plassert = [];
+    for (const f of aktive) {
+      const [sx] = P(f.x + 0.5, f.y + 0.5);
+      const b = Math.max(...f.boble.linjer.map((l) => ctx.measureText(l).width)) + 20, h = f.boble.linjer.length * lh + 12;
+      const x = Math.max(-kam[0] + 6, Math.min(logW / zoom - kam[0] - b - 6, sx - b / 2));
+      let y = f.topp - h;
+      for (let n = 0; n < 40; n++) {
+        const i = plassert.find((r) => x < r.x + r.b + 4 && x + b + 4 > r.x && y < r.y + r.h + 6 && y + h + 6 > r.y);
+        if (!i) break;
+        y = i.y - h - 8;
+      }
+      plassert.push({ x, y, b, h });
+      const synlig = Math.max(y, topp);
+      ctx.globalAlpha = Math.min(1, (f.boble.til - t) / 0.4) * (synlig > y + h * 0.6 ? 0 : 1);
+      if (!ctx.globalAlpha) continue;
+      y = synlig;
+      ctx.fillStyle = "#f5efe0"; ctx.strokeStyle = "#c9a24a"; ctx.lineWidth = 1.5;
+      // Står boblen langt over figuren, går en tynn strek ned til hodet
+      if (f.topp - (y + h) > 10) { ctx.beginPath(); ctx.moveTo(sx, y + h); ctx.lineTo(sx, f.topp - 2); ctx.stroke(); }
+      ctx.beginPath(); ctx.roundRect(x, y, b, h, 8); ctx.fill(); ctx.stroke();
+      const hx = Math.max(x + 10, Math.min(x + b - 10, sx));
+      ctx.beginPath(); ctx.moveTo(hx - 6, y + h - 1); ctx.lineTo(hx, y + h + 7); ctx.lineTo(hx + 6, y + h - 1); ctx.fillStyle = "#f5efe0"; ctx.fill();
+      ctx.fillStyle = "#1c1612";
+      f.boble.linjer.forEach((l, i) => ctx.fillText(l, x + b / 2, y + 2 + lh * (i + 0.9)));
+    }
     ctx.globalAlpha = 1;
   }
 
@@ -735,7 +759,7 @@
     if (linje) linjer.push(linje);
     const vist = linjer.slice(0, maks);
     if (linjer.length > maks) vist[maks - 1] += " …";
-    f.boble = { linjer: vist, til: t + 4 + tekst.length * 0.06 };
+    f.boble = { linjer: vist, fra: t, til: t + 4 + tekst.length * 0.06 };
   }
 
   // ---------- Tegn rommet ----------
@@ -826,6 +850,7 @@
       ctx.globalAlpha = 1;
     }
     for (const f of figurer.values()) tegnNavnOgBoble(f, t);
+    tegnBobler(t);
   }
 
   // ---------- Professoren ----------
