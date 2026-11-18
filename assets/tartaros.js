@@ -80,11 +80,219 @@
     kyklop: { hp: 900, fart: 46, skade: 22, r: 38, xp: 60, poeng: 200, boss: "Kyklopen" },
     kerberos: { hp: 2600, fart: 70, skade: 24, r: 36, xp: 120, poeng: 500, boss: "Kerberos" },
     kronos: { hp: 7000, fart: 54, skade: 30, r: 44, xp: 250, poeng: 1500, boss: "Kronos" },
+    // Bane 2, Flegeton
+    glod: { hp: 8, fart: 58, skade: 7, r: 11, xp: 1, poeng: 2 },
+    erinye: { hp: 22, fart: 120, skade: 9, r: 12, xp: 2, poeng: 4 },
+    hydra: { hp: 90, fart: 50, skade: 12, r: 19, xp: 4, poeng: 8 },
+    hydrahode: { hp: 28, fart: 88, skade: 8, r: 10, xp: 1, poeng: 3 },
+    titan: { hp: 420, fart: 40, skade: 22, r: 28, xp: 14, poeng: 25 },
+    khimaira: { hp: 1500, fart: 70, skade: 20, r: 38, xp: 80, poeng: 400, boss: "Khimaira" },
+    hydraboss: { hp: 3400, fart: 44, skade: 22, r: 42, xp: 150, poeng: 900, boss: "Lernas hydra" },
+    hades: { hp: 9500, fart: 50, skade: 32, r: 40, xp: 300, poeng: 2500, boss: "Hades" },
   };
   const vekter = (m) => ({
     skygge: Math.max(0, 5 - m * 0.6) + 1, skjelett: m >= 0.75 ? 3 : 0, harpy: m >= 1.5 ? 2 : 0,
     kentaur: m >= 3 ? 1.5 : 0, gorgon: m >= 4.5 ? 1 : 0, minotaur: m >= 5.5 ? 0.5 + (m - 5.5) * 0.25 : 0,
   });
+
+  // ---------- Banene ----------
+  // Bane 1 er Tartaros. Bane 2 er Flegeton, ildelven: flere og seigere fiender, lavaelver som brenner,
+  // egne fiender og bosser. Alt som skiller banene, står her.
+  const APNER_BANE2 = 300;   // sekunder man må ha holdt ut i Tartaros
+  const BANER = {
+    1: { navn: "Tartaros", under: "Underverdenens dypeste avgrunn", start: "Hold ut til daggry", seier: "Du slapp ut av Tartaros", tap: "Skyggene tok deg",
+      hp: hpFaktor, takt, tak, vekter, bosser: BOSSER, svermer: SVERMER, skade: 1, morke: 0.66, lys: 70, drakmer: 1, seierPoeng: 2000, seierDrakmer: 50, mynt: 0.05,
+      bakke: ["#191712", "#1b1914", "#17150f", "#1d1a14"], natt: "4,3,8" },
+    2: { navn: "Flegeton", under: "Ildelven under Tartaros", start: "Hold deg unna ildelven", seier: "Du krysset Flegeton", tap: "Ilden tok deg",
+      hp: (m) => 1.2 + m * 0.21 + Math.max(0, m - 6) * 0.3, takt: (t) => 1.15 + (t / 60) * 0.78, tak: (t) => Math.min(MAKS_FIENDER + 30, 50 + (t / 60) * 25),
+      vekter: (m) => ({
+        glod: Math.max(0, 5 - m * 0.5) + 1.5, skjelett: m >= 0.5 ? 2.5 : 0, harpy: m >= 1 ? 2 : 0, erinye: m >= 2 ? 1.1 : 0, kentaur: m >= 2.5 ? 1.5 : 0,
+        hydra: m >= 3.5 ? 1.1 : 0, gorgon: m >= 4 ? 1 : 0, minotaur: m >= 5 ? 0.7 : 0, titan: m >= 6 ? 0.35 + (m - 6) * 0.15 : 0,
+      }),
+      bosser: [[150, "khimaira"], [300, "hydraboss"], [480, "hades"]],
+      svermer: [[60, "glod", 16], [110, "harpy", 22], [190, "erinye", 14], [260, "skjelett", 34], [350, "hydrahode", 30], [430, "erinye", 22], [500, "kentaur", 26], [560, "glod", 50]],
+      skade: 1.15, morke: 0.74, lys: 60, drakmer: 1.5, seierPoeng: 4000, seierDrakmer: 100, mynt: 0.06, lava: true,
+      bakke: ["#1c1412", "#201614", "#18110f", "#231815"], natt: "12,3,2" },
+  };
+  const B = () => BANER[S.bane] || BANER[1];
+  // Ildelvene: buktende lavaelver med jevne mellomrom, vannrett og loddrett. Der elva brytes, er det en steinbro.
+  const ELV_V = 620, ELV_L = 880, ELV_BREDDE = 24;
+  const elvY = (k, x) => k * ELV_V + 310 + Math.sin(x / 240 + k * 1.7) * 110;
+  const elvX = (j, y) => j * ELV_L + 440 + Math.sin(y / 280 + j * 2.3) * 130;
+  const broV = (k, x) => Math.sin(x / 150 + k * 4.1) > 0.8, broL = (j, y) => Math.sin(y / 170 + j * 3.3) > 0.8;
+  function iLava(x, y) {
+    const k = Math.round((y - 310) / ELV_V), j = Math.round((x - 440) / ELV_L);
+    for (const kk of [k - 1, k, k + 1]) if (Math.abs(y - elvY(kk, x)) < ELV_BREDDE && !broV(kk, x)) return true;
+    for (const jj of [j - 1, j, j + 1]) if (Math.abs(x - elvX(jj, y)) < ELV_BREDDE && !broL(jj, y)) return true;
+    return false;
+  }
+  function tegnLava(t) {
+    const x0 = S.x - vW / 2 - 40, x1 = S.x + vW / 2 + 40, y0 = S.y - vH / 2 - 40, y1 = S.y + vH / 2 + 40, steg = 14;
+    const strek = (bredde, farge) => {
+      ctx.lineWidth = bredde; ctx.strokeStyle = farge; ctx.lineCap = "round"; ctx.beginPath();
+      for (let k = Math.floor((y0 - 430) / ELV_V); k <= Math.ceil((y1 + 130) / ELV_V); k++) {
+        let nede = false;
+        for (let x = Math.floor(x0 / steg) * steg; x <= x1; x += steg) { if (broV(k, x)) { nede = false; continue; } const y = elvY(k, x); if (nede) ctx.lineTo(x, y); else ctx.moveTo(x, y); nede = true; }
+      }
+      for (let j = Math.floor((x0 - 580) / ELV_L); j <= Math.ceil((x1 + 140) / ELV_L); j++) {
+        let nede = false;
+        for (let y = Math.floor(y0 / steg) * steg; y <= y1; y += steg) { if (broL(j, y)) { nede = false; continue; } const x = elvX(j, y); if (nede) ctx.lineTo(x, y); else ctx.moveTo(x, y); nede = true; }
+      }
+      ctx.stroke(); ctx.lineCap = "butt";
+    };
+    strek(ELV_BREDDE * 2 + 26, "rgba(240,90,30,.13)");
+    strek(ELV_BREDDE * 2 + 8, "#3a1208");
+    strek(ELV_BREDDE * 2, `hsl(${16 + Math.sin(t * 1.3) * 3} 88% 42%)`);
+    strek(ELV_BREDDE * 2 - 16, `hsl(${30 + Math.sin(t * 2.1) * 4} 95% ${54 + Math.sin(t * 3) * 4}%)`);
+    strek(ELV_BREDDE * 2 - 36, "rgba(255,236,170,.85)");
+  }
+  // Varsler på bakken: en ring som fylles før noe smeller
+  const varsle2 = (x, y, r, T, skade, etter) => S.varsler.push({ x, y, r, t: T, T, skade, etter });
+  function oppdaterBane(dt) {
+    for (const v of S.varsler) {
+      v.t -= dt;
+      if (v.t > 0) continue;
+      if (v.skade && Math.hypot(S.x - v.x, S.y - v.y) < v.r + 8) skadHelt(v.skade);
+      if (v.etter) v.etter();
+      S.eff.push({ type: "ring", x: v.x, y: v.y, r: v.r, t: 0.3, T: 0.3, farge: "#f08a4b" }); S.rist = Math.max(S.rist, 5);
+    }
+    S.varsler = S.varsler.filter((v) => v.t > 0);
+    for (const g of S.glor) { g.liv -= dt; if (Math.hypot(S.x - g.x, S.y - g.y) < g.r + 4) skadHelt(g.r > 30 ? 8 : 4); }
+    S.glor = S.glor.filter((g) => g.liv > 0);
+    if (B().lava && iLava(S.x, S.y)) { skadHelt(7); if (S.eff.length < 160) S.eff.push({ type: "gnist", x: S.x, y: S.y, vx: tilf(-60, 60), vy: tilf(-120, -40), t: 0.4, T: 0.4, farge: "#f2c14e" }); }
+  }
+  // Oppførselen til fiendene på bane 2. Gir farten [vx, vy], eller null for vanlig gange mot helten.
+  function oppforsel2(e, dt, d, ux, uy) {
+    const mot = [ux * e.fart, uy * e.fart];
+    if (e.type === "erinye") {
+      // Kretser rundt helten og stuper inn
+      e.tt -= dt;
+      if (e.fase === 1) { if (e.tt <= 0) { e.fase = 0; e.tt = tilf(2.4, 3.4); } return [e.sx * e.fart * 2.6, e.sy * e.fart * 2.6]; }
+      if (e.tt <= 0 && d < 300) { e.fase = 1; e.tt = 0.75; e.sx = ux; e.sy = uy; return [0, 0]; }
+      const inn = (d - 170) / 60;
+      return [(-uy + ux * inn) * e.fart, (ux + uy * inn) * e.fart];
+    }
+    if (e.type === "titan") {
+      e.tt -= dt;
+      if (e.fase === 1) { if (e.tt <= 0) { e.fase = 0; e.tt = 4; } return [0, 0]; }
+      if (e.tt <= 0 && d < 260) { e.fase = 1; e.tt = 1; varsle2(e.x, e.y, 125, 0.9, 22); return [0, 0]; }
+      return mot;
+    }
+    if (e.type === "khimaira") {
+      e.tt -= dt;
+      if (e.fase === 0 && e.tt <= 0 && d < 460) {
+        e.fase = 1; e.tt = 0.6; e.sx = ux; e.sy = uy; e.runde = (e.runde || 0) + 1;
+        if (e.runde % 2) for (let i = -2; i <= 2; i++) { const a = e.ang + i * 0.2; fiendeskudd(e.x, e.y, Math.cos(a) * 170, Math.sin(a) * 170, 8, 12, "#f08a4b"); }
+      } else if (e.fase === 1) { if (e.tt <= 0) { e.fase = e.runde % 2 ? 0 : 2; e.tt = e.runde % 2 ? 1.6 : 0.75; } return [0, 0]; }
+      else if (e.fase === 2) { if (e.tt <= 0) { e.fase = 0; e.tt = 1.8; S.glor.push({ x: e.x, y: e.y, r: 40, liv: 4 }); } return [e.sx * e.fart * 3.4, e.sy * e.fart * 3.4]; }
+      return mot;
+    }
+    if (e.type === "hydraboss") {
+      e.tt -= dt;
+      if (e.tt <= 0) { e.tt = 2.6; for (const o of [-0.28, 0, 0.28]) { const a = e.ang + o; fiendeskudd(e.x, e.y, Math.cos(a) * 165, Math.sin(a) * 165, 9, 16, "#9ad15a"); } }
+      const trinn = e.hp < e.maks * 0.33 ? 2 : e.hp < e.maks * 0.66 ? 1 : 0;
+      if (trinn > (e.kalt || 0)) { e.kalt = trinn; for (let i = 0; i < 5; i++) lagFiende("hydrahode", e.x + tilf(-70, 70), e.y + tilf(-70, 70)); visBeskjed("Hydraen får nye hoder"); }
+      return mot;
+    }
+    if (e.type === "hades") {
+      e.tt -= dt; e.tp = (e.tp === undefined ? 5 : e.tp) - dt;
+      if (e.tt <= 0) {
+        e.tt = 2.6; e.fase += 1;
+        for (let i = 0; i < 14; i++) { const a = (i / 14) * TAU + e.fase * 0.31; fiendeskudd(e.x, e.y, Math.cos(a) * 150, Math.sin(a) * 150, 8, 15, "#b07cf0"); }
+      }
+      if (e.tp <= 0) {
+        // Hades forsvinner og dukker opp ved siden av helten
+        e.tp = 6;
+        const a = tilf(0, TAU), tx = S.x + Math.cos(a) * 150, ty = S.y + Math.sin(a) * 150;
+        varsle2(tx, ty, 70, 0.9, 20, () => { if (!e.dod) { e.x = tx; e.y = ty; for (let i = 0; i < 6; i++) lagFiende("glod", tx + tilf(-80, 80), ty + tilf(-80, 80)); } });
+      }
+      return mot;
+    }
+    return null;
+  }
+  // Det som skjer når en fiende fra bane 2 faller
+  function etterDrap2(e) {
+    if (e.type === "glod" && S.glor.length < 50) S.glor.push({ x: e.x, y: e.y, r: 16, liv: 1.5 });
+    else if (e.type === "hydra") for (const s of [-1, 1]) lagFiende("hydrahode", e.x + s * 12, e.y + tilf(-8, 8));
+    else if (e.type === "hydraboss") for (let i = 0; i < 3; i++) lagFiende("hydra", e.x + tilf(-50, 50), e.y + tilf(-50, 50));
+  }
+  // Tegningene til fiendene på bane 2 (ctx står i fiendens midtpunkt)
+  const NYE = {
+    glod(e, r, f, t) {
+      ctx.fillStyle = "rgba(242,140,60,.18)"; sirkel(0, 0, r + 6 + Math.sin(t * 8) * 2); ctx.fill();
+      ctx.fillStyle = f("#7a2a1a"); ctx.beginPath(); ctx.arc(0, -2, r, Math.PI, 0);
+      for (let i = 0; i <= 4; i++) ctx.lineTo(r - (i * r) / 2, r * 0.7 + (i % 2 ? -4 : 3) + Math.sin(t * 7 + i) * 2);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = f("#c8552a"); ctx.beginPath(); ctx.moveTo(-5, -r); ctx.lineTo(-1, -r - 7 - Math.sin(t * 10) * 2); ctx.lineTo(2, -r - 1); ctx.lineTo(5, -r - 5); ctx.lineTo(6, -r + 2); ctx.fill();
+      ctx.fillStyle = "#ffe9a8"; ctx.fillRect(-5, -5, 3, 4); ctx.fillRect(2, -5, 3, 4);
+    },
+    erinye(e, r, f, t) {
+      const v = Math.sin(t * 14) * 0.7;
+      ctx.fillStyle = f("#3a2147");
+      for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(s * 3, -4); ctx.lineTo(s * (r + 13), -12 - v * 9); ctx.lineTo(s * (r + 9), -1); ctx.lineTo(s * (r + 12), 7 - v * 3); ctx.lineTo(s * 4, 5); ctx.closePath(); ctx.fill(); }
+      ctx.fillStyle = f("#5a3168"); ctx.beginPath(); ctx.ellipse(0, 1, r * 0.6, r * 0.95, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = f("#d8c7b0"); sirkel(0, -6, 5.5); ctx.fill();
+      ctx.strokeStyle = f("#7fb04f"); ctx.lineWidth = 1.6; ctx.beginPath(); for (let i = -2; i <= 2; i++) { ctx.moveTo(i * 2, -10); ctx.lineTo(i * 3.2 + Math.sin(t * 6 + i) * 1.5, -16); } ctx.stroke();
+      ctx.fillStyle = "#ff3a2a"; ctx.fillRect(-3.5, -7.5, 2.5, 2); ctx.fillRect(1, -7.5, 2.5, 2);
+      if (e.fase === 1) { ctx.strokeStyle = "rgba(255,90,60,.7)"; ctx.lineWidth = 2; sirkel(0, 0, r + 6); ctx.stroke(); }
+    },
+    hydrahode(e, r, f, t) {
+      ctx.rotate(e.ang);
+      ctx.fillStyle = f("#3f7a4a"); ctx.beginPath(); ctx.ellipse(-r * 0.7, Math.sin(t * 9) * 2, r * 0.9, r * 0.45, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = f("#4f9a5a"); ctx.beginPath(); ctx.ellipse(2, 0, r * 0.9, r * 0.7, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = "#f2e36a"; ctx.fillRect(3, -5, 3, 2.5); ctx.fillRect(3, 2.5, 3, 2.5);
+      ctx.fillStyle = "#ece4d2"; ctx.fillRect(r * 0.75, -2.5, 3, 1.6); ctx.fillRect(r * 0.75, 1, 3, 1.6);
+    },
+    hydra(e, r, f, t) {
+      ctx.fillStyle = f("#2f6a3c"); ctx.beginPath(); ctx.ellipse(0, 3, r, r * 0.75, 0, 0, TAU); ctx.fill();
+      for (const [i, dx] of [[0, -11], [1, 0], [2, 11]]) {
+        const hx = dx + Math.sin(t * 3 + i * 2) * 3, hy = -r - 4 + Math.cos(t * 2.4 + i) * 2;
+        ctx.strokeStyle = f("#3f7a4a"); ctx.lineWidth = 6; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(dx * 0.5, -4); ctx.lineTo(hx, hy); ctx.stroke(); ctx.lineCap = "butt";
+        ctx.fillStyle = f("#4f9a5a"); sirkel(hx, hy, 6); ctx.fill(); ctx.fillStyle = "#f2e36a"; ctx.fillRect(hx - 3, hy - 2, 2, 2); ctx.fillRect(hx + 1, hy - 2, 2, 2);
+      }
+    },
+    titan(e, r, f, t) {
+      if (e.fase === 1) ctx.translate(tilf(-1.5, 1.5), tilf(-1.5, 1.5));
+      ctx.fillStyle = f("#5a5560"); sirkel(0, 2, r); ctx.fill();
+      ctx.fillStyle = f("#6f6a78"); sirkel(-4, -3, r * 0.8); ctx.fill();
+      for (const s of [-1, 1]) { ctx.fillStyle = f("#4a4650"); sirkel(s * (r + 2), 4 + (e.fase === 1 ? -10 : 0), 9); ctx.fill(); }
+      ctx.strokeStyle = e.fase === 1 ? "#ffb060" : "#f08a4b"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-12, -10); ctx.lineTo(-4, 0); ctx.lineTo(-9, 10); ctx.moveTo(8, -6); ctx.lineTo(3, 6); ctx.lineTo(10, 14); ctx.stroke();
+      ctx.fillStyle = f("#7d7786"); sirkel(0, -r * 0.75, 9); ctx.fill(); ctx.fillStyle = "#ffb060"; ctx.fillRect(-5, -r * 0.75 - 2, 3.5, 2.5); ctx.fillRect(1.5, -r * 0.75 - 2, 3.5, 2.5);
+    },
+    khimaira(e, r, f, t) {
+      if (e.fase === 1) ctx.translate(tilf(-2, 2), 0);
+      ctx.rotate(e.fase === 2 ? Math.atan2(e.sy, e.sx) : e.ang);
+      ctx.strokeStyle = f("#4f9a5a"); ctx.lineWidth = 7; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(-r * 0.8, 0); ctx.quadraticCurveTo(-r - 18, Math.sin(t * 5) * 14, -r - 26, Math.sin(t * 5 + 1) * 10); ctx.stroke(); ctx.lineCap = "butt";
+      ctx.fillStyle = f("#4f9a5a"); sirkel(-r - 27, Math.sin(t * 5 + 1) * 10, 6); ctx.fill();
+      ctx.fillStyle = f("#b9853f"); ctx.beginPath(); ctx.ellipse(-6, 0, r * 0.95, r * 0.66, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = f("#d8cdb4"); sirkel(-8, -r * 0.55, 10); ctx.fill(); ctx.strokeStyle = f("#8a8272"); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-12, -r * 0.55 - 8); ctx.lineTo(-20, -r * 0.55 - 16); ctx.moveTo(-5, -r * 0.55 - 9); ctx.lineTo(-8, -r * 0.55 - 19); ctx.stroke();
+      ctx.fillStyle = f(e.fase === 1 ? "#c8552a" : "#8a5a22"); sirkel(r * 0.55, 0, 19); ctx.fill();
+      ctx.fillStyle = f("#d9a85a"); sirkel(r * 0.62, 0, 12); ctx.fill();
+      ctx.fillStyle = "#ff4a2a"; ctx.fillRect(r * 0.72, -7, 4, 3); ctx.fillRect(r * 0.72, 4, 4, 3); ctx.fillStyle = "#ece4d2"; ctx.fillRect(r * 0.92, -3, 5, 2); ctx.fillRect(r * 0.92, 1, 5, 2);
+    },
+    hydraboss(e, r, f, t) {
+      ctx.fillStyle = f("#245a33"); ctx.beginPath(); ctx.ellipse(0, 6, r, r * 0.72, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = f("#2f6a3c"); ctx.beginPath(); ctx.ellipse(-5, 2, r * 0.8, r * 0.55, 0, 0, TAU); ctx.fill();
+      for (let i = 0; i < 5; i++) {
+        const dx = (i - 2) * 15, hx = dx * 1.25 + Math.sin(t * 2.6 + i * 1.9) * 6, hy = -r - 12 + Math.abs(i - 2) * 7 + Math.cos(t * 2 + i) * 4;
+        ctx.strokeStyle = f("#3f7a4a"); ctx.lineWidth = 10; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(dx * 0.6, -6); ctx.quadraticCurveTo(dx, -r * 0.7, hx, hy); ctx.stroke(); ctx.lineCap = "butt";
+        ctx.fillStyle = f("#4f9a5a"); sirkel(hx, hy, 10); ctx.fill();
+        ctx.fillStyle = "#f2e36a"; ctx.fillRect(hx - 5, hy - 3, 3, 3); ctx.fillRect(hx + 2, hy - 3, 3, 3); ctx.fillStyle = "#ece4d2"; ctx.fillRect(hx - 3, hy + 4, 2, 3); ctx.fillRect(hx + 1, hy + 4, 2, 3);
+      }
+    },
+    hades(e, r, f, t) {
+      ctx.fillStyle = "rgba(120,70,200,.18)"; sirkel(0, 0, r + 16 + Math.sin(t * 3) * 5); ctx.fill();
+      ctx.fillStyle = f("#17131f"); ctx.beginPath(); ctx.moveTo(-r * 0.9, r * 0.8); ctx.quadraticCurveTo(-r, -r * 0.4, 0, -r * 0.9); ctx.quadraticCurveTo(r, -r * 0.4, r * 0.9, r * 0.8);
+      for (let i = 0; i <= 6; i++) ctx.lineTo(r * 0.9 - i * r * 0.3, r * 0.8 + (i % 2 ? 7 : 0) + Math.sin(t * 4 + i) * 2);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = f("#2b2338"); ctx.beginPath(); ctx.ellipse(0, 6, r * 0.5, r * 0.62, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = f("#cfc7d8"); sirkel(0, -r * 0.42, 12); ctx.fill();
+      ctx.fillStyle = f("#3a3046"); ctx.beginPath(); ctx.moveTo(-15, -r * 0.42 - 3); ctx.lineTo(-18, -r - 14); ctx.lineTo(-7, -r * 0.42 - 11); ctx.lineTo(0, -r - 8); ctx.lineTo(7, -r * 0.42 - 11); ctx.lineTo(18, -r - 14); ctx.lineTo(15, -r * 0.42 - 3); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "#b07cf0"; ctx.fillRect(-7, -r * 0.42 - 3, 5, 3); ctx.fillRect(2, -r * 0.42 - 3, 5, 3);
+      ctx.fillStyle = "#17131f"; ctx.fillRect(-4, -r * 0.42 + 5, 8, 1.5);
+      ctx.strokeStyle = f("#8f8a9c"); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(r * 0.75, r * 0.7); ctx.lineTo(r * 0.75, -r - 6); ctx.moveTo(r * 0.75 - 6, -r - 18); ctx.lineTo(r * 0.75 - 6, -r - 4); ctx.lineTo(r * 0.75 + 6, -r - 4); ctx.lineTo(r * 0.75 + 6, -r - 18); ctx.stroke();
+    },
+  };
 
   // ---------- Tilstand ----------
   let S = null;                       // toktet som pågår (eller bakgrunnen i menyen)
@@ -95,6 +303,9 @@
   let styr = null;                    // fingeren eller musa som drar
   const sistLyd = {};
   try { valgtHelt = localStorage.getItem("tafse-tartaros-helt") || "akilles"; } catch (_) {}
+  let valgtBane = 1, tavleBane = 1;
+  try { valgtBane = Number(localStorage.getItem("tafse-tartaros-bane")) || 1; } catch (_) {}
+  const bane2Apen = () => (PROFIL.beste1 || 0) >= APNER_BANE2;
 
   function lyd(navn, mellomrom, ...arg) {
     const naa = performance.now();
@@ -119,6 +330,7 @@
 
   function nyTilstand(helt, meny) {
     S = {
+      bane: valgtBane === 2 && bane2Apen() ? 2 : 1, varsler: [], glor: [],
       meny, helt, t: 0, x: 0, y: 0, fx: 1, fy: 0, gaar: false, hp: 100, niva: 1, xp: 0, behov: behov(1), drap: 0, poeng: 0, drakmer: 0,
       vapen: {}, gaver: {}, fiender: [], skudd: [], fskudd: [], soner: [], kast: [], perler: [], ting: [], eff: [], tallene: [],
       gyt: 0, bossNr: 0, svermNr: 0, boss: null, usarbar: 0, rist: 0, blink: 0, kombo: 0, komboT: 0, lyre2: 0,
@@ -133,14 +345,14 @@
   function nyttTokt() {
     nyTilstand(valgtHelt, false);
     lag.hidden = true; lag.innerHTML = "";
-    visBeskjed("Hold ut til daggry");
+    visBeskjed(B().start);
     lerret.focus({ preventScroll: true });
   }
   const visBeskjed = (tekst) => { S.beskjed = { tekst, t: 2.6 }; };
 
   // ---------- Fiender ----------
   function lagFiende(type, x, y) {
-    const def = FIENDER[type], hp = def.boss ? def.hp : def.hp * hpFaktor(S.t / 60);
+    const def = FIENDER[type], hp = def.boss ? def.hp : def.hp * B().hp(S.t / 60);
     const e = { id: nid++, type, def, x, y, hp, maks: hp, r: def.r, fart: def.fart * tilf(0.92, 1.08), t: tilf(0, 10), flash: 0, kx: 0, ky: 0, acd: 0, fase: 0, tt: tilf(2, 4), ang: 0, dod: false };
     S.fiender.push(e);
     return e;
@@ -151,14 +363,14 @@
     return lagFiende(type, S.x + Math.cos(a) * r, S.y + Math.sin(a) * r);
   }
   function gyt(dt) {
-    const t = S.t;
-    S.gyt += takt(t) * dt;
+    const t = S.t, BOSSER = B().bosser, SVERMER = B().svermer;
+    S.gyt += B().takt(t) * dt;
     while (S.gyt >= 1) {
       S.gyt -= 1;
-      if (S.fiender.length >= tak(t)) continue;
-      const v = vekter(t / 60);
+      if (S.fiender.length >= B().tak(t)) continue;
+      const v = B().vekter(t / 60);
       let sum = 0; for (const k in v) sum += v[k];
-      let r = Math.random() * sum, type = "skygge";
+      let r = Math.random() * sum, type = S.bane === 2 ? "glod" : "skygge";
       for (const k in v) { r -= v[k]; if (r <= 0) { type = k; break; } }
       gytVedKanten(type);
     }
@@ -208,9 +420,11 @@
           if (e.fase % 2 === 0) for (let i = 0; i < 6; i++) lagFiende("skygge", e.x + tilf(-60, 60), e.y + tilf(-60, 60));
         }
       }
+      const egen = NYE[e.type] ? oppforsel2(e, dt, d, ux, uy) : null;
+      if (egen) { vx = egen[0]; vy = egen[1]; }
       e.x += (vx + e.kx) * dt; e.y += (vy + e.ky) * dt;
       const brems = Math.max(0, 1 - 7 * dt); e.kx *= brems; e.ky *= brems;
-      if (d < e.r + 11) skadHelt(e.def.skade * (1 + m * 0.05));
+      if (d < e.r + 11) skadHelt(e.def.skade * (1 + m * 0.05) * B().skade);
       else if (d > grense && !e.def.boss) { const a = tilf(0, TAU), r = gyteradius(); e.x = S.x + Math.cos(a) * r; e.y = S.y + Math.sin(a) * r; }
     }
     // Fiendene skyver hverandre unna, så de ikke står oppå hverandre
@@ -247,9 +461,10 @@
   }
   function drep(e) {
     e.dod = true; S.drap += 1; S.poeng += e.def.poeng;
+    if (NYE[e.type]) etterDrap2(e);
     slippSjel(e.x, e.y, e.def.xp);
     const r = Math.random();
-    if (r < 0.05) S.ting.push({ type: "mynt", x: e.x + tilf(-8, 8), y: e.y + tilf(-8, 8) });
+    if (r < B().mynt) S.ting.push({ type: "mynt", x: e.x + tilf(-8, 8), y: e.y + tilf(-8, 8) });
     else if (r < 0.057) S.ting.push({ type: "vin", x: e.x, y: e.y });
     else if (r < 0.0585) S.ting.push({ type: "magnet", x: e.x, y: e.y });
     if (S.eff.length < 160) for (let i = 0; i < (e.def.boss ? 26 : 4); i++) { const a = tilf(0, TAU), f = tilf(40, e.def.boss ? 260 : 140); S.eff.push({ type: "gnist", x: e.x, y: e.y, vx: Math.cos(a) * f, vy: Math.sin(a) * f, t: 0.45, T: 0.45, farge: e.def.boss ? "#e2c174" : "#6b5a86" }); }
@@ -495,6 +710,7 @@
     if (S.beskjed && (S.beskjed.t -= dt) <= 0) S.beskjed = null;
 
     gyt(dt);
+    oppdaterBane(dt);
     oppdaterVapen(dt);
     oppdaterFiender(dt);
     oppdaterSkudd(dt);
@@ -520,7 +736,7 @@
     const C = 96, x0 = Math.floor((S.x - vW / 2) / C), x1 = Math.floor((S.x + vW / 2) / C), y0 = Math.floor((S.y - vH / 2) / C), y1 = Math.floor((S.y + vH / 2) / C);
     for (let gx = x0; gx <= x1; gx++) for (let gy = y0; gy <= y1; gy++) {
       const h = ((gx * 73856093) ^ (gy * 19349663)) >>> 0, x = gx * C, y = gy * C;
-      ctx.fillStyle = ["#191712", "#1b1914", "#17150f", "#1d1a14"][h % 4];
+      ctx.fillStyle = B().bakke[h % 4];
       ctx.fillRect(x, y, C + 0.5, C + 0.5);
       const v = h % 23, cx = x + 20 + ((h >> 5) % 56), cy = y + 20 + ((h >> 11) % 56);
       if (v === 0) { ctx.fillStyle = "#2c2920"; sirkel(cx, cy, 17); ctx.fill(); ctx.fillStyle = "#3a362a"; sirkel(cx, cy, 12); ctx.fill(); ctx.strokeStyle = "#221f18"; ctx.lineWidth = 1.5; sirkel(cx, cy, 7); ctx.stroke(); }
@@ -539,7 +755,8 @@
     ctx.fillStyle = "rgba(0,0,0,.3)"; ctx.beginPath(); ctx.ellipse(e.x, e.y + r * 0.7, r * 0.9, r * 0.35, 0, 0, TAU); ctx.fill();
     ctx.save(); ctx.translate(e.x, e.y);
     const t = e.t;
-    if (e.type === "skygge") {
+    if (NYE[e.type]) NYE[e.type](e, r, f, t);
+    else if (e.type === "skygge") {
       ctx.fillStyle = f("#4a3a66"); ctx.beginPath(); ctx.arc(0, -2, r, Math.PI, 0);
       for (let i = 0; i <= 4; i++) ctx.lineTo(r - (i * r) / 2, r * 0.7 + (i % 2 ? -4 : 3) + Math.sin(t * 6 + i) * 2);
       ctx.closePath(); ctx.fill();
@@ -630,6 +847,11 @@
 
   function tegnVerden(t) {
     tegnBakke();
+    if (B().lava) tegnLava(t);
+    ctx.globalCompositeOperation = "lighter";
+    for (const g of S.glor) { const a = Math.min(1, g.liv) * (0.7 + Math.sin(t * 15 + g.x) * 0.15), gr = ctx.createRadialGradient(g.x, g.y, 1, g.x, g.y, g.r); gr.addColorStop(0, `rgba(255,200,110,${0.7 * a})`); gr.addColorStop(1, "rgba(230,80,30,0)"); ctx.fillStyle = gr; sirkel(g.x, g.y, g.r); ctx.fill(); }
+    ctx.globalCompositeOperation = "source-over";
+    for (const v of S.varsler) { const a = 1 - v.t / v.T; ctx.fillStyle = "rgba(224,83,61,.14)"; sirkel(v.x, v.y, v.r); ctx.fill(); ctx.fillStyle = "rgba(224,83,61,.3)"; sirkel(v.x, v.y, v.r * a); ctx.fill(); ctx.strokeStyle = "rgba(255,120,90,.9)"; ctx.lineWidth = 2; sirkel(v.x, v.y, v.r); ctx.stroke(); }
     ctx.globalCompositeOperation = "lighter";
     for (const z of S.soner) {
       const g = ctx.createRadialGradient(z.x, z.y, 2, z.x, z.y, z.r), a = Math.min(1, z.liv * 2) * (0.75 + Math.sin(t * 18 + z.x) * 0.12);
@@ -739,8 +961,10 @@
     tegnVerden(t);
     ctx.restore();
     // Mørket i Tartaros: lys rundt helten, svart mot kantene
-    const g = ctx.createRadialGradient(vW / 2, vH / 2, 70, vW / 2, vH / 2, Math.max(vW, vH) * 0.62), m = S.blink > 0 ? 0.3 : 0.66;
-    g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, `rgba(4,3,8,${m})`);
+    // Når Hades er på banen, blir det enda mørkere
+    const hades = S.boss && S.boss.type === "hades" && !S.boss.dod;
+    const g = ctx.createRadialGradient(vW / 2, vH / 2, B().lys, vW / 2, vH / 2, Math.max(vW, vH) * (hades ? 0.5 : 0.62)), m = S.blink > 0 ? 0.3 : B().morke + (hades ? 0.16 : 0);
+    g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, `rgba(${B().natt},${m})`);
     ctx.fillStyle = g; ctx.fillRect(0, 0, vW, vH);
     if (S.usarbar > 0.3 && !S.meny) { ctx.fillStyle = "rgba(181,40,42,.16)"; ctx.fillRect(0, 0, vW, vH); }
     if (!S.meny) tegnHud();
@@ -760,12 +984,14 @@
   async function avslutt(seier) {
     S.slutt = true; S.pause = true;
     const sekunder = Math.min(SEIERSTID, Math.floor(S.t));
-    const poeng = Math.round(S.poeng + sekunder * 2 + (seier ? 2000 : 0));
-    const drakmer = Math.round((S.drakmer + Math.floor(sekunder / 20) + (seier ? 50 : 0)) * (1 + 0.1 * (PROFIL.gunst.midas || 0)));
+    const poeng = Math.round(S.poeng + sekunder * 2 + (seier ? B().seierPoeng : 0));
+    const drakmer = Math.round((S.drakmer + Math.floor(sekunder / 20) + (seier ? B().seierDrakmer : 0)) * B().drakmer * (1 + 0.1 * (PROFIL.gunst.midas || 0)));
+    const apnet = S.bane === 1 && sekunder >= APNER_BANE2 && !bane2Apen();
     lyd(seier ? "seier" : "dod", 0.1);
     lag.className = "ta-lag ta-slutt";
     lag.innerHTML = `<p class="overline">${seier ? "Daggry" : `Felt etter ${klokke(sekunder)}`}</p>
-      <h2>${seier ? "Du slapp ut av Tartaros" : "Skyggene tok deg"}</h2>
+      <h2>${seier ? B().seier : B().tap}</h2>
+      ${apnet ? `<p class="ta-apnet">Du har åpnet veien til <strong>Flegeton</strong>, ildelven under Tartaros.</p>` : ""}
       <p class="ta-poeng">${tall(poeng)} <span>poeng</span></p>
       <p class="ta-tall">Nivå ${S.niva} · ${tall(S.drap)} felt · <strong>+${tall(drakmer)} drakmer</strong></p>
       <div class="ta-bygging">${bygging()}</div>
@@ -775,7 +1001,7 @@
     lag.hidden = false;
     if (!innlogget()) return;
     try {
-      const svar = await api("tartaros", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ poeng, sekunder, niva: S.niva, drap: S.drap, helt: S.helt, seier, drakmer }) });
+      const svar = await api("tartaros", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ poeng, sekunder, niva: S.niva, drap: S.drap, helt: S.helt, seier, drakmer, bane: S.bane }) });
       PROFIL = svar.profil;
       const l = document.getElementById("ta-lagret");
       if (l) l.textContent = `Ført i protokollen.${svar.bytte ? ` Dagens bytte: ${svar.bytte} oliven til godset ditt i Symposion.` : ""}`;
@@ -795,14 +1021,19 @@
     if (!harHelt(valgtHelt)) valgtHelt = "akilles";
     nyTilstand(valgtHelt, true);
     lag.className = "ta-lag ta-meny";
-    lag.innerHTML = `<p class="overline">Underverdenens dypeste avgrunn</p><h2>Tartaros</h2>
-      <p class="ta-ingress">Hold ut i ti minutter. Våpnene skyter selv. Du styrer bare beina.</p>
+    const apen = bane2Apen(), bane = S.bane;
+    lag.innerHTML = `<p class="overline">${BANER[bane].under}</p><h2>${BANER[bane].navn}</h2>
+      <p class="ta-ingress">${bane === 2 ? "Ti minutter langs ildelven. Flere fiender, nye bosser, og lava som brenner. Kryss elva på steinbroene." : "Hold ut i ti minutter. Våpnene skyter selv. Du styrer bare beina."}</p>
+      <div class="ta-baner">
+        <button type="button" class="ta-bane${bane === 1 ? " valgt" : ""}" data-bane="1"><strong>I · Tartaros</strong><span>Skygger, Kyklopen, Kerberos og Kronos</span></button>
+        <button type="button" class="ta-bane ild${bane === 2 ? " valgt" : ""}${apen ? "" : " last"}" data-bane="2" ${apen ? "" : "disabled"}><strong>II · Flegeton</strong><span>${apen ? "Vanskeligere. Halvannen gang så mange drakmer" : `Låst. Hold ut ${APNER_BANE2 / 60} minutter i Tartaros`}</span></button>
+      </div>
       <div class="ta-helter">${Object.entries(HELTER).map(([id, h]) => {
         const har = harHelt(id), pris = PRISER ? PRISER.helter[id] : null;
         return `<button type="button" class="ta-helt${id === valgtHelt ? " valgt" : ""}${har ? "" : " last"}" data-helt="${id}" style="--farge:${h.farge}"><strong>${h.navn}</strong><span>${h.tekst}</span>${har ? "" : `<em>${pris ? `Lås opp: ${pris} Δ` : "Låst"}</em>`}</button>`;
       }).join("")}</div>
       <p class="melding feil" id="ta-menyfeil" hidden></p>
-      <button class="knapp ta-start" type="button" data-start>Gå ned i Tartaros</button>`;
+      <button class="knapp ta-start" type="button" data-start>${bane === 2 ? "Gå ned til Flegeton" : "Gå ned i Tartaros"}</button>`;
     lag.hidden = false;
   }
 
@@ -844,10 +1075,12 @@
       data = await api("tartaros");
       PROFIL = data.profil; PRISER = { gunst: data.gunst, helter: data.helter };
       const krone = (tittel, r) => `<div class="t-krone"><span>${tittel}</span>${r ? `<strong>${tall(r.poeng)}</strong><em>${esc(visningsnavn(r.navn))}</em>` : `<strong>·</strong><em>Ledig</em>`}</div>`;
-      tavle.innerHTML = `<div class="t-kroner">${krone("Rekorden", data.alle[0])}${krone("Ukens leder", data.uke[0])}</div>
-        <h3 class="t-undertittel">Denne uka</h3>${liste(data.uke, "Ingen har vært nede denne uka.")}
-        <h3 class="t-undertittel">Alle tider</h3>${liste(data.alle, "Ingen har vært nede ennå.")}
-        <p class="dempet t-fot">${tall(data.antall)} tokt totalt. «Daggry» betyr at man holdt ut alle ti minuttene.</p>`;
+      const d = data.baner[tavleBane];
+      tavle.innerHTML = `<div class="ta-tavlefaner">${[1, 2].map((b) => `<button type="button" class="ta-fane${b === tavleBane ? " aktiv" : ""}" data-tavlebane="${b}">${b === 1 ? "I · " : "II · "}${BANER[b].navn}</button>`).join("")}</div>
+        <div class="t-kroner">${krone("Rekorden", d.alle[0])}${krone("Ukens leder", d.uke[0])}</div>
+        <h3 class="t-undertittel">Denne uka</h3>${liste(d.uke, "Ingen har vært nede denne uka.")}
+        <h3 class="t-undertittel">Alle tider</h3>${liste(d.alle, "Ingen har vært nede ennå.")}
+        <p class="dempet t-fot">${tall(d.antall)} tokt totalt. «Daggry» betyr at man holdt ut alle ti minuttene.</p>`;
       visLeir();
       if (S && S.meny) visMeny();
     } catch (e) { tavle.innerHTML = `<p class="melding feil">${esc(e.message)}</p>`; }
@@ -863,6 +1096,8 @@
     <ul>${Object.values(VAPEN).map((v) => `<li><strong>${v.navn}:</strong> ${v.tekst[0]}</li>`).join("")}</ul>
     <h3>Gudegavene</h3>
     <ul>${Object.values(GAVER).map((v) => `<li><strong>${v.navn}:</strong> ${v.tekst}.</li>`).join("")}</ul>
+    <h3>Flegeton</h3>
+    <p>Holder du ut fem minutter i Tartaros, åpnes bane to: Flegeton, ildelven. Der er fiendene flere og seigere, og lavaelver bukter seg over bakken. Lava brenner deg, men ikke fiendene, så kryss på steinbroene. Glødeskyggene etterlater glør, erinyene kretser og stuper, hydraene deler seg når de faller, og titanene tramper der en rød ring varsler. Bossene er Khimaira, Lernas hydra og Hades. Flegeton gir halvannen gang så mange drakmer, 4 000 poeng for daggry og har egen tavle.</p>
     <h3>Fiendene</h3>
     <p>Skygger og skjeletter kommer i flokk. Harpyene er raske, kentaurene stormer rett fram, gorgonene skyter og minotaurene tåler mye. Kyklopen kommer etter to og et halvt minutt, Kerberos etter fem og Kronos etter åtte. En felt boss etterlater en skattekiste.</p>
     <h3>På bakken</h3>
@@ -897,6 +1132,7 @@
     if (k.dataset.valg !== undefined) taValg(Number(k.dataset.valg));
     else if (k.dataset.omkast !== undefined) omkast();
     else if (k.dataset.start !== undefined) nyttTokt();
+    else if (k.dataset.bane) { valgtBane = Number(k.dataset.bane); try { localStorage.setItem("tafse-tartaros-bane", valgtBane); } catch (_) {} visMeny(); }
     else if (k.dataset.leir !== undefined) visMeny();
     else if (k.dataset.fortsett !== undefined) fortsett();
     else if (k.dataset.giopp !== undefined) { lag.hidden = true; S.pause = false; avslutt(false); }
@@ -909,6 +1145,7 @@
   });
   leir.addEventListener("click", (e) => { const k = e.target.closest("[data-gunst]"); if (k && !k.disabled) kjop("gunst", k.dataset.gunst, "ta-leirfeil"); });
   document.getElementById("ta-info").addEventListener("click", () => { visPause(); visInfo("Slik spiller du Tartaros", INFO); });
+  tavle.addEventListener("click", (e) => { const k = e.target.closest("[data-tavlebane]"); if (k) { tavleBane = Number(k.dataset.tavlebane); lastTavle(); } });
   window.addEventListener("resize", tilpass);
 
   LYD.knapp(document.getElementById("ta-lyd"));

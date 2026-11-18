@@ -29,7 +29,7 @@ Nettsiden til Taffelakademiet for Samvær og Etegilder.
 | `lib/innboks.js` | Innboksen på spillsiden: private meldinger mellom spillerne og hvem som er på hotellet nå. Vinduet ligger i `assets/app.js` |
 | `lib/hotellbytte.js` | Møbelbytte mellom to gjester på hotellet, og stjernene gjestene gir rommene |
 | `lib/premier.js` | Premiene fra spillene, som brukes i Tafse Hotell: hvilken premie hvert spill gir, hvor mange poeng som gir én premie, og lommeboka som samler oliven, vin og marmor (Symposion), drakmer (Tartaros) og resten |
-| `tartaros.html`, `assets/tartaros.js`, `lib/tartaros.js` | Spillet Tartaros: overlev ti minutter i underverdenen. Våpen, fiender og tall ligger øverst i `assets/tartaros.js`, drakmer, gunst og tavle i `lib/tartaros.js` |
+| `tartaros.html`, `assets/tartaros.js`, `lib/tartaros.js` | Spillet Tartaros: overlev ti minutter i underverdenen. To baner: Tartaros og den vanskeligere Flegeton (ildelven), som åpnes etter fem minutter i Tartaros. Våpen, fiender, baner (`BANER`) og tall ligger øverst i `assets/tartaros.js`, drakmer, gunst og tavle i `lib/tartaros.js` |
 | `murbrekker.html`, `assets/murbrekker.js` | Spillet Murbrekker (Breakout), med toppliste for uka og for alle tider |
 | `2048.html`, `assets/2048.js` | Spillet 2048, med toppliste for uka og for alle tider |
 | `tetris.html`, `assets/tetris.js` | Spillet Tetris, med toppliste for uka og for alle tider |

@@ -1211,3 +1211,18 @@ p.h-merket { margin: 10px 0; }
 .h-gknapp.valgt { outline: 1px solid var(--gull); }
 .h-fargekart { display: flex; flex-wrap: wrap; gap: 5px; max-width: 420px; }
 @media (max-width: 520px) { .spillside .merke svg { display: none; } .spillside .topp-inner { gap: 6px; } #h-garderobe { min-width: 0; } }
+
+/* Tartaros: valg av bane, og faner på tavlen */
+.ta-baner { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; width: min(100%, 46rem); }
+.ta-bane { background: var(--flate); border: 1px solid var(--linje); color: var(--tekst); padding: .6rem .7rem; cursor: pointer; display: flex; flex-direction: column; gap: .15rem; font-family: var(--brod); font-size: .92rem; text-align: left; }
+.ta-bane strong { font-family: var(--display); letter-spacing: .08em; color: var(--gull-lys); }
+.ta-bane span { color: var(--dempet); font-size: .86rem; }
+.ta-bane.ild strong { color: #f08a4b; }
+.ta-bane.valgt { border-color: var(--gull); background: var(--flate2); }
+.ta-bane.ild.valgt { border-color: #f08a4b; }
+.ta-bane.last { opacity: .6; cursor: default; }
+.ta-apnet { margin: 0; border: 1px solid #f08a4b; background: rgba(240,138,75,.1); padding: .4rem .9rem; }
+.ta-apnet strong { color: #f08a4b; }
+.ta-tavlefaner { display: flex; gap: 6px; margin-bottom: 14px; }
+.ta-fane { background: transparent; border: 1px solid var(--linje); color: var(--dempet); padding: 7px 12px; font-family: var(--display); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; cursor: pointer; }
+.ta-fane.aktiv { border-color: var(--gull); color: var(--gull-lys); background: var(--flate2); }
