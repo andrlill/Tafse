@@ -16,6 +16,7 @@ Nettsiden til Taffelakademiet for Samvær og Etegilder.
 | `assets/land-modell.js`, `assets/land-kart.js`, `assets/land-editor.js` | Drømmelandet: fagmodellen (klima, geologi, valgordning, vetospillere, Lijphart, ressursforbannelse), kart og flagg, og veiviseren i åtte steg |
 | `gjest.html` | Gjester i spillhallen: brødrenes gjestelenker, registrering og innlogging for gjester |
 | `velkommen.html` | Registrering fra den personlige invitasjonslenken |
+| `nyttpassord.html` | Nytt passord fra en lenke som administratoren lager på `invitasjoner.html` (under «Glemt passord?»). Lenken virker i tre dager og bare til passordet er byttet |
 | `invitasjoner.html` | Oversikt over invitasjonslenker (kun administratorer) |
 | `moter.html`, `mote.html` | Møtene: kommende og avholdte møter, kalenderfil, og egen side per møte med bilder og poster |
 | `fortellingen.html` | Nettversjonen av lanseringspresentasjonen |
@@ -103,4 +104,4 @@ Hele nettstedet er stengt for alle som ikke er innlogget som bror. Porten ligger
 `functions/_middleware.js` og gjelder alle sider og filer, også vedtektene, forsiden og `data/`.
 Andre (gjester og ukjente) slipper bare inn i spillhallen (`gjest.html` og spillene i `GJESTESPILL`),
 og sendes dit fra alt annet. Brødre og gjester logger inn i samme skjema i spillhallen; er navnet en
-bror, havner man på forsiden. Invitasjonslenkene til nye brødre (`velkommen.html`) er åpne.
+bror, havner man på forsiden. Invitasjonslenkene til nye brødre (`velkommen.html`) og lenkene for nytt passord (`nyttpassord.html`) er åpne.

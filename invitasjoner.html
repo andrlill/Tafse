@@ -25,6 +25,10 @@ function melding(navn, lenke) {
   return `Hei ${navn}! Du er invitert inn på tafse.no, Taffelakademiets egen nettside. Åpne lenken, velg et profilbilde, skriv litt om deg selv og hva TAFSE betyr for deg, og lag et passord:\n\n${lenke}\n\nLenken er personlig, så ikke del den videre.`;
 }
 
+function glemtMelding(navn, lenke) {
+  return `Hei ${navn}! Her er en lenke der du kan lage nytt passord på tafse.no. Den virker i tre dager og bare én gang:\n\n${lenke}`;
+}
+
 async function kopier(tekst, knapp) {
   try {
     await navigator.clipboard.writeText(tekst);
@@ -62,7 +66,14 @@ kreverInnlogging(boks, async () => {
             <h3>${esc(i.navn)}</h3>
             <span class="merkelapp ${i.registrert ? "status-vedtatt" : ""}">${i.registrert ? "Registrert" : "Ikke registrert"}</span>
           </div>
-          ${i.registrert ? "" : `
+          ${i.registrert ? `
+          <details class="glemt"><summary>Glemt passord?</summary>
+            <p class="dempet" style="font-size:15px">Send denne lenken, så kan ${esc(i.navn)} lage nytt passord. Den virker i tre dager og slutter å virke når passordet er byttet.</p>
+            <div class="handlinger">
+              <button class="liten-knapp" data-glemt="${n}">Kopier melding</button>
+              <a class="liten-knapp" style="text-decoration:none; display:inline-flex; align-items:center" href="sms:?&body=${encodeURIComponent(glemtMelding(i.navn, `${location.origin}/${i.nullstill}`))}">Send som SMS</a>
+            </div>
+          </details>` : `
           <p class="dempet" style="font-size:15px; word-break:break-all">${esc(lenke(i))}</p>
           <div class="handlinger">
             <button class="liten-knapp" data-melding="${n}">Kopier melding</button>
@@ -79,7 +90,7 @@ kreverInnlogging(boks, async () => {
     try {
       const g = await api("gjester");
       gjesteboks.innerHTML = g.length
-        ? g.map((x) => `<div class="gjest-rad"><span><strong>${esc(x.navn)}</strong> <span class="dempet">invitert av ${esc(x.invitert_av || "ukjent")}, ${esc(tidTekst(x.opprettet))}</span></span><button class="liten-knapp" type="button" data-fjern="${esc(x.navn)}">Fjern</button></div>`).join("")
+        ? g.map((x) => `<div class="gjest-rad"><span><strong>${esc(x.navn)}</strong> <span class="dempet">invitert av ${esc(x.invitert_av || "ukjent")}, ${esc(tidTekst(x.opprettet))}</span></span><span class="handlinger" style="margin:0"><button class="liten-knapp" type="button" data-glemtgjest="${esc(x.nullstill)}" data-navn="${esc(x.navn)}" title="Kopier en lenke der gjesten kan lage nytt passord">Glemt passord</button><button class="liten-knapp" type="button" data-fjern="${esc(x.navn)}">Fjern</button></span></div>`).join("")
         : `<p class="tom-tekst">Ingen gjester ennå.</p>`;
     } catch (err) {
       gjesteboks.innerHTML = `<p class="melding feil">${esc(err.message)}</p>`;
@@ -92,6 +103,8 @@ kreverInnlogging(boks, async () => {
     if (!b) return;
     if (b.dataset.melding) { const i = liste[b.dataset.melding]; kopier(melding(i.navn, lenke(i)), b); }
     if (b.dataset.lenke) kopier(lenke(liste[b.dataset.lenke]), b);
+    if (b.dataset.glemt) { const i = liste[b.dataset.glemt]; kopier(glemtMelding(i.navn, `${location.origin}/${i.nullstill}`), b); }
+    if (b.dataset.glemtgjest) kopier(glemtMelding(b.dataset.navn, `${location.origin}/${b.dataset.glemtgjest}`), b);
     if (b.dataset.fjern) {
       b.disabled = true;
       api(`gjester/${encodeURIComponent(b.dataset.fjern)}`, { method: "DELETE" }).then(visGjester).catch((err) => { b.disabled = false; b.textContent = err.message; });

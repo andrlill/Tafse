@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nytt passord · TAFSE</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main class="side smal">
+  <p class="overline">Glemt passord</p>
+  <h1 class="side-tittel" id="tittel">Nytt passord</h1>
+  <div id="innhold"><p class="dempet">Laster …</p></div>
+</main>
+<script src="assets/app.js"></script>
+<script>
+// Lenken lages av en administrator på invitasjonssiden. Serveren sjekker koden.
+(async () => {
+  const q = new URLSearchParams(location.search);
+  const lenke = { navn: q.get("navn") || "", gjest: q.get("gjest") === "1", ut: q.get("ut") || "", kode: q.get("kode") || "" };
+  const boks = document.getElementById("innhold");
+  let sjekk = { gyldig: false };
+  try { sjekk = await api(`nyttpassord?${q.toString()}`); } catch (_) {}
+  if (!sjekk.gyldig) {
+    boks.innerHTML = `<p>Lenken er ugyldig eller utløpt, eller passordet er allerede byttet. Be om en ny lenke.</p>`;
+    return;
+  }
+  document.getElementById("tittel").textContent = `Nytt passord for ${lenke.navn}`;
+  boks.innerHTML = `
+    <form class="skjema" id="skjema">
+      <div class="to-kol">
+        <div class="felt"><label for="passord">Nytt passord (minst seks tegn)</label><input id="passord" type="password" minlength="6" autocomplete="new-password" required></div>
+        <div class="felt"><label for="passord2">Gjenta passordet</label><input id="passord2" type="password" minlength="6" autocomplete="new-password" required></div>
+      </div>
+      <div><button class="knapp" type="submit">Lagre passordet</button></div>
+      <div id="melding" role="status"></div>
+    </form>`;
+  document.getElementById("skjema").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const melding = document.getElementById("melding"), knapp = e.target.querySelector("button[type=submit]");
+    const passord = document.getElementById("passord").value;
+    if (passord !== document.getElementById("passord2").value) { melding.innerHTML = `<p class="melding feil">Passordene er ikke like.</p>`; return; }
+    knapp.disabled = true;
+    try {
+      const svar = await api("nyttpassord", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...lenke, passord }) });
+      boks.innerHTML = `<p>Passordet er byttet, og du er logget inn.</p><p><a class="knapp" href="${svar.gjest ? "symposion.html" : "salongen.html"}">Gå videre</a></p>`;
+    } catch (err) {
+      melding.innerHTML = `<p class="melding feil">${esc(err.message)}</p>`;
+      knapp.disabled = false;
+    }
+  });
+})();
+</script>
+</body>
+</html>

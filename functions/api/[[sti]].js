@@ -309,6 +309,23 @@ const postLenke = (post) => (post.mote && post.mote !== "salongen" ? `mote.html?
 const gjestekode = async (env, bror) => (await hmac(env.TAFSE_PASSORD, `gjest|${bror}`)).slice(0, 20);
 const gjesteNavn = (navn) => `${navn} (gjest)`;
 
+// Lenke for nytt passord, laget av en administrator. Koden bygger på det nåværende passordet,
+// så lenken slutter å virke når passordet er byttet, og den går ut etter NULLSTILL_DAGER.
+const NULLSTILL_DAGER = 3;
+const nullstillkode = async (env, type, navn, hash, utloper) => (await hmac(env.TAFSE_PASSORD, `nullstill|${type}|${navn}|${hash.slice(0, 16)}|${utloper}`)).slice(0, 24);
+async function nullstillLenke(env, type, bruker) {
+  const ut = Date.now() + NULLSTILL_DAGER * 86400000;
+  return `nyttpassord.html?${type === "gjest" ? "gjest=1&" : ""}navn=${encodeURIComponent(bruker.navn)}&ut=${ut}&kode=${await nullstillkode(env, type, bruker.navn, bruker.hash, ut)}`;
+}
+// Finner brukeren en lenke for nytt passord gjelder, eller null hvis lenken er ugyldig eller utløpt
+async function sjekkNullstill(env, db, { navn, gjest, ut, kode }) {
+  const type = gjest ? "gjest" : "bror";
+  if (!(Number(ut) > Date.now())) return null;
+  const b = await db.prepare(`SELECT navn, salt, hash FROM ${type === "gjest" ? "gjester" : "brukere"} WHERE navn = ?`).bind(tekst(navn, 60)).first();
+  if (!b || !likt(String(kode || ""), await nullstillkode(env, type, b.navn, b.hash, String(ut)))) return null;
+  return { ...b, type };
+}
+
 // Personlig invitasjonskode, avledet av navnet og akademipassordet
 const invitasjonskode = async (env, navn) => (await hmac(env.TAFSE_PASSORD, `invitasjon|${navn}`)).slice(0, 20);
 
@@ -437,6 +454,25 @@ export async function onRequest({ request, env, params }) {
     }
     return json({ innlogget: true, navn: bruker.navn }, 200, { "Set-Cookie": await lagOkt(env, bruker, url) });
   }
+  if (ressurs === "nyttpassord") {
+    const sp = url.searchParams;
+    if (metode === "GET") {
+      const b = await sjekkNullstill(env, db, { navn: sp.get("navn"), gjest: sp.get("gjest") === "1", ut: sp.get("ut"), kode: sp.get("kode") });
+      if (!b) await vent(400);
+      return json({ gyldig: !!b, navn: b ? (b.type === "gjest" ? gjesteNavn(b.navn) : b.navn) : null });
+    }
+    if (metode === "POST") {
+      const k = await lesJson(request);
+      const b = await sjekkNullstill(env, db, { navn: k.navn, gjest: !!k.gjest, ut: k.ut, kode: k.kode });
+      if (!b) { await vent(600); return feil(401, "Lenken er ugyldig eller utløpt. Be om en ny."); }
+      if (typeof k.passord !== "string" || k.passord.length < 6) return feil(400, "Passordet må ha minst seks tegn.");
+      const salt = hex(crypto.getRandomValues(new Uint8Array(16)));
+      const hash = await hashPassord(k.passord, salt);
+      await db.prepare(`UPDATE ${b.type === "gjest" ? "gjester" : "brukere"} SET salt = ?, hash = ? WHERE navn = ?`).bind(salt, hash, b.navn).run();
+      const okt = b.type === "gjest" ? await lagGjesteokt(env, { navn: b.navn, hash }, url) : await lagOkt(env, { navn: b.navn, hash }, url);
+      return json({ ok: true, gjest: b.type === "gjest" }, 200, { "Set-Cookie": okt });
+    }
+  }
   if (ressurs === "loggut" && metode === "POST") {
     const h = new Headers({ "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
     h.append("Set-Cookie", "tafse=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax");
@@ -461,8 +497,10 @@ export async function onRequest({ request, env, params }) {
   if (ressurs === "gjester") {
     if (!(await erAdmin(env, url, meg))) return feil(403, "Bare administratorer kan se gjestene.");
     if (!id && metode === "GET") {
-      const { results } = await db.prepare("SELECT navn, invitert_av, opprettet FROM gjester ORDER BY opprettet DESC").all();
-      return json(results);
+      const { results } = await db.prepare("SELECT navn, hash, invitert_av, opprettet FROM gjester ORDER BY opprettet DESC").all();
+      const ut = [];
+      for (const g of results) ut.push({ navn: g.navn, invitert_av: g.invitert_av, opprettet: g.opprettet, nullstill: await nullstillLenke(env, "gjest", g) });
+      return json(ut);
     }
     if (id && metode === "DELETE") {
       await db.prepare("DELETE FROM gjester WHERE navn = ?").bind(decodeURIComponent(id)).run();
@@ -472,11 +510,12 @@ export async function onRequest({ request, env, params }) {
 
   if (ressurs === "invitasjoner" && metode === "GET") {
     if (!(await erAdmin(env, url, meg))) return feil(403, "Bare administratorer kan se invitasjonene.");
-    const { results } = await db.prepare("SELECT navn FROM brukere").all();
-    const registrerte = new Set(results.map((r) => r.navn));
+    const { results } = await db.prepare("SELECT navn, hash FROM brukere").all();
+    const registrerte = new Map(results.map((r) => [r.navn, r]));
     const liste = [];
     for (const navn of await medlemsliste(env, url)) {
-      liste.push({ navn, registrert: registrerte.has(navn), kode: await invitasjonskode(env, navn) });
+      const b = registrerte.get(navn);
+      liste.push({ navn, registrert: !!b, kode: await invitasjonskode(env, navn), nullstill: b ? await nullstillLenke(env, "bror", b) : null });
     }
     return json(liste);
   }

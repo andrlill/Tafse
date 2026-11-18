@@ -2,7 +2,7 @@
 // Alle andre (gjester og ukjente) slipper bare inn i spillhallen og sendes dit fra alt annet.
 import { GJESTESPILL, hvemErInnlogget } from "./api/[[sti]].js";
 
-const APNE_SIDER = new Set(["gjest", "velkommen", ...GJESTESPILL]);
+const APNE_SIDER = new Set(["gjest", "velkommen", "nyttpassord", ...GJESTESPILL]);
 
 function apen(sti) {
   if (sti.startsWith("/api/") || sti.startsWith("/assets/") || sti === "/favicon.ico" || sti === "/robots.txt") return true;

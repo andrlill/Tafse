@@ -1081,3 +1081,8 @@ a.liten-knapp { text-decoration: none; display: inline-flex; align-items: center
   .h-mynt span { font-size: 8px; letter-spacing: .08em; }
   .h-butikk { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* Glemt passord på invitasjonssiden */
+details.glemt > summary { cursor: pointer; list-style: none; display: inline-block; font-family: var(--display); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--dempet); }
+details.glemt > summary::-webkit-details-marker { display: none; }
+details.glemt > summary:hover, details.glemt[open] > summary { color: var(--gull); }
