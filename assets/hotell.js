@@ -14,7 +14,7 @@
   const HAR = ["kort", "langt", "krøller", "knute", "skallet"];
   const HARFARGE = ["#1c1612", "#4a2f1c", "#8a5a2b", "#c9a35a", "#b5482a", "#9a9a9a", "#ece4d2"];
   const TOGA = ["#ece4d2", "#8e2f52", "#2f5d8e", "#2f7d5b", "#c9a24a", "#5b3a8e", "#b5482a", "#2b2b2b"];
-  const GESTER = { vink: "vinker", skal: "skåler", dans: "danser" };
+  const GESTER = { vink: "vinker", skal: "skåler", dans: "danser", klapp: "klapper", ler: "ler" };
   const BARES = ["hode", "pynt", "dyr"];   // det figuren kan ha på seg eller med seg
   const PROFESSOR = "Professor Lund", TALERSTOL = [3, 1];   // samme som i lib/auditoriet.js
 
@@ -45,10 +45,10 @@
         ["disk", 1, 2], ["disk", 1, 3], ["disk", 1, 4], ["disk", 1, 5],
         ["krakk", 2, 2], ["krakk", 2, 3], ["krakk", 2, 4], ["krakk", 2, 5],
         ["bord", 5, 1], ["krakk", 4, 1], ["krakk", 6, 1], ["bord", 3, 7], ["krakk", 2, 7], ["krakk", 4, 7],
-        ["vinfat", 0, 7], ["vinfat", 0, 8], ["plante", 9, 0], ["soyle", 0, 0], ["lyre", 9, 8], ["festbord", 5, 8],
+        ["vinfat", 0, 7], ["vinfat", 0, 8], ["plante", 9, 0], ["soyle", 0, 0], ["lyre", 9, 8], ["festbord", 5, 8], ["jukeboks", 3, 0],
       ],
       npc: [{ navn: "Dionysos", x: 0, y: 3, utseende: { hud: HUD[2], har: "krøller", harfarge: "#1c1612", skjegg: "ja", toga: "#8e2f52" },
-        replikker: ["Hva skal det være? Vi har vin, vin og vin.", "Skål, bror!", "Dansegulvet lyser ikke for ingenting.", "Jeg blander aldri vinen med vann. Det er det dere som gjør.", "Siste runde var for to tusen år siden."] }],
+        replikker: ["Hva skal det være? Vi har vin, vin og vin.", "Skål, bror!", "Dansegulvet lyser ikke for ingenting.", "Jeg blander aldri vinen med vann. Det er det dere som gjør.", "Siste runde var for to tusen år siden.", "Jukeboksen står ved veggen. Sirtakien er populær."] }],
     },
     terrassen: {
       navn: "Terrassen", b: 11, d: 10, start: [5, 2], vegg: 30, veggfarge: ["#8f8672", "#a39a84"], bakgrunn: ["#0a0d18", "#1c2136"], himmel: true,
@@ -97,6 +97,15 @@
     <p>Trykk på gulvet, så går figuren dit og finner veien rundt møblene selv. Trykk på en sofa, krakk, seng eller solseng for å sette deg. Gå gjennom en dør, eller bruk knappene over rommet, for å bytte rom.</p>
     <h3>Prat</h3>
     <p>Det du skriver, kommer som en snakkeboble over hodet ditt og i praten under rommet. Du kan også vinke, skåle og danse. Portieren og Dionysos svarer når du trykker på dem, og i auditoriet venter professoren. Det tar et par sekunder før de andre ser det du gjør.</p>
+    <h3>Folk</h3>
+    <p>Trykk på en figur for å se profilkortet. Der kan du gi respekt (tre om dagen), hviske, besøke rommet deres, gi bort møbler fra lageret ditt og, for 14 oliven, gi en slibrig kommentar som hele rommet hører. Kortet viser også merkene de har tjent, for eksempel Skattejeger og Disputert. Trykk på deg selv for å se dine egne.</p>
+    <h3>Moro</h3>
+    <ul>
+      <li><strong>Terning:</strong> Trill en terning som hele rommet ser.</li>
+      <li><strong>Jukeboksen</strong> står i baren. Alle der inne hører sangen du velger.</li>
+      <li><strong>Skattejakt:</strong> Hver halvtime dukker det opp en glitrende kiste et sted i fellesrommene. Den første som stiller seg på den, får premien.</li>
+      <li><strong>Gjestebok:</strong> Legg igjen en hilsen når du besøker rommet til noen.</li>
+    </ul>
     <h3>Rommene</h3>
     <ul>
       <li><strong>Lobbyen</strong>, <strong>baren</strong> med dansegulv, <strong>terrassen</strong> med basseng og <strong>auditoriet</strong> er felles for alle.</li>
@@ -200,6 +209,13 @@
   const TETRIS = ["#4fc3d9", "#edc22e", "#9a5bd0", "#f08a4b", "#6fbf5a", "#e0533d", "#3f6fd0"];
   // mot = "v" betyr at ryggen står mot venstre vegg (x = 0), ellers mot høyre vegg (y = 0)
   const MOBEL = {
+    jukeboks: { blokk: true, klikk: "jukeboks", tegn(x, y, _, t) {
+      kloss(x, y, 0.14, 0.3, 0.86, 0.74, 0, 46, "#6b1f3a");
+      kloss(x, y, 0.2, 0.34, 0.8, 0.7, 46, 58, "#8e2f52");
+      const [a, b] = P(x + 0.5, y + 0.74, 0);
+      for (let i = 0; i < 5; i++) rk(a - 17 + i * 7.2, b - 40 - Math.abs(Math.sin(t * 4 + i * 1.3)) * 10, 5, 10 + Math.abs(Math.sin(t * 4 + i * 1.3)) * 10, `hsl(${(i * 60 + t * 60) % 360} 70% 60%)`);
+      rk(a - 19, b - 22, 38, 3, "#c9a24a"); rk(a - 19, b - 54, 38, 3, "#c9a24a"); glod(a, b - 34, 40, 0.18);
+    } },
     talerstol: { blokk: true, tegn(x, y) {
       kloss(x, y, 0.18, 0.24, 0.82, 0.76, 0, 4, "#3a2a18");
       kloss(x, y, 0.26, 0.32, 0.74, 0.68, 4, 34, "#6b4a2a");
@@ -535,6 +551,7 @@
       if (m.vegg) { if (x === 0 || y === 0) veggting.push({ type, x, y, mot: x === 0 ? "v" : "h" }); continue; }
       if (m.vann) ruter[x][y].vann = true;
       if (m.blokk) ruter[x][y].blokk = true;
+      if (m.klikk) ruter[x][y].klikk = m.klikk;
       if (m.sete) ruter[x][y].sete = { h: m.sete };
       mobler.push({ type, x, y, mot, dybde: x + y, gulv: !!m.gulv });
     }
@@ -604,6 +621,7 @@
     else {
       px(-9, -22, 3, 4, toga); px(-9, -18, 3, 6, hud);
       if (o.gest === "vink") { px(6, -22, 3, 3, togaM); px(7 + Math.round(Math.sin(t * 14)), -31, 3, 9, hudM); }
+      else if (o.gest === "klapp") { const k = Math.sin(t * 16) > 0 ? 1 : 0; px(6, -22, 3, 3, togaM); px(-4 - k, -21, 3, 3, hud); px(1 + k, -21, 3, 3, hudM); }
       else if (o.gest === "skal") { px(6, -22, 3, 3, togaM); px(7, -30, 3, 8, hudM); px(6, -35, 5, 5, "#e2c174"); px(7, -36, 3, 1, "#8e2f52"); }
       else { px(6, -22, 3, 4, togaM); px(6, -18, 3, 6, hudM); }
     }
@@ -674,7 +692,7 @@
     const gest = f.gest && f.gestTil > t ? f.gest : null;
     const dans = gest === "dans";
     const gaar = f.sti.length > 0;
-    const hopp = dans ? Math.abs(Math.sin(t * 9)) * 6 : gaar ? Math.abs(Math.sin(t * 11)) * 3 : 0;
+    const hopp = dans ? Math.abs(Math.sin(t * 9)) * 6 : gest === "ler" ? Math.abs(Math.sin(t * 15)) * 2.5 : gaar ? Math.abs(Math.sin(t * 11)) * 3 : 0;
 
     if (!vann) { ctx.fillStyle = "rgba(0,0,0,.28)"; ctx.beginPath(); ctx.ellipse(sx, sy0, 15, 6, 0, 0, 7); ctx.fill(); }
     ctx.save();
@@ -684,6 +702,7 @@
     ctx.restore();
     if (vann) { ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(sx, sy0 - 4, 16 + Math.sin(t * 4) * 2, 6, 0, 0, 7); ctx.stroke(); }
     f.topp = sy0 - (sitter ? rt.sete.h - 8 : 0) + (vann ? 16 : 0) - 84;
+    if (gest === "ler") { ctx.font = "italic 600 13px 'EB Garamond', Georgia, serif"; ctx.textAlign = "center"; ctx.fillStyle = "#e2c174"; for (let i = 0; i < 2; i++) { const f2 = (t * 0.9 + i * 0.5) % 1; ctx.globalAlpha = 1 - f2; ctx.fillText("ha", sx + 16 + i * 12, f.topp + 22 - f2 * 22); } ctx.globalAlpha = 1; }
   }
 
   function tegnDyr(f, t) {
@@ -735,12 +754,13 @@
       ctx.globalAlpha = Math.min(1, (f.boble.til - t) / 0.4) * (synlig > y + h * 0.6 ? 0 : 1);
       if (!ctx.globalAlpha) continue;
       y = synlig;
-      ctx.fillStyle = "#f5efe0"; ctx.strokeStyle = "#c9a24a"; ctx.lineWidth = 1.5;
+      const lys = f.boble.hvisk ? "#e9def2" : "#f5efe0";
+      ctx.fillStyle = lys; ctx.strokeStyle = f.boble.hvisk ? "#8e6fb0" : "#c9a24a"; ctx.lineWidth = 1.5;
       // Står boblen langt over figuren, går en tynn strek ned til hodet
       if (f.topp - (y + h) > 10) { ctx.beginPath(); ctx.moveTo(sx, y + h); ctx.lineTo(sx, f.topp - 2); ctx.stroke(); }
       ctx.beginPath(); ctx.roundRect(x, y, b, h, 8); ctx.fill(); ctx.stroke();
       const hx = Math.max(x + 10, Math.min(x + b - 10, sx));
-      ctx.beginPath(); ctx.moveTo(hx - 6, y + h - 1); ctx.lineTo(hx, y + h + 7); ctx.lineTo(hx + 6, y + h - 1); ctx.fillStyle = "#f5efe0"; ctx.fill();
+      ctx.beginPath(); ctx.moveTo(hx - 6, y + h - 1); ctx.lineTo(hx, y + h + 7); ctx.lineTo(hx + 6, y + h - 1); ctx.fillStyle = lys; ctx.fill();
       ctx.fillStyle = "#1c1612";
       f.boble.linjer.forEach((l, i) => ctx.fillText(l, x + b / 2, y + 2 + lh * (i + 0.9)));
     }
@@ -824,6 +844,7 @@
     for (let x = 0; x < R.b; x++) for (let y = 0; y < R.d; y++) rombe(x, y, 0, R.gulv(x, y, t));
     for (const m of mobler) if (m.gulv) MOBEL[m.type].tegn(m.x, m.y, m.mot, t);
     for (const d of R.dorer) { ctx.globalAlpha = 0.35 + Math.sin(t * 3) * 0.12; rombe(d.x, d.y, 0, "#e2c174"); ctx.globalAlpha = 1; }
+    tegnSkatt(t);
     if (R.talerstol) { ctx.globalAlpha = 0.45 + Math.sin(t * 1.5) * 0.15; rombe(R.talerstol[0], R.talerstol[1], 0.08, "#c9a24a"); ctx.globalAlpha = 1; }
     const merk = (m, farge, bredde) => {
       ctx.strokeStyle = farge; ctx.lineWidth = bredde; ctx.beginPath();
@@ -849,7 +870,7 @@
       MOBEL[holder.type].tegn(peker[0], peker[1], peker[0] === 0 ? "v" : "h", t);
       ctx.globalAlpha = 1;
     }
-    for (const f of figurer.values()) tegnNavnOgBoble(f, t);
+    for (const f of figurer.values()) { tegnNavnOgBoble(f, t); tegnTerning(f, t); }
     tegnBobler(t);
   }
 
@@ -861,6 +882,147 @@
   function hilsProfessor() {
     tenk(true);
     api("hotell/professor", post({})).then((s) => { if (!s || !s.svar) tenk(false); }).catch(() => tenk(false));
+  }
+
+  // ---------- Det sosiale: profilkort, hvisking, gaver, gjestebok, terning, jukeboks og skatt ----------
+  let hviskTil = null, skatt = null, tarSkatt = false, sanger = {}, kortNavn = null;
+  let lydPa = (() => { try { return localStorage.getItem("tafse-hotell-lyd") !== "av"; } catch (_) { return true; } })();
+
+  // Jukeboksen: små melodier laget med Web Audio. Tall er halvtoner over A (220 Hz), null er pause.
+  const MELODIER = {
+    sirtaki: { takt: 0.2, form: "triangle", noter: [0, 3, 7, 3, 0, 3, 7, 3, 2, 5, 8, 5, 2, 5, 8, 5, 0, 3, 7, 12, 10, 7, 3, 7, 0, 3, 7, 3, 0, null, 0, null] },
+    vals: { takt: 0.26, form: "sine", noter: [3, 7, 7, 3, 7, 7, 5, 8, 8, 5, 8, 8, 7, 10, 10, 7, 10, 10, 12, 10, 8, 7, 5, 3] },
+    marsj: { takt: 0.22, form: "square", noter: [0, 0, 7, 7, 5, 5, 7, null, 3, 3, 5, 5, 7, 7, 12, null, 0, 0, 7, 7, 5, 3, 0, null] },
+    vugge: { takt: 0.42, form: "sine", noter: [7, 5, 3, null, 7, 5, 3, null, 5, 7, 8, 7, 5, 3, 0, null] },
+  };
+  let lydCtx = null;
+  function spillMelodi(id) {
+    const m = MELODIER[id];
+    if (!m || !lydPa) return;
+    try {
+      lydCtx = lydCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (lydCtx.state === "suspended") lydCtx.resume();
+      const start = lydCtx.currentTime + 0.05;
+      m.noter.forEach((n, i) => {
+        if (n === null) return;
+        const o = lydCtx.createOscillator(), g = lydCtx.createGain(), t = start + i * m.takt;
+        o.type = m.form; o.frequency.value = 220 * Math.pow(2, n / 12);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(m.form === "square" ? 0.05 : 0.12, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + m.takt * 0.95);
+        o.connect(g).connect(lydCtx.destination); o.start(t); o.stop(t + m.takt);
+      });
+    } catch (_) {}
+  }
+  const plingLyd = () => { if (!lydPa) return; try { lydCtx = lydCtx || new (window.AudioContext || window.webkitAudioContext)(); [12, 16, 19, 24].forEach((n, i) => { const o = lydCtx.createOscillator(), g = lydCtx.createGain(), t = lydCtx.currentTime + i * 0.07; o.frequency.value = 220 * Math.pow(2, n / 12); g.gain.setValueAtTime(0.1, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.25); o.connect(g).connect(lydCtx.destination); o.start(t); o.stop(t + 0.26); }); } catch (_) {} };
+
+  // Figuren som står under pekeren, hvis noen (kroppen, ikke bare flisa)
+  function figurVed(e) {
+    const r = lerret.getBoundingClientRect();
+    const a = ((e.clientX - r.left) / r.width) * logW / zoom - kam[0], b = ((e.clientY - r.top) / r.height) * logH / zoom - kam[1];
+    let funnet = null;
+    for (const f of figurer.values()) {
+      if (f.npc) continue;
+      const [sx, sy] = P(f.x + 0.5, f.y + 0.5);
+      // Andre går foran deg selv, og den som står nærmest, foran dem bak
+      if (Math.abs(a - sx) < 17 && b > sy - 82 && b < sy + 6 && (!funnet || funnet === meg || (f !== meg && f.x + f.y > funnet.x + funnet.y))) funnet = f;
+    }
+    return funnet;
+  }
+
+  async function visKort(navn) {
+    kortNavn = navn;
+    let k;
+    try { k = await api(`hotell/kort?navn=${encodeURIComponent(navn)}`); } catch (e) { leggILogg(null, e.message, "info"); return; }
+    if (kortNavn !== navn) return;
+    const min = navn === MEG, iRommet = figurer.has(navn);
+    const lager = !min && k.lager.length ? `<h3>Gi en gave fra lageret ditt</h3><div class="h-kortvalg">${k.lager.map((m) => `<button type="button" class="h-valg" data-h-gave="${m.id}">${esc(varenavn(m.type))}</button>`).join("")}</div>` : "";
+    visInfo(vis(navn), `
+      <div class="h-kort">
+        <canvas id="h-kortbilde" width="200" height="240" aria-hidden="true"></canvas>
+        <div>
+          <p class="h-korttall"><strong>${k.respekt}</strong> respekt · <strong>${k.merker.length}</strong> merker</p>
+          ${min ? `<p class="dempet">Dette er deg. Du har ${k.respektIgjen} respekt igjen å dele ut i dag.</p>` : `<div class="h-kortknapper">
+            <button class="knapp" type="button" data-h-respekt ${k.gittIDag || k.respektIgjen <= 0 ? "disabled" : ""}>${k.gittIDag ? "Respekt gitt i dag" : `Gi respekt (${k.respektIgjen} igjen)`}</button>
+            ${iRommet ? `<button class="knapp sekundar" type="button" data-h-hvisk>Hvisk</button>` : ""}
+            <button class="knapp sekundar" type="button" data-h-besok>Besøk rommet</button>
+            ${iRommet ? `<button class="knapp sekundar" type="button" data-h-slibrig>Gi en slibrig kommentar (${k.slibrigPris} oliven)</button>` : ""}
+          </div>`}
+          <p class="melding" id="h-kortmelding" hidden></p>
+        </div>
+      </div>
+      <h3>Merker</h3>
+      <ul class="h-merker">${k.merker.map((m) => `<li><strong>${esc(m.navn)}</strong><span>${esc(m.tekst)}</span></li>`).join("")}</ul>
+      ${lager}`);
+    const c = document.getElementById("h-kortbilde");
+    if (c) { const g = c.getContext("2d"); g.translate(100, 215); g.scale(2.6, 2.6); figur(g, utseende(k.utseende, navn), { t: 1, gaar: false, sitter: false, gest: "vink", flip: false, bak: false }); }
+  }
+  const kortMelding = (tekst, feil) => { const m = document.getElementById("h-kortmelding"); if (m) { m.textContent = tekst; m.hidden = false; m.className = "melding" + (feil ? " feil" : " h-kvittering"); } };
+  const lukkInfo = () => { const d = document.getElementById("infoboks"); if (d && d.open) d.close(); };
+  function settHvisk(navn) {
+    hviskTil = navn;
+    const felt = document.getElementById("h-tekst"), merke = document.getElementById("h-hviskmerke");
+    if (felt) { felt.placeholder = navn ? `Hvisk til ${vis(navn)} …` : "Si noe til rommet …"; if (navn) felt.focus(); }
+    if (merke) { merke.hidden = !navn; merke.textContent = navn ? `Hvisker til ${vis(navn)} ✕` : ""; }
+  }
+  function visJukeboks() {
+    visInfo("Jukeboksen", `<p>Velg en sang. Alle i baren hører den.</p><div class="h-kortvalg">${Object.entries(sanger).map(([id, navn]) => `<button type="button" class="knapp sekundar" data-h-sang="${id}">${esc(navn)}</button>`).join("")}</div>
+      <p class="melding" id="h-kortmelding" hidden></p><p class="dempet">Hører du ingenting? Sjekk knappen «Lyd» under rommet.</p>`);
+  }
+  // Knappene i profilkortet og jukeboksen ligger i dialogen, utenfor hotellet
+  document.addEventListener("click", async (e) => {
+    const k = e.target.closest("#infoboks button");
+    if (!k || !meg) return;
+    const d = k.dataset;
+    try {
+      if (d.hRespekt !== undefined) { await api("hotell/respekt", post({ til: kortNavn })); lukkInfo(); hent(); }
+      else if (d.hHvisk !== undefined) { lukkInfo(); settHvisk(kortNavn); }
+      else if (d.hBesok !== undefined) { lukkInfo(); gaTil(`hjem:${kortNavn}`, null); }
+      else if (d.hGave) { const s = await api("hotell/gave", post({ til: kortNavn, id: Number(d.hGave) })); if (erMitt() && hjem) oppdaterHjem(s.hjem); lukkInfo(); lastButikk(); hent(); }
+      else if (d.hSang) { await api("hotell/musikk", post({ sang: d.hSang })); lukkInfo(); hent(); }
+      else if (d.hSlibrig !== undefined) { const s = await api("hotell/slibrig", post({ til: kortNavn })); lukkInfo(); si(meg, s.tekst, performance.now() / 1000); leggILogg(MEG, s.tekst); lastButikk(); }
+    } catch (err) { kortMelding(err.message, true); }
+  });
+
+  // Gjesteboka i rommene til folk
+  let gjestebokNokkel = "";
+  function visGjestebok() {
+    const boks = document.getElementById("h-gjestebok");
+    if (!boks) return;
+    if (!hjem) { if (gjestebokNokkel) { boks.innerHTML = ""; gjestebokNokkel = ""; } return; }
+    const nokkel = JSON.stringify([rom, hjem.gjestebok]);
+    if (nokkel === gjestebokNokkel) return;
+    gjestebokNokkel = nokkel;
+    const liste = hjem.gjestebok || [];
+    boks.innerHTML = `<section class="h-boks h-gjestebok">
+      <p class="h-etikett">Gjesteboka${erMitt() ? "" : ` til ${esc(vis(hjem.eier))}`}</p>
+      ${liste.length ? `<ul>${liste.map((g) => `<li><strong>${esc(vis(g.navn))}</strong> ${esc(g.tekst)} <span class="dempet">${esc(new Date(g.opprettet).toLocaleDateString("nb-NO", { day: "numeric", month: "short" }))}</span>${erMitt() || g.navn === MEG ? ` <button type="button" class="h-slett" data-slettbok="${g.id}" aria-label="Slett">✕</button>` : ""}</li>`).join("")}</ul>` : `<p class="dempet">Ingen har skrevet her ennå.</p>`}
+      <form id="h-bokskjema" class="h-prat"><input id="h-boktekst" maxlength="200" placeholder="${erMitt() ? "Skriv en velkomst til gjestene …" : "Legg igjen en hilsen …"}" autocomplete="off" aria-label="Skriv i gjesteboka"><button class="knapp sekundar" type="submit">Skriv</button></form>
+    </section>`;
+  }
+  async function gjestebokSend(kropp) {
+    try { const s = await api("hotell/gjestebok", post(kropp)); if (s.hjem && hjem) { hjem.gjestebok = s.hjem.gjestebok; visGjestebok(); } }
+    catch (e) { leggILogg(null, e.message, "info"); }
+  }
+
+  // Terningen over hodet på den som triller
+  function tegnTerning(f, t) {
+    if (!f.terning || f.terning.til < t) return;
+    const [sx] = P(f.x + 0.5, f.y + 0.5), ruller = t < f.terning.fra + 0.9;
+    const v = ruller ? 1 + Math.floor(t * 14 + f.x * 3) % 6 : f.terning.verdi, s = 26, x = sx + 16, y = f.topp - 4 - (ruller ? Math.abs(Math.sin(t * 16)) * 6 : 0);
+    ctx.globalAlpha = Math.min(1, (f.terning.til - t) / 0.4);
+    ctx.fillStyle = "#f5efe0"; ctx.strokeStyle = "#c9a24a"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.roundRect(x, y, s, s, 5); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#8e2f52";
+    const prikk = { 1: [[1, 1]], 2: [[0, 0], [2, 2]], 3: [[0, 0], [1, 1], [2, 2]], 4: [[0, 0], [2, 0], [0, 2], [2, 2]], 5: [[0, 0], [2, 0], [1, 1], [0, 2], [2, 2]], 6: [[0, 0], [2, 0], [0, 1], [2, 1], [0, 2], [2, 2]] }[v];
+    for (const [i, j] of prikk) { ctx.beginPath(); ctx.arc(x + 6.5 + i * 6.5, y + 6.5 + j * 6.5, 2.2, 0, 7); ctx.fill(); }
+    ctx.globalAlpha = 1;
+  }
+  // Skattekista som ligger og glitrer
+  function tegnSkatt(t) {
+    if (!skatt) return;
+    const [a, b] = P(skatt.x + 0.5, skatt.y + 0.5);
+    glod(a, b - 12, 44, 0.3 + Math.sin(t * 3) * 0.1);
+    kloss(skatt.x, skatt.y, 0.26, 0.3, 0.74, 0.7, 0, 12, "#6b4a2a"); kloss(skatt.x, skatt.y, 0.26, 0.3, 0.74, 0.7, 12, 17, "#c9a24a");
+    for (let i = 0; i < 4; i++) { const g = Math.max(0, Math.sin(t * 3 + i * 1.6)) * 2.2; ell(a + [-14, 12, -4, 8][i], b + [-24, -30, -38, -18][i], g, g, "#fffbe6"); }
   }
 
   // ---------- Bevegelse ----------
@@ -884,6 +1046,11 @@
         else k.flip = f.flip;
       } else f.kjael = null;
       if (f === meg && !f.sti.length && !bytter) {
+        if (skatt && !tarSkatt && Math.round(f.x) === skatt.x && Math.round(f.y) === skatt.y) {
+          tarSkatt = true;
+          api("hotell/skatt", post({})).then((s) => { plingLyd(); leggILogg(null, `Du fant skatten: ${s.antall} ${s.hva}! De ligger i lommeboka.`, "info"); lastButikk(); })
+            .catch((e) => leggILogg(null, e.message, "info")).finally(() => { skatt = null; tarSkatt = false; hent(); });
+        }
         // Opp på talerstolen: professoren hilser
         const pa = paTalerstolen();
         if (pa && !varPaStol) hilsProfessor();
@@ -898,6 +1065,7 @@
     if (!meg || bytter) return;
     const r = rute(tx, ty);
     if (!r) return;
+    if (r.klikk === "jukeboks") return visJukeboks();
     if (r.npc) {
       const n = figurer.get(r.npc);
       if (n.npc.ai && R.talerstol && !paTalerstolen()) return ga(R.talerstol[0], R.talerstol[1]);
@@ -926,12 +1094,13 @@
       if (def) { const d = fra && def.dorer.find((x) => x.til === fra); pos = d ? (d.side === "h" ? [d.x, 1] : [1, d.y]) : def.start; }
       const svar = await api("hotell/flytt", post({ rom: til, x: pos[0], y: pos[1] }));
       hjem = erHjem ? svar.hjem : null;
+      settHvisk(null); skatt = null;
       if (erHjem) def = lagHjem(til, hjem);
       innred = false; valgt = null; melding = "";
       byggRom(til, def);
       meg = { navn: MEG, x: pos[0], y: pos[1], sti: [], utseende: look };
       figurer.set(MEG, meg);
-      visRomliste(); visInnred(); butikkNokkel = ""; visButikk();
+      visRomliste(); visInnred(); visGjestebok(); butikkNokkel = ""; visButikk();
       leggILogg(null, ROM[til] ? `Du er i ${R.navn.toLowerCase()}.` : til === mittRom() ? "Du er i rommet ditt." : `Du er på besøk hos ${vis(til.slice(5))}.`, "info");
       if (til === "auditoriet") leggILogg(null, "Gå opp på talerstolen ved tavla, eller trykk på professoren, for å øve på disputas. Hele salen ser samtalen. Fra benkene svarer han når du nevner ham.", "info");
       varPaStol = false;
@@ -954,7 +1123,8 @@
       const s = await api(`hotell?rom=${encodeURIComponent(rom)}&etter=${etter}${forste ? "&forste=1" : ""}`);
       if (spurtRom !== rom || bytter) return;
       const t = performance.now() / 1000;
-      if (s.hjem && hjem) oppdaterHjem(s.hjem);
+      if (s.hjem && hjem) { oppdaterHjem(s.hjem); visGjestebok(); }
+      skatt = tarSkatt ? skatt : s.skatt || null; sanger = s.sanger || sanger;
       const sett = new Set([MEG]);
       for (const g of s.gjester) {
         if (g.navn === MEG) continue;
@@ -972,9 +1142,19 @@
       }
       for (const [navn, f] of figurer) if (!f.npc && !sett.has(navn)) figurer.delete(navn);
       for (const m of s.prat) {
-        if (m.navn === MEG && !s.forste) continue; // egne meldinger er allerede vist
+        if (m.navn === MEG && !s.forste && !["terning", "musikk", "hendelse"].includes(m.type)) continue; // egne meldinger er allerede vist
         const f = figurer.get(m.navn);
-        if (m.type === "gest") { if (f && !s.forste) { f.gest = m.tekst; f.gestTil = t + (m.tekst === "dans" ? 7 : 3); } if (!s.forste) leggILogg(m.navn, GESTER[m.tekst] || "", "gest"); }
+        if (m.type === "hvisk") {
+          const fraMeg = m.navn === MEG;
+          if (!fraMeg && f && !s.forste) { si(f, m.tekst, t); f.boble.hvisk = true; }
+          if (!fraMeg) leggILogg(m.navn, m.tekst, "hvisk");
+        } else if (m.type === "terning") {
+          if (f && !s.forste) f.terning = { verdi: Number(m.tekst) || 1, fra: t, til: t + 5 };
+          if (!s.forste) leggILogg(m.navn, `triller terning og får ${m.tekst}`, "gest");
+        } else if (m.type === "musikk") {
+          if (!s.forste) { spillMelodi(m.tekst); leggILogg(m.navn, `setter på «${sanger[m.tekst] || m.tekst}» på jukeboksen`, "gest"); }
+        } else if (m.type === "hendelse") { if (!s.forste) leggILogg(null, m.tekst, "info"); }
+        else if (m.type === "gest") { if (f && !s.forste) { f.gest = m.tekst; f.gestTil = t + (m.tekst === "dans" ? 7 : 3); } if (!s.forste) leggILogg(m.navn, GESTER[m.tekst] || "", "gest"); }
         else { if (f && m.navn === PROFESSOR) f.tenker = 0; if (f && !s.forste) si(f, m.tekst, t); leggILogg(m.navn, m.tekst); }
       }
       etter = s.sisteId; forste = false;
@@ -987,6 +1167,13 @@
   async function send(type, tekst) {
     if (!meg) return;
     const t = performance.now() / 1000;
+    if (type === "terning") { api("hotell/terning", post({})).then(hent).catch((e) => leggILogg(null, e.message, "info")); return; }
+    if (type === "si" && hviskTil) {
+      const til = hviskTil;
+      leggILogg(null, `Du hvisker til ${vis(til)}: ${tekst}`, "hvisk");
+      try { await api("hotell/hvisk", post({ til, tekst })); } catch (e) { leggILogg(null, e.message, "info"); settHvisk(null); }
+      return;
+    }
     if (type === "gest") { meg.gest = tekst; meg.gestTil = t + (tekst === "dans" ? 7 : 3); leggILogg(MEG, GESTER[tekst], "gest"); }
     else { si(meg, tekst, t); leggILogg(MEG, tekst); }
     const tilProfessoren = type !== "gest" && rom === "auditoriet" && (paTalerstolen() || /professor/i.test(tekst));
@@ -1169,7 +1356,7 @@
     if (logg.length > 40) logg.shift();
     const l = document.getElementById("h-logg");
     if (!l) return;
-    l.innerHTML = logg.map((m) => m.type === "info" ? `<li class="info">${esc(m.tekst)}</li>` : m.type === "gest" ? `<li class="gest">${esc(vis(m.navn))} ${esc(m.tekst)}</li>` : `<li><strong>${esc(vis(m.navn))}</strong> ${esc(m.tekst)}</li>`).join("");
+    l.innerHTML = logg.map((m) => m.type === "info" ? `<li class="info">${esc(m.tekst)}</li>` : m.type === "gest" ? `<li class="gest">${esc(vis(m.navn))} ${esc(m.tekst)}</li>` : m.type === "hvisk" ? `<li class="hvisk">${m.navn ? `<strong>${esc(vis(m.navn))}</strong> hvisker: ` : ""}${esc(m.tekst)}</li>` : `<li><strong>${esc(vis(m.navn))}</strong> ${esc(m.tekst)}</li>`).join("");
     l.scrollTop = l.scrollHeight;
   }
   function visRomliste() {
@@ -1231,6 +1418,10 @@
     if (!k || k.disabled) return;
     if (k.dataset.info !== undefined) visInfo("Slik fungerer Tafse Hotell", INFO);
     else if (k.dataset.gest) send("gest", k.dataset.gest);
+    else if (k.dataset.terning !== undefined) send("terning", "");
+    else if (k.dataset.lyd !== undefined) { lydPa = !lydPa; try { localStorage.setItem("tafse-hotell-lyd", lydPa ? "pa" : "av"); } catch (_) {} k.textContent = lydPa ? "Lyd på" : "Lyd av"; }
+    else if (k.id === "h-hviskmerke") settHvisk(null);
+    else if (k.dataset.slettbok) gjestebokSend({ slett: Number(k.dataset.slettbok) });
     else if (k.dataset.rom && k.dataset.rom !== rom) gaTil(k.dataset.rom, null);
     else if (k.dataset.felt && look) baer(k.dataset.felt, k.dataset.verdi);
     else if (k.dataset.fane) { fane = k.dataset.fane; kvittering = null; visButikk(); }
@@ -1238,6 +1429,13 @@
     else if (k.dataset.innred !== undefined) { innred = !innred; valgt = null; melding = ""; visInnred(); }
     else if (k.dataset.velg) { valgt = valgt === Number(k.dataset.velg) ? null : Number(k.dataset.velg); visInnred(); if (valgt) visRommet(); }
     else if (k.dataset.kjop) kjop(k.dataset.kjop);
+  });
+  rot.addEventListener("submit", (e) => {
+    if (e.target.id !== "h-bokskjema") return;
+    e.preventDefault();
+    const felt = document.getElementById("h-boktekst"), tekst = felt.value.replace(/\s+/g, " ").trim();
+    if (tekst) { gjestebokNokkel = ""; gjestebokSend({ tekst }); }
+    felt.value = "";
   });
   rot.addEventListener("change", (e) => { if (e.target.id === "h-besok" && e.target.value) gaTil(e.target.value, null); });
 
@@ -1248,9 +1446,11 @@
       <form class="h-prat" id="h-prat">
         <input id="h-tekst" maxlength="140" placeholder="Si noe til rommet …" autocomplete="off" aria-label="Si noe">
         <button class="knapp" type="submit">Si</button>
-        <div class="h-gester">${Object.keys(GESTER).map((g) => `<button class="liten-knapp" type="button" data-gest="${g}">${{ vink: "Vink", skal: "Skål", dans: "Dans" }[g]}</button>`).join("")}</div>
+        <button class="h-hviskmerke" type="button" id="h-hviskmerke" hidden></button>
+        <div class="h-gester">${Object.keys(GESTER).map((g) => `<button class="liten-knapp" type="button" data-gest="${g}">${{ vink: "Vink", skal: "Skål", dans: "Dans", klapp: "Klapp", ler: "Le" }[g]}</button>`).join("")}<button class="liten-knapp" type="button" data-terning>Terning</button><button class="liten-knapp" type="button" data-lyd>${lydPa ? "Lyd på" : "Lyd av"}</button></div>
       </form>
       <div id="h-innred"></div>
+      <div id="h-gjestebok"></div>
       <div class="h-to">
         <section class="h-boks"><p class="h-etikett">Praten</p><ul class="h-logg" id="h-logg"></ul></section>
         <section class="h-boks"><p class="h-etikett">Garderoben</p><div id="h-garderobe"></div>
@@ -1264,12 +1464,14 @@
 
     lerret.addEventListener("click", (e) => {
       const [x, y] = tilFlis(e);
-      if (innred && erMitt() && hjem) innredKlikk(x, y); else ga(x, y);
+      if (innred && erMitt() && hjem) return innredKlikk(x, y);
+      const f = figurVed(e);
+      if (f) visKort(f.navn); else ga(x, y);
     });
     lerret.addEventListener("pointermove", (e) => { peker = tilFlis(e); });
     lerret.addEventListener("pointerleave", () => { peker = null; });
     document.getElementById("h-prat").addEventListener("submit", (e) => {
-      e.preventDefault();
+      e.preventDefault(); e.stopPropagation();
       const felt = document.getElementById("h-tekst");
       const tekst = felt.value.replace(/\s+/g, " ").trim();
       if (tekst) send("si", tekst);

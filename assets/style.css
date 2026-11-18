@@ -935,6 +935,24 @@ input:focus, select:focus, textarea:focus, .knapp:focus-visible, a:focus-visible
 .h-logg li { padding: 3px 0; overflow-wrap: anywhere; }
 .h-logg strong { color: var(--gull-lys); font-weight: 500; margin-right: 4px; }
 .h-logg .gest, .h-logg .info { color: var(--dempet); font-style: italic; font-size: 15px; }
+.h-logg .hvisk { color: #c9b3e0; font-style: italic; }
+.h-hviskmerke { background: #3a2c4a; border: 1px solid #8e6fb0; color: #e9def2; padding: 6px 10px; font-size: 14px; cursor: pointer; }
+.h-gester { flex-wrap: wrap; }
+.h-kort { display: grid; grid-template-columns: 100px 1fr; gap: 18px; align-items: center; }
+.h-kort canvas { width: 100px; height: 120px; background: var(--bunn); border: 1px solid var(--linje); }
+.h-korttall { font-size: 19px; margin: 0 0 10px; }
+.h-korttall strong { color: var(--gull-lys); font-weight: 500; }
+.h-kortknapper, .h-kortvalg { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0; }
+.infoboks .h-merker, .h-merker { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+.h-merker li { border: 1px solid rgba(201,162,74,.45); background: var(--bunn); padding: 8px 10px; display: flex; flex-direction: column; font-size: 15px !important; line-height: 1.3 !important; }
+.h-merker strong { font-family: var(--display); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--gull-lys); font-weight: 600; }
+.h-merker span { color: var(--dempet); }
+.h-gjestebok { margin-top: 18px; }
+.h-gjestebok ul { list-style: none; margin: 0 0 10px; padding: 0; max-height: 180px; overflow-y: auto; font-size: 17px; }
+.h-gjestebok li { padding: 3px 0; overflow-wrap: anywhere; }
+.h-gjestebok li strong { color: var(--gull-lys); font-weight: 500; margin-right: 4px; }
+.h-gjestebok li .dempet { font-size: 14px; }
+.h-slett { background: none; border: 0; color: var(--dempet); cursor: pointer; padding: 0 4px; }
 .h-rad { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; }
 .h-rad > span { flex: 0 0 76px; font-size: 15px; color: var(--dempet); }
 .h-rad > div { display: flex; gap: 6px; flex-wrap: wrap; }
