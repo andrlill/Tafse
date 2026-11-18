@@ -10,13 +10,16 @@
   const FART = 3.4;                // fliser i sekundet
   const HENT_HVERT = 1600;         // millisekunder mellom hver gang vi spør serveren
 
-  const HUD = ["#f6d7bd", "#eac19f", "#d19f76", "#a8734d", "#6e4a30"];
-  const HAR = ["kort", "langt", "krøller", "knute", "skallet"];
-  const HARFARGE = ["#1c1612", "#4a2f1c", "#8a5a2b", "#c9a35a", "#b5482a", "#9a9a9a", "#ece4d2"];
-  const TOGA = ["#ece4d2", "#8e2f52", "#2f5d8e", "#2f7d5b", "#c9a24a", "#5b3a8e", "#b5482a", "#2b2b2b"];
+  const HUD = ["#fbe3d0", "#f6d7bd", "#eac19f", "#e0b088", "#d19f76", "#b98558", "#a8734d", "#85583a", "#6e4a30", "#4f3422"];
+  const HAR = ["kort", "sideskill", "pigg", "viker", "krøller", "bob", "langt", "hale", "knute", "skallet"];
+  const SKJEGG = ["nei", "ja", "bart", "fipp"], OYNE = ["vanlige", "store", "smale", "vipper"], MUNN = ["smil", "rett", "glis", "o"];
+  const PLAGG = ["toga", "tunika", "kjole", "rustning"], SKO = ["sandaler", "støvler", "barbeint"];
+  const NAVN = { ja: "fullskjegg", nei: "ingen", fipp: "fippskjegg", o: "forundret", hale: "hestehale", pigg: "piggsveis", viker: "viker" };
+  const HARFARGE = ["#1c1612", "#3a2416", "#4a2f1c", "#6b4423", "#8a5a2b", "#b07a3a", "#c9a35a", "#e6cf8a", "#b5482a", "#8e2f2f", "#9a9a9a", "#ece4d2", "#3f6fd0", "#c2549a"];
+  const TOGA = ["#ece4d2", "#d8cdb4", "#8e2f52", "#b5282a", "#b5482a", "#e0843d", "#c9a24a", "#e6cf8a", "#2f7d5b", "#6b8a45", "#2f6f8e", "#2f5d8e", "#3f4fa0", "#5b3a8e", "#c2549a", "#2b2b2b"];
   const GESTER = { vink: "vinker", skal: "skåler", dans: "danser", klapp: "klapper", ler: "ler" };
   const BARES = ["hode", "pynt", "dyr"];
-  const GRUNNTREKK = ["hud", "har", "harfarge", "toga", "skjegg"];   // koster oliven å bytte etter innsjekken   // det figuren kan ha på seg eller med seg
+  const GRUNNTREKK = ["hud", "har", "harfarge", "toga", "skjegg", "oyne", "munn", "plagg", "sko", "briller"];   // koster oliven å bytte etter innsjekken   // det figuren kan ha på seg eller med seg
   const PROFESSOR = "Professor Lund", TALERSTOL = [3, 1];   // samme som i lib/auditoriet.js
 
   // ---------- Fellesrommene ----------
@@ -649,17 +652,26 @@
     if (a.pynt === "pynt_vinger") { const v = Math.sin(t * 3); for (const [x1, x2, x3] of [[-12, -14, -11], [6, 7, 6]]) { px(x1, -29 + ned - v, 6, 4, "#f5efe0"); px(x2, -25 + ned - v, 7, 6, "#ece4d2"); px(x3, -19 + ned, 5, 5, "#d8cdb4"); } }
     if (a.pynt === "pynt_kappe" && !o.bak) px(-8, -24 + ned, 16, o.sitter ? 14 : 19, "#6b1f3a");
     if (a.har === "langt") { boks(-16, -76 + ned * u, 32, 34, 3, har, harK); }
+    if (a.har === "bob") { boks(-16, -76 + ned * u, 32, 24, 3, har, harK); }
 
     // Bein og sandaler
-    const bein = (x, loft, farge) => { boks(x, -19, 8, 19 - loft, 1, farge, hudK); q(x, -3 - loft, 9, 3, "#4a2f1c"); q(x + 1, -8 - loft, 6, 1, "#6b4a2a"); };
-    if (o.sitter) { boks(-10, -11, 9, 10, 1, hud, hudK); boks(1, -11, 9, 10, 1, hudM, hudK); q(-10, -3, 10, 3, "#4a2f1c"); q(1, -3, 10, 3, "#4a2f1c"); c.translate(0, 4 * u); }
+    const sko = a.sko || "sandaler";
+    const bein = (x, loft, farge) => {
+      boks(x, -19, 8, 19 - loft, 1, farge, hudK);
+      if (sko === "støvler") { boks(x - 1, -12 - loft, 10, 12, 1, "#6b4a2a", "#3a2416"); q(x, -12 - loft, 8, 2, "#8a6038"); }
+      else if (sko === "sandaler") { q(x, -3 - loft, 9, 3, "#4a2f1c"); q(x + 1, -8 - loft, 6, 1, "#6b4a2a"); }
+    };
+    if (o.sitter) { boks(-10, -11, 9, 10, 1, hud, hudK); boks(1, -11, 9, 10, 1, hudM, hudK); if (sko !== "barbeint") { q(-10, -3, 10, 3, "#4a2f1c"); q(1, -3, 10, 3, "#4a2f1c"); } c.translate(0, 4 * u); }
     else { const l = o.gaar ? (Math.sin(t * 11) > 0 ? 1 : -1) : 0; bein(-9, l > 0 ? 4 : 0, hud); bein(1, l < 0 ? 4 : 0, hudM); }
 
     // Kroppen: toga med skygge, skrå kant og belte
-    boks(-13, -49, 26, 34, 2, toga, togaK);
-    q(5, -47, 7, 30, togaM); q(-12, -19, 24, 3, togaM);
-    if (!o.bak) for (let i = 0; i < 9; i++) q(-12 + i * 2.5, -47 + i * 2.4, 5, 3, kant);
-    q(-12, -27, 24, 2, kant); q(-12, -25, 24, 1, togaK);
+    const plagg = a.plagg || "toga", lang = plagg === "kjole" && !o.sitter ? 9 : 0;
+    boks(-13, -49, 26, 34 + lang, 2, toga, togaK);
+    q(5, -47, 7, 30 + lang, togaM); q(-12, -19 + lang, 24, 3, togaM);
+    if (plagg === "toga") { if (!o.bak) for (let i = 0; i < 9; i++) q(-12 + i * 2.5, -47 + i * 2.4, 5, 3, kant); q(-12, -27, 24, 2, kant); q(-12, -25, 24, 1, togaK); }
+    else if (plagg === "tunika") { q(-12, -28, 24, 3, "#6b4a2a"); q(-2, -29, 4, 5, "#c9a24a"); if (!o.bak) { q(-5, -48, 10, 2, kant); q(-3, -46, 6, 2, kant); } q(-12, -18, 24, 1, kant); }
+    else if (plagg === "kjole") { if (!o.bak) { q(-6, -48, 4, 3, hud); q(2, -48, 4, 3, hud); q(-3, -48, 6, 6, hud); q(-1, -42, 2, 2, hud); } q(-12, -30, 24, 2, kant); q(-12, -9 + (o.sitter ? -9 : 0), 24, 2, kant); }
+    else { boks(-12, -48, 24, 20, 2, "#b08d57", "#6b5326"); q(5, -46, 6, 16, "#9a7a48"); if (!o.bak) { q(-8, -44, 6, 5, "#c9a66a"); q(2, -44, 6, 5, "#c9a66a"); q(-6, -37, 12, 1, "#8a6f33"); q(-5, -34, 10, 1, "#8a6f33"); } for (let i = 0; i < 6; i++) q(-12 + i * 4, -28, 3, 9, i % 2 ? "#8a6038" : "#6b4a2a"); }
 
     // Armer: erme øverst, hud nederst
     const arm = (x, y, h, farge, erme) => { boks(x, y, 7, h, 2, farge, hudK); boks(x, y, 7, Math.min(9, h), 2, erme, togaK); };
@@ -682,17 +694,39 @@
     q(8, -75, 5, 22, hudM); q(-10, -52, 20, 1, hudM);
     if (!o.bak) {
       // Øyne med hvitt, pupill og glimt, og øyenbryn i hårfargen
-      for (const x of [-9, 3]) { q(x, -67, 6, 7, "#ffffff"); q(x, -68, 6, 1, hudK); q(x + 2, -66, 4, 5, "#2b1a10"); q(x + 2, -66, 2, 2, "#5a4636"); q(x + 4, -65, 1, 1, "#ffffff"); q(x - 1, -71, 8, 2, a.har === "skallet" ? hudK : harK); }
+      const oy = a.oyne || "vanlige";
+      for (const x of [-9, 3]) {
+        if (oy === "smale") { q(x, -65, 6, 4, "#ffffff"); q(x, -66, 6, 1, hudK); q(x + 2, -65, 4, 4, "#2b1a10"); q(x + 4, -64, 1, 1, "#ffffff"); }
+        else if (oy === "store") { q(x - 1, -69, 8, 9, "#ffffff"); q(x - 1, -70, 8, 1, hudK); q(x + 1, -67, 5, 6, "#2b1a10"); q(x + 1, -67, 2, 2, "#5a4636"); q(x + 4, -66, 2, 2, "#ffffff"); }
+        else { q(x, -67, 6, 7, "#ffffff"); q(x, -68, 6, 1, hudK); q(x + 2, -66, 4, 5, "#2b1a10"); q(x + 2, -66, 2, 2, "#5a4636"); q(x + 4, -65, 1, 1, "#ffffff"); if (oy === "vipper") { q(x - 1, -69, 2, 1, "#2b1a10"); q(x + 5, -69, 2, 1, "#2b1a10"); q(x + 2, -70, 2, 1, "#2b1a10"); } }
+        q(x - 1, oy === "store" ? -73 : -71, 8, 2, a.har === "skallet" ? hudK : harK);
+      }
       q(-1, -60, 3, 2, hudM); q(0, -58, 2, 1, hudK);                               // nese
       q(-10, -59, 4, 2, mork(hud, 0.93)); q(7, -59, 4, 2, mork(hud, 0.78));       // kinn
       if (a.briller === "ja") { const g = "#c9a24a"; for (const x of [-11, 1]) { q(x, -69, 10, 1, g); q(x, -60, 10, 1, g); q(x, -69, 1, 10, g); q(x + 9, -69, 1, 10, g); } q(-2, -66, 4, 1, g); }
+      const munn = () => {
+        const m = a.munn || "smil";
+        if (m === "rett") q(-4, -55, 8, 1, "#7a2f2a");
+        else if (m === "glis") { q(-6, -57, 12, 4, "#7a2f2a"); q(-5, -56, 10, 2, "#ffffff"); }
+        else if (m === "o") { q(-2, -57, 4, 4, "#7a2f2a"); q(-1, -56, 2, 2, "#3a1512"); }
+        else { q(-5, -55, 10, 1, "#7a2f2a"); q(-6, -56, 1, 1, "#7a2f2a"); q(5, -56, 1, 1, "#7a2f2a"); q(-3, -54, 6, 1, mork(hud, 0.7)); }
+      };
       if (a.skjegg === "ja") { boks(-13, -59, 26, 10, 3, har, harK); q(-9, -61, 7, 3, har); q(2, -61, 7, 3, har); q(-4, -56, 8, 2, "#7a2f2a"); q(-9, -52, 18, 1, harL); }
-      else { q(-5, -55, 10, 1, "#7a2f2a"); q(-6, -56, 1, 1, "#7a2f2a"); q(5, -56, 1, 1, "#7a2f2a"); q(-3, -54, 6, 1, mork(hud, 0.7)); }   // smil
+      else {
+        munn();
+        if (a.skjegg === "bart") { q(-8, -59, 16, 3, har); q(-9, -57, 3, 2, har); q(6, -57, 3, 2, har); }
+        else if (a.skjegg === "fipp") { boks(-5, -54, 10, 6, 2, har, harK); q(-6, -59, 12, 2, har); }
+      }
     } else if (a.har !== "skallet") boks(-14, -78, 28, 22, 4, har, harK);
     // Hår
     if (a.har === "kort") { boks(-15, -82, 30, 12, 4, har, harK); q(-14, -72, 3, 8, har); q(11, -72, 3, 8, har); q(-9, -72, 5, 2, har); q(1, -72, 7, 2, har); q(-9, -80, 12, 2, harL); }
     else if (a.har === "langt") { boks(-16, -82, 32, 13, 4, har, harK); q(-15, -71, 4, 22, har); q(11, -71, 4, 22, har); q(-16, -71, 1, 22, harK); q(15, -71, 1, 22, harK); q(-11, -72, 9, 3, har); q(-9, -80, 12, 2, harL); }
     else if (a.har === "krøller") { for (const [x, y] of [[-16, -76], [-12, -82], [-5, -85], [3, -85], [9, -81], [12, -75]]) boks(x, y, 10, 10, 3, har, harK); q(-12, -76, 24, 5, har); for (const [x, y] of [[-10, -80], [-2, -82], [6, -80]]) q(x, y, 3, 2, harL); if (!o.bak) { q(-15, -70, 3, 6, har); q(12, -70, 3, 6, har); } }
+    else if (a.har === "sideskill") { boks(-15, -82, 30, 12, 4, har, harK); q(-14, -72, 3, 7, har); q(11, -72, 3, 7, har); if (!o.bak) { q(-13, -72, 16, 4, har); q(-13, -68, 9, 2, har); } q(4, -81, 1, 9, harK); q(-9, -80, 10, 2, harL); }
+    else if (a.har === "pigg") { boks(-15, -80, 30, 10, 4, har, harK); for (let i = 0; i < 5; i++) { const x = -13 + i * 6; q(x, -86, 5, 7, harK); q(x + 1, -85, 3, 6, har); q(x + 1.5, -88, 2, 3, har); } q(-14, -72, 2, 5, har); q(12, -72, 2, 5, har); }
+    else if (a.har === "viker") { q(-15, -76, 4, 14, harK); q(-14, -75, 3, 12, har); q(11, -76, 4, 14, harK); q(11, -75, 3, 12, har); q(-8, -79, 16, 2, har); q(-9, -76, 8, 2, mork(hud, 1.12)); }
+    else if (a.har === "bob") { boks(-16, -82, 32, 13, 4, har, harK); boks(-17, -72, 6, 20, 2, har, harK); boks(11, -72, 6, 20, 2, har, harK); if (!o.bak) q(-11, -72, 22, 3, har); q(-9, -80, 12, 2, harL); }
+    else if (a.har === "hale") { boks(-15, -82, 30, 12, 4, har, harK); q(-14, -72, 2, 6, har); q(12, -72, 2, 6, har); if (!o.bak) q(-10, -72, 8, 2, har); boks(12, -80, 8, 8, 3, har, harK); boks(15, -74, 6, 20, 2, har, harK); q(13, -78, 3, 3, "#c9a24a"); q(-9, -80, 10, 2, harL); }
     else if (a.har === "knute") { boks(-5, -89, 10, 9, 3, har, harK); boks(-15, -82, 30, 11, 4, har, harK); q(-14, -72, 2, 5, har); q(12, -72, 2, 5, har); q(-8, -80, 10, 2, harL); q(-2, -87, 3, 2, harL); }
     else { q(-9, -76, 8, 2, mork(hud, 1.12)); q(-14, -70, 2, 5, harK); q(12, -70, 2, 5, harK); }
     // Hodeplagg fra butikken (tegnet for et litt mindre hode, så de strekkes litt)
@@ -1546,33 +1580,58 @@
       (alle.length ? `<select id="h-besok" class="h-besok${rom.startsWith("hjem:") && !erMitt() ? " aktiv" : ""}" aria-label="Besøk noen">
         <option value="">Besøk noen …</option>${alle.map(valg).join("")}</select>` : "");
   }
+  // Garderoben, etter modell av Habbo: faner for kropp, hode og klær, et bilde av hvert valg, og fargekart under
+  let gFane = "hode";
+  const GFANER = { kropp: "Kropp", hode: "Hode", overdel: "Overdel", nederdel: "Sko", ekstra: "Fra butikken" };
+  function tilfeldig() {
+    const en = (l) => l[Math.floor(Math.random() * l.length)];
+    const ny = { hud: en(HUD), har: en(HAR), harfarge: en(HARFARGE), skjegg: Math.random() < 0.6 ? "nei" : en(SKJEGG), oyne: en(OYNE), munn: en(MUNN), plagg: en(PLAGG), toga: en(TOGA), sko: en(SKO), briller: Math.random() < 0.15 ? "ja" : "nei" };
+    if (look.klar !== "ja") look = { ...look, ...ny }; else utkast = { ...(utkast || {}), ...ny };
+    visGarderobe();
+  }
   function visGarderobe() {
     const g = document.getElementById("h-garderobe");
     if (!g || !look) return;
     const a = { ...look, ...(utkast || {}) };
     const endret = utkast && GRUNNTREKK.some((k) => utkast[k] !== look[k]);
-    const farger = (felt, liste) => liste.map((f) => `<button type="button" class="h-farge${a[felt] === f ? " valgt" : ""}" data-felt="${felt}" data-verdi="${f}" style="background:${f}" aria-label="${felt}"></button>`).join("");
-    const valg = (felt, liste) => liste.map((v) => `<button type="button" class="h-valg${a[felt] === v ? " valgt" : ""}" data-felt="${felt}" data-verdi="${v}">${v}</button>`).join("");
-    // Det som er kjøpt i butikken
+    const pris = (butikk && butikk.byttepris && butikk.byttepris.oliven) || 100;
+    const std = { skjegg: "nei", oyne: "vanlige", munn: "smil", plagg: "toga", sko: "sandaler", briller: "nei" };
+    const na = (felt) => a[felt] || std[felt];
+    const navnAv = (felt, v) => (felt === "briller" ? (v === "ja" ? "med" : "uten") : NAVN[v] || v);
+    const farger = (felt, liste) => `<div class="h-fargekart">${liste.map((f) => `<button type="button" class="h-farge${a[felt] === f ? " valgt" : ""}" data-felt="${felt}" data-verdi="${f}" style="background:${f}" aria-label="${felt}"></button>`).join("")}</div>`;
+    // Et lite bilde av figuren med akkurat dette valget. «hode» zoomer inn på hodet.
+    const bilder = (felt, liste, utsnitt, tittel) => `<p class="h-gtittel">${tittel}</p><div class="h-gvalg">${liste.map((v) => `<button type="button" class="h-gknapp${na(felt) === v ? " valgt" : ""}" data-felt="${felt}" data-verdi="${v}" title="${navnAv(felt, v)}"><canvas width="112" height="112" data-gbilde="${felt}:${v}:${utsnitt}"></canvas><span>${navnAv(felt, v)}</span></button>`).join("")}</div>`;
     const kjopt = (felt, tittel) => {
       const l = eide(felt);
-      return l.length ? `<div class="h-rad"><span>${tittel}</span><div><button type="button" class="h-valg${a[felt] ? "" : " valgt"}" data-felt="${felt}" data-verdi="">ingen</button>${l.map((id) => `<button type="button" class="h-valg${a[felt] === id ? " valgt" : ""}" data-felt="${felt}" data-verdi="${id}">${esc(varenavn(id))}</button>`).join("")}</div></div>` : "";
+      return l.length ? `<p class="h-gtittel">${tittel}</p><div class="h-gvalg">${["", ...l].map((id) => `<button type="button" class="h-gknapp${(a[felt] || "") === id ? " valgt" : ""}" data-felt="${felt}" data-verdi="${id}"><canvas width="112" height="112" data-gbilde="${felt}:${id}:${felt === "dyr" ? "dyr" : felt === "hode" ? "hode" : "hel"}"></canvas><span>${id ? esc(varenavn(id)) : "ingen"}</span></button>`).join("")}</div>` : "";
     };
-    const pris = (butikk && butikk.byttepris && butikk.byttepris.oliven) || 100;
+    const inne = look.klar === "ja";
+    const faner = Object.entries(GFANER).filter(([id]) => id !== "ekstra" || inne);
+    if (!inne && gFane === "ekstra") gFane = "hode";
+    const innhold = {
+      kropp: () => `<p class="h-gtittel">Hud</p>${farger("hud", HUD)}${bilder("oyne", OYNE, "hode", "Øyne")}${bilder("munn", MUNN, "hode", "Munn")}`,
+      hode: () => `${bilder("har", HAR, "hode", "Hår")}<p class="h-gtittel">Hårfarge</p>${farger("harfarge", HARFARGE)}${bilder("skjegg", SKJEGG, "hode", "Skjegg")}${bilder("briller", ["nei", "ja"], "hode", "Briller")}`,
+      overdel: () => `${bilder("plagg", PLAGG, "hel", "Plagg")}<p class="h-gtittel">Farge</p>${farger("toga", TOGA)}`,
+      nederdel: () => bilder("sko", SKO, "bein", "Sko"),
+      ekstra: () => (kjopt("hode", "Hodeplagg") + kjopt("pynt", "Tilbehør") + kjopt("dyr", "Kjæledyr")) || `<p class="dempet">Hodeplagg, tilbehør og kjæledyr kjøper du i butikken. Det du eier, dukker opp her.</p>`,
+    };
     g.innerHTML = `
-      <div class="h-rad"><span>Toga</span><div>${farger("toga", TOGA)}</div></div>
-      <div class="h-rad"><span>Hud</span><div>${farger("hud", HUD)}</div></div>
-      <div class="h-rad"><span>Hår</span><div>${valg("har", HAR)}</div></div>
-      <div class="h-rad"><span>Hårfarge</span><div>${farger("harfarge", HARFARGE)}</div></div>
-      <div class="h-rad"><span>Skjegg</span><div>${valg("skjegg", ["ja", "nei"])}</div></div>
-      ${kjopt("hode", "Hodeplagg")}${kjopt("pynt", "Tilbehør")}${kjopt("dyr", "Kjæledyr")}
+      <div class="h-gtopp"><div class="h-faner">${faner.map(([id, navn]) => `<button type="button" class="h-fane${id === gFane ? " aktiv" : ""}" data-gfane="${id}">${navn}</button>`).join("")}</div>
+        <button type="button" class="liten-knapp" data-tilfeldig>Tilfeldig</button></div>
+      <div class="h-gfane">${innhold[gFane]()}</div>
       ${look.klar !== "ja" ? "" : `<div class="h-utkast">
         <canvas id="h-utkastbilde" width="120" height="150" aria-hidden="true"></canvas>
-        <div>${endret ? `<p>Slik blir du. Å bytte hud, hår, skjegg eller toga koster <strong>${pris} oliven</strong>.</p>
+        <div>${endret ? `<p>Slik blir du. Å bytte utseende koster <strong>${pris} oliven</strong>.</p>
           <p class="h-merket-knapper"><button class="knapp" type="button" data-utkast="betal">Bytt utseende · ${pris} oliven</button><button class="knapp sekundar" type="button" data-utkast="angre">Angre</button></p>`
-          : `<p class="dempet">Hud, hår, skjegg og toga valgte du da du sjekket inn. Å bytte koster ${pris} oliven. Hodeplagg, tilbehør og kjæledyr fra butikken bytter du fritt.</p>`}
+          : `<p class="dempet">Utseendet valgte du da du sjekket inn. Å bytte kropp, hode, plagg eller sko koster ${pris} oliven. Det du har kjøpt i butikken, bytter du fritt.</p>`}
           <p class="melding feil" id="h-utkastfeil" hidden></p></div>
       </div>`}`;
+    for (const b of g.querySelectorAll("[data-gbilde]")) {
+      const [felt, verdi, utsnitt] = b.dataset.gbilde.split(":"), k = b.getContext("2d");
+      if (utsnitt === "dyr") { if (verdi) { k.translate(52, 80); k.scale(2.4, 2.4); dyr(k, verdi, 1, false); } continue; }
+      if (utsnitt === "hode") { k.translate(56, 196); k.scale(2.3, 2.3); } else if (utsnitt === "bein") { k.translate(56, 100); k.scale(3.2, 3.2); } else { k.translate(56, 108); k.scale(1.25, 1.25); }
+      figur(k, { ...a, [felt]: verdi }, { t: 1, gaar: false, sitter: false, gest: null, flip: false, bak: false });
+    }
     const c = document.getElementById("h-utkastbilde");
     if (!c) return;
     const k = c.getContext("2d");
@@ -1624,6 +1683,8 @@
     else if (k.dataset.stjerne !== undefined) giStjerne();
     else if (k.dataset.bytte) bytteGjor(k.dataset.bytte, k.dataset.id ? Number(k.dataset.id) : undefined);
     else if (k.dataset.utkast !== undefined) { if (k.dataset.utkast === "betal") betalUtseende(); else { utkast = null; visGarderobe(); } }
+    else if (k.dataset.gfane) { gFane = k.dataset.gfane; visGarderobe(); }
+    else if (k.dataset.tilfeldig !== undefined) tilfeldig();
     else if (k.dataset.felt && look) baer(k.dataset.felt, k.dataset.verdi);
     else if (k.dataset.fane) { fane = k.dataset.fane; kvittering = null; visButikk(); }
     else if (k.dataset.stil) velgStil(k.dataset.stil, k.dataset.verdi);
@@ -1714,9 +1775,9 @@
         <h2>${paNytt ? "Lag figuren din på nytt" : "Lag figuren din"}</h2>
         ${paNytt ? `<p><strong>Figurene på hotellet er tegnet om, og har fått ansikt.</strong> Velg hvordan du vil se ut. Denne gangen er det gratis, og rommet, møblene og alt annet du har er som før.</p>` : ""}
         ${new URLSearchParams(location.search).get("innsjekk") ? `<p><strong>Du må sjekke inn før du kan spille.</strong> Det gjør du bare én gang.</p>` : ""}
-        <p${paNytt ? " hidden" : ""}>Bestem hvordan du ser ut. Når du sjekker inn, får du et rom her på hotellet og et hus i Symposion, og du blir synlig for de andre i spillene. Velg med omhu: å bytte hud, hår, skjegg eller toga senere koster 100 oliven.</p>
+        <p${paNytt ? " hidden" : ""}>Bestem hvordan du ser ut. Når du sjekker inn, får du et rom her på hotellet og et hus i Symposion, og du blir synlig for de andre i spillene. Velg med omhu: å bytte utseende senere koster 100 oliven.</p>
         <div id="h-garderobe"></div>
-        ${paNytt ? `<p class="dempet">Å bytte hud, hår, skjegg eller toga senere koster 100 oliven.</p>` : ""}<button class="knapp" type="button" id="h-sjekkinn">${paNytt ? "Ferdig" : `Sjekk inn som ${esc(vis(MEG))}`}</button>
+        ${paNytt ? `<p class="dempet">Å bytte utseende senere koster 100 oliven.</p>` : ""}<button class="knapp" type="button" id="h-sjekkinn">${paNytt ? "Ferdig" : `Sjekk inn som ${esc(vis(MEG))}`}</button>
         <p class="melding feil" id="h-innfeil" hidden></p>
       </div></div>`;
     visGarderobe();

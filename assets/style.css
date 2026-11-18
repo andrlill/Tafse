@@ -1183,3 +1183,14 @@ button.h-ting:hover, .h-ting.valgt { border-color: var(--gull); background: var(
 p.h-merket { margin: 10px 0; }
 @media (max-width: 640px) { .h-skaler { grid-template-columns: 1fr; } .h-stjerne, .h-stjernetall { margin-left: 0; } }
 @media (min-width: 1241px) { .spillside .meny { gap: 11px; } .spillside .meny a { letter-spacing: .06em; font-size: 12.5px; } .spillside .topp-inner { gap: 14px; } }
+
+/* Garderoben: faner, bilder av valgene og fargekart */
+.h-gtopp { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+.h-gtittel { font-family: var(--display); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--gull); margin: 14px 0 6px; }
+.h-gvalg { display: flex; flex-wrap: wrap; gap: 6px; }
+.h-gknapp { background: var(--bunn); border: 1px solid var(--linje); color: var(--dempet); padding: 3px 3px 5px; cursor: pointer; display: flex; flex-direction: column; align-items: center; font: inherit; font-size: 13px; line-height: 1.1; width: 68px; }
+.h-gknapp canvas { width: 56px; height: 56px; background: #c2b697; }
+.h-gknapp:hover, .h-gknapp.valgt { border-color: var(--gull); color: var(--gull-lys); background: var(--flate2); }
+.h-gknapp.valgt { outline: 1px solid var(--gull); }
+.h-fargekart { display: flex; flex-wrap: wrap; gap: 5px; max-width: 420px; }
+@media (max-width: 520px) { .spillside .merke svg { display: none; } .spillside .topp-inner { gap: 6px; } #h-garderobe { min-width: 0; } }
