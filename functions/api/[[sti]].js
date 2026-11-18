@@ -810,7 +810,7 @@ export async function onRequest({ request, env, params }) {
 
   // --- Tafse Hotell. Logikken ligger i lib/hotell.js ---
   if (ressurs === "hotell" && (metode === "GET" || metode === "POST")) {
-    return hotell({ db, meg, metode, handling: id, request, url, medlemmer: await medlemsliste(env, url), json, feil, lesJson });
+    return hotell({ db, ai: env.AI, modell: env.PROFESSOR_MODELL, meg, metode, handling: id, request, url, medlemmer: await medlemsliste(env, url), json, feil, lesJson });
   }
 
   // --- Spillet: Symposion (den felles byen). Logikken ligger i lib/symposion.js ---

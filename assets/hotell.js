@@ -16,6 +16,7 @@
   const TOGA = ["#ece4d2", "#8e2f52", "#2f5d8e", "#2f7d5b", "#c9a24a", "#5b3a8e", "#b5482a", "#2b2b2b"];
   const GESTER = { vink: "vinker", skal: "skåler", dans: "danser" };
   const BARES = ["hode", "pynt", "dyr"];   // det figuren kan ha på seg eller med seg
+  const PROFESSOR = "Professor Lund", TALERSTOL = [3, 1];   // samme som i lib/auditoriet.js
 
   // ---------- Fellesrommene ----------
   // Koordinater: x går ned mot høyre, y ned mot venstre. Veggene står langs x = 0 og y = 0.
@@ -24,16 +25,16 @@
       navn: "Lobbyen", b: 11, d: 11, start: [5, 9], vegg: 112, veggfarge: ["#5a1d2c", "#6f2638"], bakgrunn: ["#141110", "#0b0b0a"],
       gulv: (x, y) => (x === 5 && y >= 1 ? (y % 2 ? "#8e2f52" : "#842a4b") : (x + y) % 2 ? "#d8cdb4" : "#c2b697"),
       skilt: { side: "h", pos: 3.6, z: 62, tekst: "TAFSE HOTELL", font: "700 22px Cinzel, Georgia, serif" },
-      dorer: [{ x: 9, y: 0, side: "h", til: "baren" }, { x: 0, y: 8, side: "v", til: "terrassen" }],
+      dorer: [{ x: 9, y: 0, side: "h", til: "baren" }, { x: 0, y: 8, side: "v", til: "terrassen" }, { x: 0, y: 2, side: "v", til: "auditoriet" }],
       mobler: [
         ["disk", 6, 1], ["disk", 7, 1], ["disk", 8, 1],
-        ["sofa", 0, 2, "v"], ["sofa", 0, 3, "v"], ["sofa", 0, 4, "v"], ["bord", 2, 3],
+        ["sofa", 0, 3, "v"], ["sofa", 0, 4, "v"], ["sofa", 0, 5, "v"], ["bord", 2, 4],
         ["bord", 8, 7], ["krakk", 7, 7], ["krakk", 9, 7], ["krakk", 8, 6], ["krakk", 8, 8],
         ["soyle", 0, 0], ["soyle", 0, 6], ["soyle", 10, 0], ["plante", 0, 1], ["plante", 10, 1], ["plante", 1, 10],
         ["amfora", 10, 5], ["amfora", 10, 6], ["fontene", 2, 7], ["laurbartre", 10, 10], ["kandelaber", 4, 0],
       ],
       npc: [{ navn: "Portieren", x: 7, y: 0, utseende: { hud: HUD[1], har: "kort", harfarge: "#9a9a9a", skjegg: "ja", toga: "#2b2b2b" },
-        replikker: ["Velkommen til Tafse Hotell.", "Baren ligger gjennom døra til høyre.", "Terrassen har basseng. Togaen tåler vann.", "Rommet ditt finner du øverst. Det vokser med villaen i Symposion.", "Butikken tar imot premier fra alle spillene. Vi er ikke kresne.", "Frokost serveres aldri. Vi er et taffelakademi.", "Rom 1412 er dessverre opptatt."] }],
+        replikker: ["Velkommen til Tafse Hotell.", "Baren ligger gjennom døra til høyre.", "Terrassen har basseng. Togaen tåler vann.", "Rommet ditt finner du øverst. Det vokser med villaen i Symposion.", "Butikken tar imot premier fra alle spillene. Vi er ikke kresne.", "Frokost serveres aldri. Vi er et taffelakademi.", "Auditoriet ligger bak døra ved sofaen. Professoren biter, men bare faglig.", "Rom 1412 er dessverre opptatt."] }],
     },
     baren: {
       navn: "Baren", b: 10, d: 9, start: [7, 2], vegg: 112, veggfarge: ["#16302f", "#1d3d3b"], bakgrunn: ["#0f1413", "#0b0b0a"],
@@ -61,6 +62,33 @@
       ],
       npc: [],
     },
+    // Auditoriet: Professor Lund (lib/auditoriet.js) svarer den som står på talerstolen
+    auditoriet: {
+      navn: "Auditoriet", b: 12, d: 11, start: [1, 9], vegg: 112, veggfarge: ["#1f2a36", "#273443"], bakgrunn: ["#0e1116", "#0b0b0a"],
+      gulv: (x, y) => (y <= 2 ? ((x + y) % 2 ? "#6f2638" : "#652233") : y % 2 ? "#6b4f36" : "#62482f"),
+      skilt: { side: "v", pos: 6.3, z: 90, tekst: "SAPERE AUDE", font: "700 20px Cinzel, Georgia, serif" },
+      dorer: [{ x: 0, y: 9, side: "v", til: "lobbyen" }],
+      talerstol: TALERSTOL,
+      veggpynt: (rom, t) => {
+        // Tavla bak kateteret, med kritt
+        vf("h", 4.35, 7.65, 38, 104, "#5a4630"); vf("h", 4.45, 7.55, 41, 101, "#1f3a2e");
+        vf("h", 4.4, 7.6, 37, 40, "#8a6038");
+        const kritt = "#e8e4d8";
+        veggTekst("h", 6, 86, "H₀: alt er i orden", "italic 600 13px 'EB Garamond', Georgia, serif", kritt);
+        veggTekst("h", 6, 69, "p < 0,05 ?", "italic 600 13px 'EB Garamond', Georgia, serif", kritt);
+        veggTekst("h", 6, 52, "∴ Q.E.D.", "italic 600 13px 'EB Garamond', Georgia, serif", kritt);
+        vf("h", 7.1, 7.3, 41.5, 43, "#f5efe0");
+      },
+      mobler: [
+        ["talerstol", 3, 2], ["talerstol", 8, 2],
+        ...[5, 7, 9].flatMap((y) => [2, 3, 4, 6, 7, 8, 9].map((x) => ["benk", x, y])),
+        ["soyle", 0, 0], ["soyle", 11, 0], ["kandelaber", 1, 0], ["kandelaber", 10, 0],
+        ["bokhylle", 0, 2, "v"], ["bokhylle", 0, 3, "v"], ["plante", 0, 4], ["statue", 0, 10], ["laurbartre", 11, 10],
+        ["vindu", 0, 5], ["vindu", 0, 7], ["vegglampe", 0, 1], ["vegglampe", 0, 9],
+      ],
+      npc: [{ navn: PROFESSOR, x: 8, y: 1, ai: true, utseende: { hud: HUD[0], har: "skallet", harfarge: "#ece4d2", skjegg: "ja", toga: "#2b2b2b", briller: "ja" },
+        replikker: ["Jeg er ikke døv, bare gammel. Skriv i feltet under, så svarer jeg."] }],
+    },
   };
 
   const INFO = `
@@ -68,13 +96,15 @@
     <h3>Gå og sitte</h3>
     <p>Trykk på gulvet, så går figuren dit og finner veien rundt møblene selv. Trykk på en sofa, krakk, seng eller solseng for å sette deg. Gå gjennom en dør, eller bruk knappene over rommet, for å bytte rom.</p>
     <h3>Prat</h3>
-    <p>Det du skriver, kommer som en snakkeboble over hodet ditt og i praten under rommet. Du kan også vinke, skåle og danse. Portieren og Dionysos svarer når du trykker på dem. Det tar et par sekunder før de andre ser det du gjør.</p>
+    <p>Det du skriver, kommer som en snakkeboble over hodet ditt og i praten under rommet. Du kan også vinke, skåle og danse. Portieren og Dionysos svarer når du trykker på dem, og i auditoriet venter professoren. Det tar et par sekunder før de andre ser det du gjør.</p>
     <h3>Rommene</h3>
     <ul>
-      <li><strong>Lobbyen</strong>, <strong>baren</strong> med dansegulv og <strong>terrassen</strong> med basseng er felles for alle.</li>
+      <li><strong>Lobbyen</strong>, <strong>baren</strong> med dansegulv, <strong>terrassen</strong> med basseng og <strong>auditoriet</strong> er felles for alle.</li>
       <li><strong>Rommet mitt</strong> er ditt eget. Tallet på knappene viser hvor mange som er inne.</li>
       <li><strong>Besøk noen</strong> tar deg til rommet til en av de andre.</li>
     </ul>
+    <h3>Auditoriet</h3>
+    <p>Her kan du øve på disputas med Professor Sokrates Lund. Gå opp på talerstolen til venstre for tavla, eller trykk på professoren, så tar han det derfra. Han spør hvem du er og hvor du tar doktorgraden, og spiller opponent etter oppsettet ved OsloMet, UiO eller Aix-Marseille. Han husker deg til neste gang. Hele salen ser samtalen, og fra benkene kan du komme med innspill ex auditorio ved å nevne professoren. Han er en språkmodell, så sjekk reglene hos ditt eget fakultet.</p>
     <h3>Rommet ditt</h3>
     <p>Størrelsen følger villaen din i Symposion. Uten gods er rommet 4 × 4 fliser, og en villa på høyeste nivå gir 8 × 8. Bygg ut villaen i <a href="symposion.html">Symposion</a>, eller kjøp en utvidelse i butikken, for å få større rom. Med begge utvidelsene kan rommet bli 10 × 10.</p>
     <table class="tavle"><thead><tr><th>Villanivå</th><th>Rommet</th></tr></thead><tbody>
@@ -130,7 +160,7 @@
   const mittRom = () => `hjem:${MEG}`;
   const erMitt = () => rom === mittRom();
   // Hotellet er for alle, så «(gjest)» vises ikke. Unntaket er en gjest som heter det samme som en bror.
-  const vis = (navn) => { const kort = String(navn || "").replace(/ \(gjest\)$/, ""); return kort !== navn && medlemmer.includes(kort) ? navn : kort; };
+  const vis = (navn) => { const kort = String(navn || "").replace(/ \(gjest\)$/, ""); return kort !== navn && (medlemmer.includes(kort) || kort === PROFESSOR) ? navn : kort; };
   const romNavn = (id) => (ROM[id] ? ROM[id].navn : id === mittRom() ? "Rommet ditt" : `${eier(vis(id.slice(5)))} rom`);
   const post = (kropp) => ({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(kropp) });
 
@@ -170,6 +200,13 @@
   const TETRIS = ["#4fc3d9", "#edc22e", "#9a5bd0", "#f08a4b", "#6fbf5a", "#e0533d", "#3f6fd0"];
   // mot = "v" betyr at ryggen står mot venstre vegg (x = 0), ellers mot høyre vegg (y = 0)
   const MOBEL = {
+    talerstol: { blokk: true, tegn(x, y) {
+      kloss(x, y, 0.18, 0.24, 0.82, 0.76, 0, 4, "#3a2a18");
+      kloss(x, y, 0.26, 0.32, 0.74, 0.68, 4, 34, "#6b4a2a");
+      kloss(x, y, 0.25, 0.31, 0.75, 0.69, 18, 21, "#c9a24a");
+      kloss(x, y, 0.16, 0.2, 0.84, 0.8, 34, 39, "#8a6038");
+      flate([P(x + 0.3, y + 0.3, 39.5), P(x + 0.66, y + 0.3, 39.5), P(x + 0.66, y + 0.62, 39.5), P(x + 0.3, y + 0.62, 39.5)], "#ece4d2");
+    } },
     disk: { blokk: true, tegn(x, y) { kloss(x, y, 0, 0.1, 1, 0.9, 0, 30, "#6b4a2a"); kloss(x, y, 0, 0.05, 1, 0.95, 30, 34, "#c9a24a"); } },
     sofa: { sete: 15, tegn(x, y, mot) {
       if (mot === "v") { kloss(x, y, 0, 0, 0.28, 1, 0, 36, "#7a2843"); kloss(x, y, 0.28, 0, 1, 1, 0, 15, "#8e2f52"); }
@@ -577,6 +614,7 @@
     px(-6, -36, 12, 11, hud); px(4, -36, 2, 11, hudM);
     if (!o.bak) {
       px(-4, -31, 2, 2, "#1c1612"); px(1, -31, 2, 2, "#1c1612");
+      if (a.briller === "ja") { const g = "#c9a24a"; px(-5, -32, 4, 1, g); px(0, -32, 4, 1, g); px(-5, -29, 4, 1, g); px(0, -29, 4, 1, g); px(-5, -32, 1, 4, g); px(-2, -32, 1, 4, g); px(0, -32, 1, 4, g); px(3, -32, 1, 4, g); px(-1, -31, 1, 1, g); }
       if (a.skjegg === "ja") { px(-6, -28, 12, 3, har); px(-2, -27, 3, 1, mork(har, 0.55)); }
       else px(-2, -27, 3, 1, mork(hud, 0.6));
     } else if (a.har !== "skallet") px(-6, -36, 12, 9, har);
@@ -664,6 +702,14 @@
     ctx.strokeText(vis(f.navn), sx, sy + 13 + 4 * TK);
     ctx.fillStyle = f === meg ? "#e2c174" : f.npc ? "#b9ae97" : "#ece4d2";
     ctx.fillText(vis(f.navn), sx, sy + 13 + 4 * TK);
+    if (f.tenker > t && (!f.boble || f.boble.til < t)) {
+      const x = sx - 22, y = f.topp - 30;
+      ctx.fillStyle = "#f5efe0"; ctx.strokeStyle = "#c9a24a"; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.roundRect(x, y, 44, 22, 8); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#1c1612";
+      for (let i = 0; i < 3; i++) { ctx.globalAlpha = 0.3 + 0.7 * Math.max(0, Math.sin(t * 5 - i * 0.9)); ctx.beginPath(); ctx.arc(x + 12 + i * 10, y + 11, 2.6, 0, 7); ctx.fill(); }
+      ctx.globalAlpha = 1;
+    }
     if (!f.boble || f.boble.til < t) return;
     ctx.font = `${Math.round(16 * TK)}px 'EB Garamond', Georgia, serif`;
     const b = Math.max(...f.boble.linjer.map((l) => ctx.measureText(l).width)) + 20, lh = 19 * TK, h = f.boble.linjer.length * lh + 12;
@@ -678,15 +724,18 @@
   }
 
   function si(f, tekst, t) {
+    const prof = f.npc && f.npc.ai, bredde = prof ? 250 : 190, maks = prof ? 8 : 5;
     ctx.font = `${Math.round(16 * TK)}px 'EB Garamond', Georgia, serif`;
     const linjer = [];
     let linje = "";
     for (const ord of tekst.split(" ")) {
       const ny = linje ? `${linje} ${ord}` : ord;
-      if (ctx.measureText(ny).width > 190 * TK && linje) { linjer.push(linje); linje = ord; } else linje = ny;
+      if (ctx.measureText(ny).width > bredde * TK && linje) { linjer.push(linje); linje = ord; } else linje = ny;
     }
     if (linje) linjer.push(linje);
-    f.boble = { linjer: linjer.slice(0, 5), til: t + 4 + tekst.length * 0.06 };
+    const vist = linjer.slice(0, maks);
+    if (linjer.length > maks) vist[maks - 1] += " …";
+    f.boble = { linjer: vist, til: t + 4 + tekst.length * 0.06 };
   }
 
   // ---------- Tegn rommet ----------
@@ -751,6 +800,7 @@
     for (let x = 0; x < R.b; x++) for (let y = 0; y < R.d; y++) rombe(x, y, 0, R.gulv(x, y, t));
     for (const m of mobler) if (m.gulv) MOBEL[m.type].tegn(m.x, m.y, m.mot, t);
     for (const d of R.dorer) { ctx.globalAlpha = 0.35 + Math.sin(t * 3) * 0.12; rombe(d.x, d.y, 0, "#e2c174"); ctx.globalAlpha = 1; }
+    if (R.talerstol) { ctx.globalAlpha = 0.45 + Math.sin(t * 1.5) * 0.15; rombe(R.talerstol[0], R.talerstol[1], 0.08, "#c9a24a"); ctx.globalAlpha = 1; }
     const merk = (m, farge, bredde) => {
       ctx.strokeStyle = farge; ctx.lineWidth = bredde; ctx.beginPath();
       [P(m[0] + 0.06, m[1] + 0.06), P(m[0] + 0.94, m[1] + 0.06), P(m[0] + 0.94, m[1] + 0.94), P(m[0] + 0.06, m[1] + 0.94)].forEach(([a, b], i) => (i ? ctx.lineTo(a, b) : ctx.moveTo(a, b)));
@@ -778,6 +828,16 @@
     for (const f of figurer.values()) tegnNavnOgBoble(f, t);
   }
 
+  // ---------- Professoren ----------
+  let varPaStol = false;
+  const paTalerstolen = () => !!(meg && R.talerstol && !meg.sti.length && Math.round(meg.x) === R.talerstol[0] && Math.round(meg.y) === R.talerstol[1]);
+  // Tre prikker over professoren til svaret kommer (det kan ta noen sekunder)
+  const tenk = (pa) => { const p = figurer.get(PROFESSOR); if (p) p.tenker = pa ? performance.now() / 1000 + 25 : 0; };
+  function hilsProfessor() {
+    tenk(true);
+    api("hotell/professor", post({})).then((s) => { if (!s || !s.svar) tenk(false); }).catch(() => tenk(false));
+  }
+
   // ---------- Bevegelse ----------
   function oppdater(dt) {
     for (const f of figurer.values()) {
@@ -799,6 +859,10 @@
         else k.flip = f.flip;
       } else f.kjael = null;
       if (f === meg && !f.sti.length && !bytter) {
+        // Opp på talerstolen: professoren hilser
+        const pa = paTalerstolen();
+        if (pa && !varPaStol) hilsProfessor();
+        varPaStol = pa;
         const r = rute(Math.round(f.x), Math.round(f.y));
         if (r && r.dor) gaTil(r.dor.til, rom);
       }
@@ -809,7 +873,12 @@
     if (!meg || bytter) return;
     const r = rute(tx, ty);
     if (!r) return;
-    if (r.npc) { const n = figurer.get(r.npc); si(n, n.npc.replikker[Math.floor(Math.random() * n.npc.replikker.length)], performance.now() / 1000); return; }
+    if (r.npc) {
+      const n = figurer.get(r.npc);
+      if (n.npc.ai && R.talerstol && !paTalerstolen()) return ga(R.talerstol[0], R.talerstol[1]);
+      si(n, n.npc.replikker[Math.floor(Math.random() * n.npc.replikker.length)], performance.now() / 1000);
+      return;
+    }
     // Start fra flisa figuren er på vei inn i, så den ikke hopper
     const fx = Math.round(meg.x), fy = Math.round(meg.y);
     const sti = finnSti(fx, fy, tx, ty);
@@ -839,6 +908,8 @@
       figurer.set(MEG, meg);
       visRomliste(); visInnred(); butikkNokkel = ""; visButikk();
       leggILogg(null, ROM[til] ? `Du er i ${R.navn.toLowerCase()}.` : til === mittRom() ? "Du er i rommet ditt." : `Du er på besøk hos ${vis(til.slice(5))}.`, "info");
+      if (til === "auditoriet") leggILogg(null, "Gå opp på talerstolen ved tavla, eller trykk på professoren, for å øve på disputas. Hele salen ser samtalen. Fra benkene svarer han når du nevner ham.", "info");
+      varPaStol = false;
     } catch (e) {
       feilet = true;
       leggILogg(null, e.message, "info");
@@ -879,7 +950,7 @@
         if (m.navn === MEG && !s.forste) continue; // egne meldinger er allerede vist
         const f = figurer.get(m.navn);
         if (m.type === "gest") { if (f && !s.forste) { f.gest = m.tekst; f.gestTil = t + (m.tekst === "dans" ? 7 : 3); } if (!s.forste) leggILogg(m.navn, GESTER[m.tekst] || "", "gest"); }
-        else { if (f && !s.forste) si(f, m.tekst, t); leggILogg(m.navn, m.tekst); }
+        else { if (f && m.navn === PROFESSOR) f.tenker = 0; if (f && !s.forste) si(f, m.tekst, t); leggILogg(m.navn, m.tekst); }
       }
       etter = s.sisteId; forste = false;
       antall = s.antall; medlemmer = s.medlemmer || medlemmer; gjesterom = s.gjesterom || gjesterom;
@@ -893,8 +964,10 @@
     const t = performance.now() / 1000;
     if (type === "gest") { meg.gest = tekst; meg.gestTil = t + (tekst === "dans" ? 7 : 3); leggILogg(MEG, GESTER[tekst], "gest"); }
     else { si(meg, tekst, t); leggILogg(MEG, tekst); }
-    try { await api("hotell/si", post({ type, tekst })); }
-    catch (e) { leggILogg(null, e.message, "info"); }
+    const tilProfessoren = type !== "gest" && rom === "auditoriet" && (paTalerstolen() || /professor/i.test(tekst));
+    if (tilProfessoren) tenk(true);
+    try { await api("hotell/si", post({ type, tekst })); hent(); }
+    catch (e) { leggILogg(null, e.message, "info"); if (tilProfessoren) tenk(false); }
   }
 
   // ---------- Innredning av eget rom ----------
