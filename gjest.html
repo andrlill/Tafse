@@ -51,7 +51,7 @@ async function visBror(navn) {
   const melding = `Hei! Du er invitert til spillhallen. Lag deg en bruker her, så kan du spille og komme på tavlene:\n\n${lenke}`;
   boks.innerHTML = `${SPILLSIDE ? `<p>Hei, <strong>${esc(navn)}</strong>. Velg et spill.</p>${spilliste()}
     <h2 style="font-size:20px; color:var(--gull); letter-spacing:.1em; margin:36px 0 8px">Inviter en gjest</h2>` : ""}
-${SPILLSIDE ? "" : `<p>Gjester kan spille ${GJESTESPILL.map(([, n]) => n).join(", ").replace(/, ([^,]*)$/, " og $1")}, og kommer på tavlene med «(gjest)» bak navnet. De ser ikke noe annet på siden, og ingenting forteller dem at det finnes mer. Hold det gjerne slik.</p>`}
+${SPILLSIDE ? "" : `<p>Gjester kan spille ${GJESTESPILL.map(([, n]) => n).join(", ").replace(/, ([^,]*)$/, " og $1")}. De ser ikke noe annet på siden, og ingenting forteller dem at det finnes mer. Hold det gjerne slik.</p>`}
     <h2 style="font-size:20px; color:var(--gull); letter-spacing:.1em; margin:28px 0 8px">Din gjestelenke</h2>
     <p class="dempet" style="word-break:break-all">${esc(lenke)}</p>
     <div class="gjest-handlinger">

@@ -207,7 +207,7 @@
   function liste(rader, tom) {
     return rader.length
       ? `<table class="tavle t-tavle"><thead><tr><th>#</th><th>Spiller</th><th>Poeng</th><th>Brikke</th></tr></thead><tbody>${rader.map((r, i) =>
-          `<tr${r.navn === MEG ? ' class="meg"' : ""}><td>${i + 1}</td><td>${esc(r.navn)}</td><td>${tall(r.poeng)}</td><td><span class="t-mini v${Math.min(r.brikke, 8192)}">${r.brikke}</span></td></tr>`).join("")}</tbody></table>`
+          `<tr${r.navn === MEG ? ' class="meg"' : ""}><td>${i + 1}</td><td>${esc(visningsnavn(r.navn))}</td><td>${tall(r.poeng)}</td><td><span class="t-mini v${Math.min(r.brikke, 8192)}">${r.brikke}</span></td></tr>`).join("")}</tbody></table>`
       : `<p class="tomt">${tom}</p>`;
   }
   function visTavle() {
@@ -216,8 +216,8 @@
     const leder = data.uke[0];
     tavle.innerHTML = `
       <div class="t-kroner">
-        <div class="t-krone"><span>Rekorden</span>${rekord ? `<strong>${tall(rekord.poeng)}</strong><em>${esc(rekord.navn)}</em>` : `<strong>·</strong><em>Ledig</em>`}</div>
-        <div class="t-krone"><span>Ukens leder</span>${leder ? `<strong>${tall(leder.poeng)}</strong><em>${esc(leder.navn)}</em>` : `<strong>·</strong><em>Ledig</em>`}</div>
+        <div class="t-krone"><span>Rekorden</span>${rekord ? `<strong>${tall(rekord.poeng)}</strong><em>${esc(visningsnavn(rekord.navn))}</em>` : `<strong>·</strong><em>Ledig</em>`}</div>
+        <div class="t-krone"><span>Ukens leder</span>${leder ? `<strong>${tall(leder.poeng)}</strong><em>${esc(visningsnavn(leder.navn))}</em>` : `<strong>·</strong><em>Ledig</em>`}</div>
       </div>
       <h3 class="t-undertittel">Denne uka</h3>
       ${liste(data.uke, "Ingen har spilt denne uka. Ledig førsteplass.")}

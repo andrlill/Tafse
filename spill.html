@@ -67,7 +67,7 @@ window.lastToppliste = async () => {
     boks.innerHTML = `<div class="tabell-boks"><table class="tavle">
       <thead><tr><th>#</th><th>Spiller</th><th>Poeng</th><th>Utfall</th><th>Tid</th><th>Sår</th><th>Kolleger</th></tr></thead>
       <tbody>${toppliste.map((r, i) => `<tr${r.navn === MEG ? ' class="meg"' : ""}>
-        <td>${i + 1}</td><td>${esc(r.navn)}</td><td><strong>${r.poeng}</strong></td>
+        <td>${i + 1}</td><td>${esc(visningsnavn(r.navn))}</td><td><strong>${r.poeng}</strong></td>
         <td>${r.seier ? "Overlevde" : "Falt"}</td>
         <td>${Math.floor(r.sekunder)} s</td><td>${r.sar}</td><td>${r.kolleger}</td></tr>`).join("")}</tbody>
     </table></div>

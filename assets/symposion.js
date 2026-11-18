@@ -23,7 +23,7 @@
   const pris = (k) => Object.entries(k).map(([r, n]) => `<span class="sy-pris">${tall(n)}${IKON[r]}</span>`).join(" ");
   const gave = (k) => Object.entries(k).map(([r, n]) => `+${tall(n)} ${r}`).join(", ");
   const eier = (navn) => (/[sxz]$/i.test(navn) ? `${navn}'` : `${navn}s`);
-  const godsNavn = (navn) => (navn.endsWith(")") ? `Godset til ${navn}` : `${eier(navn)} gods`);
+  const godsNavn = (navn) => `${eier(visningsnavn(navn))} gods`;
 
   // Lageret fylles mellom hver gang vi spør serveren
   function lager(r) {
@@ -108,7 +108,7 @@
     }
     return `<g class="${klasse}" data-navn="${esc(navn)}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${s.toFixed(3)})" tabindex="0" role="button" aria-label="${esc(godsNavn(navn))}">
       <ellipse rx="70" ry="60" cy="-22" fill="transparent"/>${inn}
-      <text y="34" text-anchor="middle" class="sy-navn">${esc(navn)}${mitt ? " (deg)" : ""}</text>
+      <text y="34" text-anchor="middle" class="sy-navn">${esc(visningsnavn(navn))}${mitt ? " (deg)" : ""}</text>
       ${sp && sp.rang ? `<text y="47" text-anchor="middle" class="sy-tittel">${esc(T.regler.ranger[sp.rang].tittel)}</text>` : ""}</g>`;
   }
 
@@ -133,10 +133,10 @@
     return l.map((navn, i) => {
       const v = Math.PI * (1.08 + (i + 0.5) * (0.84 / Math.max(l.length, 1)));
       const x = 500 + Math.cos(v) * 178, y = 432 + Math.sin(v) * 78;
-      return `<g transform="translate(${x.toFixed(0)} ${y.toFixed(0)})"><title>${esc(navn)}</title>
+      return `<g transform="translate(${x.toFixed(0)} ${y.toFixed(0)})"><title>${esc(visningsnavn(navn))}</title>
         <rect x="-7" y="-5" width="14" height="7" fill="#bdb49d"/><rect x="-6" y="-7" width="12" height="2" fill="#ece5d3"/>
         <circle cy="-26" r="3.6" fill="#ece5d3"/><path d="M-4 -22 h8 l1.5 15 h-11 z" fill="#ece5d3"/><path d="M-4 -22 h3 l-1 15 h-3.5 z" fill="#bdb49d"/><path d="M4 -20 l6 -7" stroke="#ece5d3" stroke-width="2.2" stroke-linecap="round"/><circle cx="10.5" cy="-27.5" r="1.8" fill="#c9a24a"/>
-        <text y="12" text-anchor="middle" class="sy-statuenavn">${esc(navn)}</text></g>`;
+        <text y="12" text-anchor="middle" class="sy-statuenavn">${esc(visningsnavn(navn))}</text></g>`;
     }).join("");
   }
 
@@ -349,13 +349,13 @@
     const t = T.spillere.find((s) => s.navn === T.meg.navn)?.tagg;
     if (!t) return "";
     return `<div class="sy-taggvarsel"><div><p class="sy-etikett">Huset ditt er tagget</p>
-      <p><strong>${esc(t.fra)}</strong> sprayet <span class="sy-taggsitat" style="color:${t.farge}">${esc(t.tekst)}</span> på villaen din. Godset produserer ${Math.round(T.regler.taggStraff * 100)} % mindre til det er vasket bort.</p></div>
+      <p><strong>${esc(visningsnavn(t.fra))}</strong> sprayet <span class="sy-taggsitat" style="color:${t.farge}">${esc(t.tekst)}</span> på villaen din. Godset produserer ${Math.round(T.regler.taggStraff * 100)} % mindre til det er vasket bort.</p></div>
       <button class="knapp" type="button" data-skrubb>${skrubb ? `Skrubb videre (${skrubb} av ${SKRUBB})` : "Skrubb det bort"}</button></div>`;
   }
 
   function taggSkjema(sp) {
     const m = T.meg;
-    if (sp.tagg) return `<div class="sy-taggboks"><p class="sy-etikett">Spraybøksa</p><p>Huset er allerede tagget av <strong>${esc(sp.tagg.fra)}</strong>: <span class="sy-taggsitat" style="color:${sp.tagg.farge}">${esc(sp.tagg.tekst)}</span>. ${esc(sp.navn)} må vaske før noen kan tagge igjen.</p></div>`;
+    if (sp.tagg) return `<div class="sy-taggboks"><p class="sy-etikett">Spraybøksa</p><p>Huset er allerede tagget av <strong>${esc(visningsnavn(sp.tagg.fra))}</strong>: <span class="sy-taggsitat" style="color:${sp.tagg.farge}">${esc(sp.tagg.tekst)}</span>. ${esc(visningsnavn(sp.navn))} må vaske før noen kan tagge igjen.</p></div>`;
     const tom = m.taggIgjen <= 0 || sp.tagget;
     return `<form class="sy-taggboks" data-taggskjema="${esc(sp.navn)}"><p class="sy-etikett">Spraybøksa · ${m.taggIgjen} av ${T.regler.taggPerDag} tagger igjen i dag</p>
       <div class="sy-taggrad"><input type="text" name="tekst" maxlength="${T.regler.taggMaks}" placeholder="Skriv noe på veggen hans" autocomplete="off" ${tom ? "disabled" : ""} required>
@@ -402,7 +402,7 @@
         `<button class="liten-knapp" type="button" data-gi="${r}" data-antall="${Math.min(har, igjen)}" ${har > 0 ? "" : "disabled"}>Gi ${har > 0 ? tall(Math.min(har, igjen)) : "alt"}</button>`;
       return `<div class="sy-krav"><div class="sy-kravtekst">${IKON[r]}<span>${tall(m.gitt[r])} av ${tall(m.krav[r])} ${r}</span></div><div class="sy-lager"><span style="width:${Math.min(100, (m.gitt[r] / m.krav[r]) * 100)}%"></span></div><div class="sy-giknapper">${knapper}</div></div>`;
     }).join("");
-    const topp3 = T.bidrag.slice(0, 5).map((b, i) => `<li><span>${i + 1}. ${esc(b.navn)}</span><span>${tall(b.verdi)}</span></li>`).join("");
+    const topp3 = T.bidrag.slice(0, 5).map((b, i) => `<li><span>${i + 1}. ${esc(visningsnavn(b.navn))}</span><span>${tall(b.verdi)}</span></li>`).join("");
     return `<section class="sy-boks" id="sy-monument"><p class="sy-etikett">Felles byggverk ${nr} av ${T.regler.monumenter.length}</p><h3>${esc(m.navn)}</h3>
       <p class="dempet">${esc(m.tekst)} Når det står ferdig, produserer alle 10 % mer. Hver gave gir deg ære.</p>${rader}
       ${topp3 ? `<p class="sy-etikett" style="margin-top:16px">Største givere</p><ol class="sy-givere">${topp3}</ol>` : ""}</section>`;
@@ -416,9 +416,9 @@
   function sidefelt() {
     const rang = T.spillere.slice().sort((a, b) => b.aere - a.aere);
     return `<section class="sy-boks"><p class="sy-etikett">Ærestavlen</p>
-        <ol class="sy-givere sy-rang">${rang.map((s, i) => `<li class="${s.navn === T.meg.navn ? "meg" : ""}"><button type="button" class="lenkeknapp" data-velg="${esc(s.navn)}">${i + 1}. ${esc(s.navn)}</button>${s.rang ? `<span class="sy-litentittel">${esc(T.regler.ranger[s.rang].tittel)}</span>` : ""}<span class="sy-rangpoeng">${tall(s.aere)} ${IKON.aere}</span></li>`).join("")}</ol>
+        <ol class="sy-givere sy-rang">${rang.map((s, i) => `<li class="${s.navn === T.meg.navn ? "meg" : ""}"><button type="button" class="lenkeknapp" data-velg="${esc(s.navn)}">${i + 1}. ${esc(visningsnavn(s.navn))}</button>${s.rang ? `<span class="sy-litentittel">${esc(T.regler.ranger[s.rang].tittel)}</span>` : ""}<span class="sy-rangpoeng">${tall(s.aere)} ${IKON.aere}</span></li>`).join("")}</ol>
         <p class="sy-etikett" style="margin-top:20px">Byens røst</p>
-        <ul class="sy-logg">${T.logg.map((l) => `<li><strong>${esc(l.navn)}</strong> ${esc(l.tekst)} <span>${tidSiden(l.opprettet)}</span></li>`).join("") || `<li class="dempet">Stille i gatene.</li>`}</ul></section>`;
+        <ul class="sy-logg">${T.logg.map((l) => `<li><strong>${esc(visningsnavn(l.navn))}</strong> ${esc(utenGjest(l.tekst))} <span>${tidSiden(l.opprettet)}</span></li>`).join("") || `<li class="dempet">Stille i gatene.</li>`}</ul></section>`;
   }
 
   // ---------- Tegn alt ----------
@@ -532,7 +532,7 @@
       if (ny) ny.scrollLeft = x;
       etterHandling();
     } catch (e) {
-      toast(e.message, true);
+      toast(utenGjest(e.message), true);
     } finally {
       opptatt = false;
       tikk();

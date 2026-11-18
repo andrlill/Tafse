@@ -835,7 +835,7 @@
   function liste(rader, tom) {
     return rader.length
       ? `<div class="tabell-boks"><table class="tavle t-tavle"><thead><tr><th>#</th><th>Navn</th><th>Poeng</th><th>Tid</th><th>Nivå</th></tr></thead><tbody>${rader.map((r, i) =>
-          `<tr${r.navn === MEG ? ' class="meg"' : ""}><td>${i + 1}</td><td>${esc(r.navn)}</td><td>${tall(r.poeng)}</td><td>${r.seier ? "Daggry" : klokke(r.sekunder)}</td><td>${r.niva}</td></tr>`).join("")}</tbody></table></div>`
+          `<tr${r.navn === MEG ? ' class="meg"' : ""}><td>${i + 1}</td><td>${esc(visningsnavn(r.navn))}</td><td>${tall(r.poeng)}</td><td>${r.seier ? "Daggry" : klokke(r.sekunder)}</td><td>${r.niva}</td></tr>`).join("")}</tbody></table></div>`
       : `<p class="tomt">${tom}</p>`;
   }
   async function lastTavle() {
@@ -843,7 +843,7 @@
     try {
       data = await api("tartaros");
       PROFIL = data.profil; PRISER = { gunst: data.gunst, helter: data.helter };
-      const krone = (tittel, r) => `<div class="t-krone"><span>${tittel}</span>${r ? `<strong>${tall(r.poeng)}</strong><em>${esc(r.navn)}</em>` : `<strong>·</strong><em>Ledig</em>`}</div>`;
+      const krone = (tittel, r) => `<div class="t-krone"><span>${tittel}</span>${r ? `<strong>${tall(r.poeng)}</strong><em>${esc(visningsnavn(r.navn))}</em>` : `<strong>·</strong><em>Ledig</em>`}</div>`;
       tavle.innerHTML = `<div class="t-kroner">${krone("Rekorden", data.alle[0])}${krone("Ukens leder", data.uke[0])}</div>
         <h3 class="t-undertittel">Denne uka</h3>${liste(data.uke, "Ingen har vært nede denne uka.")}
         <h3 class="t-undertittel">Alle tider</h3>${liste(data.alle, "Ingen har vært nede ennå.")}

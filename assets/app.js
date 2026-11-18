@@ -47,7 +47,10 @@ function settRolle(r) {
   document.cookie = r ? `tafserolle=${r}; Path=/; Max-Age=31536000; SameSite=Lax` : "tafserolle=; Path=/; Max-Age=0; SameSite=Lax";
 }
 const settGjestemerke = (pa) => settRolle(pa ? "gjest" : "");
+// Navn slik de vises. De som har registrert seg selv, heter «Navn (gjest)» i databasen, men det vises ikke.
 const visningsnavn = (navn) => String(navn || "").replace(/ \(gjest\)$/, "");
+// Det samme for ferdig tekst der navn står inne i setningen, som i varsler og loggen i Symposion
+const utenGjest = (tekst) => String(tekst || "").replace(/ \(gjest\)/g, "");
 // Spillsiden (tafsespill) er et eget nettsted med samme kode. Porten (functions/_middleware.js)
 // setter et merke, så siden vet hvor den er før noe er lastet.
 const SPILLSIDE = /(?:^|;\s*)tafsenettsted=spill/.test(document.cookie);
@@ -231,7 +234,7 @@ function tegnVarsler() {
   const liste = document.querySelector(".varsel-liste");
   liste.innerHTML = varslene.length
     ? varslene.map((v) => `<li><a href="${esc(v.lenke)}" data-varsel="${v.id}" class="${v.lest ? "" : "ulest"}">
-        <span><strong>${esc(v.avsender)}</strong> ${esc(v.tekst)}</span>
+        <span><strong>${esc(visningsnavn(v.avsender))}</strong> ${esc(utenGjest(v.tekst))}</span>
         <span class="varsel-tid">${esc(tidTekst(v.opprettet))}</span></a></li>`).join("")
     : `<li class="varsel-tomt">Ingen varsler ennå.</li>`;
 }

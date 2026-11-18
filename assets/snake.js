@@ -249,12 +249,12 @@
   function liste(rader, tom) {
     return rader.length
       ? `<table class="tavle t-tavle"><thead><tr><th>#</th><th>Spiller</th><th>Poeng</th><th>Lengde</th></tr></thead><tbody>${rader.map((r, i) =>
-          `<tr${r.navn === MEG ? ' class="meg"' : ""}><td>${i + 1}</td><td>${esc(r.navn)}</td><td>${tall(r.poeng)}</td><td>${r.lengde}</td></tr>`).join("")}</tbody></table>`
+          `<tr${r.navn === MEG ? ' class="meg"' : ""}><td>${i + 1}</td><td>${esc(visningsnavn(r.navn))}</td><td>${tall(r.poeng)}</td><td>${r.lengde}</td></tr>`).join("")}</tbody></table>`
       : `<p class="tomt">${tom}</p>`;
   }
   function visTavle() {
     const topp = data.alle[0], leder = data.uke[0];
-    const krone = (tittel, r) => `<div class="t-krone"><span>${tittel}</span>${r ? `<strong>${tall(r.poeng)}</strong><em>${esc(r.navn)}</em>` : `<strong>·</strong><em>Ledig</em>`}</div>`;
+    const krone = (tittel, r) => `<div class="t-krone"><span>${tittel}</span>${r ? `<strong>${tall(r.poeng)}</strong><em>${esc(visningsnavn(r.navn))}</em>` : `<strong>·</strong><em>Ledig</em>`}</div>`;
     tavle.innerHTML = `<div class="t-kroner">${krone("Rekorden", topp)}${krone("Ukens leder", leder)}</div>
       <h3 class="t-undertittel">Denne uka</h3>${liste(data.uke, "Ingen har spilt denne uka. Ledig førsteplass.")}
       <p class="dempet t-fot">Uka starter mandag.</p>
