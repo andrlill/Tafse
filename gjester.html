@@ -19,10 +19,10 @@
 </main>
 <script src="assets/app.js"></script>
 <script>
-// Administratorens oversikt over gjestene på spillsiden: se hvem som finnes, send lenke for nytt
-// passord, og fjern gjester. «Fjern helt» sletter også alt gjesten har gjort i spillene.
+// Administratorens oversikt over gjestene på spillsiden: se hvem som finnes, gi dem nytt navn,
+// send lenke for nytt passord, og fjern gjester. «Fjern helt» sletter også alt gjesten har gjort i spillene.
 const boks = document.getElementById("innhold");
-let gjester = [];
+let gjester = [], endrer = null, beskjed = null;   // endrer: navnet på gjesten som får nytt navn akkurat nå
 
 async function kopier(tekst, knapp) {
   try { await navigator.clipboard.writeText(tekst); }
@@ -34,6 +34,8 @@ function tegn() {
   const inne = gjester.filter((g) => g.spill).length;
   boks.innerHTML = gjester.length ? `
     <p><strong>${gjester.length}</strong> ${gjester.length === 1 ? "gjest" : "gjester"}, og ${inne} av dem har sjekket inn.</p>
+    ${beskjed ? `<p class="melding">${esc(beskjed.gammelt)} heter nå <strong>${esc(beskjed.navn)}</strong>. Si fra om det nye navnet: gjesten er logget ut og må logge inn med det. Passordet er det samme.
+      <button class="liten-knapp" type="button" data-beskjed>Kopier beskjed til ${esc(beskjed.navn)}</button></p>` : ""}
     <div class="innlegg-liste">${gjester.map((g, n) => `
       <article class="innlegg">
         <div class="innlegg-topp">
@@ -41,12 +43,20 @@ function tegn() {
           <span class="merkelapp ${g.spill ? "status-vedtatt" : ""}">${g.spill ? "Sjekket inn" : "Ikke sjekket inn"}</span>
         </div>
         <p class="dempet" style="margin:4px 0 12px">Invitert av ${esc(g.invitert_av || "ukjent")}, ${esc(tidTekst(g.opprettet))}</p>
+        ${endrer === g.navn ? `<form class="handlinger" data-nyttnavn="${n}" style="margin-bottom:10px">
+          <input name="navn" value="${esc(g.navn)}" maxlength="24" required aria-label="Nytt navn på ${esc(g.navn)}" style="flex:1 1 180px; min-width:0">
+          <button class="liten-knapp" type="submit">Lagre navn</button>
+          <button class="liten-knapp" type="button" data-avbryt>Avbryt</button>
+          <p class="melding feil" hidden style="flex-basis:100%; margin:0"></p>
+        </form>` : ""}
         <div class="handlinger">
+          ${endrer === g.navn ? "" : `<button class="liten-knapp" type="button" data-endre="${n}">Endre navn</button>`}
           <button class="liten-knapp" type="button" data-passord="${n}">Kopier lenke for nytt passord</button>
           <button class="liten-knapp" type="button" data-fjern="${n}">Fjern helt</button>
         </div>
       </article>`).join("")}</div>
-    <p class="dempet" style="font-size:15px; margin-top:24px">«Fjern helt» sletter brukeren og alt gjesten har gjort i spillene: figur, rom, møbler, hus i Symposion, poeng, premier og varsler. Det kan ikke angres.</p>`
+    <p class="dempet" style="font-size:15px; margin-top:24px">«Endre navn» bytter navnet overalt i spillene, og gjesten beholder figur, rom, hus, poeng og premier. Gjesten blir logget ut og må logge inn med det nye navnet og samme passord.</p>
+    <p class="dempet" style="font-size:15px">«Fjern helt» sletter brukeren og alt gjesten har gjort i spillene: figur, rom, møbler, hus i Symposion, poeng, premier og varsler. Det kan ikke angres.</p>`
     : `<p class="tomt">Ingen gjester ennå.</p>`;
 }
 
@@ -58,6 +68,12 @@ async function last() {
 boks.addEventListener("click", async (e) => {
   const k = e.target.closest("button");
   if (!k) return;
+  if (k.dataset.endre) { endrer = gjester[k.dataset.endre].navn; tegn(); const f = boks.querySelector("form[data-nyttnavn] input"); f.focus(); f.select(); return; }
+  if (k.dataset.avbryt !== undefined) { endrer = null; tegn(); return; }
+  if (k.dataset.beskjed !== undefined) {
+    kopier(`Hei! Du har fått nytt navn på Tafse-spill: ${beskjed.navn}. Logg inn med det navnet og samme passord som før.`, k);
+    return;
+  }
   if (k.dataset.passord) {
     const g = gjester[k.dataset.passord];
     kopier(`Hei ${g.navn}! Her er en lenke der du kan lage nytt passord på Tafse-spill. Den virker i tre dager og bare én gang:\n\n${location.origin}/${g.nullstill}`, k);
@@ -69,6 +85,21 @@ boks.addEventListener("click", async (e) => {
     try { await api(`gjester/${encodeURIComponent(g.navn)}?alt=1`, { method: "DELETE" }); await last(); }
     catch (err) { k.disabled = false; k.textContent = err.message; }
   }
+});
+
+boks.addEventListener("submit", async (e) => {
+  const skjema = e.target.closest("form[data-nyttnavn]");
+  if (!skjema) return;
+  e.preventDefault();
+  const g = gjester[skjema.dataset.nyttnavn], knapp = skjema.querySelector("[type=submit]"), feil = skjema.querySelector(".melding");
+  const navn = skjema.navn.value.replace(/\s+/g, " ").trim();
+  if (navn === g.navn) { endrer = null; tegn(); return; }
+  knapp.disabled = true;
+  try {
+    beskjed = await api(`gjester/${encodeURIComponent(g.navn)}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ navn }) });
+    endrer = null;
+    await last();
+  } catch (err) { knapp.disabled = false; feil.textContent = err.message; feil.hidden = false; }
 });
 
 (async () => {

@@ -325,6 +325,36 @@ const FJERN_GJEST = [
   ["spillresultater", "navn"], ["honningfella", "navn"], ["varsler", "mottaker"], ["varsler", "avsender"],
 ];
 
+// Gir en gjest nytt navn overalt: brukeren, og alt gjesten eier og har gjort i spillene.
+// Alt skjer i én samlet operasjon, så enten byttes navnet overalt eller ingen steder.
+async function byttGjestenavn(db, gammelt, nytt) {
+  const g = gjesteNavn(gammelt), n = gjesteNavn(nytt);
+  // Tabeller som ikke er laget ennå, hoppes over
+  let finnes = null;
+  try { finnes = new Set((await db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all()).results.map((r) => r.name)); } catch (_) {}
+  const steder = FJERN_GJEST.filter(([tabell]) => !finnes || finnes.has(tabell));
+  const har = (t) => !finnes || finnes.has(t);
+  // Ligger det igjen noe i spillene under det nye navnet (fra en gjest som ble fjernet uten «Fjern helt»),
+  // ville de to blitt slått sammen. Da sier vi heller nei.
+  if (g.toLowerCase() !== n.toLowerCase()) {
+    const rester = await db.batch(steder.map(([tabell, kolonne]) => db.prepare(`SELECT 1 AS ja FROM ${tabell} WHERE ${kolonne} = ? LIMIT 1`).bind(n)));
+    if (rester.some((r) => r.results.length)) return "Det ligger igjen spilldata under det navnet fra en tidligere gjest. Velg et annet navn.";
+  }
+  const jobber = [
+    db.prepare("UPDATE gjester SET navn = ? WHERE navn = ?").bind(nytt, gammelt),
+    ...steder.map(([tabell, kolonne]) => db.prepare(`UPDATE ${tabell} SET ${kolonne} = ? WHERE ${kolonne} = ?`).bind(n, g)),
+  ];
+  if (har("symposion_gods")) jobber.push(db.prepare("UPDATE symposion_gods SET slave_til = ? WHERE slave_til = ?").bind(n, g));
+  // Rommet til gjesten heter «hjem:Navn (gjest)», og hvisking lagres med mottakeren først i teksten
+  if (har("hotell_gjest")) jobber.push(db.prepare("UPDATE hotell_gjest SET rom = ? WHERE rom = ?").bind(`hjem:${n}`, `hjem:${g}`));
+  if (har("hotell_prat")) {
+    jobber.push(db.prepare("UPDATE hotell_prat SET rom = ? WHERE rom = ?").bind(`hjem:${n}`, `hjem:${g}`));
+    jobber.push(db.prepare("UPDATE hotell_prat SET tekst = ? || substr(tekst, ?) WHERE type = 'hvisk' AND substr(tekst, 1, ?) = ?").bind(n, g.length + 1, g.length + 1, g + "\u0001"));
+  }
+  await db.batch(jobber);
+  return null;
+}
+
 // ---------- To nettsteder: hovedsiden og spillsiden ----------
 // Begge bygges fra denne koden og deler databasen. Spillsiden kjenner seg igjen på variabelen
 // NETTSTED=spill i Cloudflare. Hovedsiden sender alltid spillene over til spillsiden.
@@ -573,6 +603,22 @@ export async function onRequest({ request, env, params }) {
       const ut = [];
       for (const g of results) ut.push({ navn: g.navn, invitert_av: g.invitert_av, opprettet: g.opprettet, nullstill: await nullstillLenke(env, "gjest", g), spill: await innsjekket(db, gjesteNavn(g.navn)) });
       return json(ut);
+    }
+    // Nytt navn på en gjest. Gjesten må logge inn på nytt med det nye navnet. Passordet er det samme.
+    if (id && metode === "PUT") {
+      const gjest = await db.prepare("SELECT navn FROM gjester WHERE navn = ?").bind(decodeURIComponent(id)).first();
+      if (!gjest) return feil(404, "Fant ikke gjesten.");
+      const nytt = tekst((await lesJson(request)).navn, 24).replace(/\s+/g, " ");
+      if (!/^[\p{L}\p{N}][\p{L}\p{N} .'-]{1,23}$/u.test(nytt)) return feil(400, "Navnet må ha 2 til 24 tegn: bokstaver, tall, mellomrom, punktum, bindestrek eller apostrof.");
+      if (nytt === gjest.navn) return feil(400, "Det er samme navn som før.");
+      if ((await medlemsliste(env, url)).some((m) => m.toLowerCase() === nytt.toLowerCase())) return feil(409, "Det navnet tilhører et medlem. Velg et annet.");
+      const annen = await db.prepare("SELECT navn FROM gjester WHERE navn = ?").bind(nytt).first();
+      if (annen && annen.navn !== gjest.navn) return feil(409, "En annen gjest heter allerede det.");
+      let avslag;
+      try { avslag = await byttGjestenavn(db, gjest.navn, nytt); }
+      catch (_) { return feil(500, "Navnet ble ikke byttet. Ingenting er endret. Prøv igjen."); }
+      if (avslag) return feil(409, avslag);
+      return json({ ok: true, navn: nytt, gammelt: gjest.navn });
     }
     if (id && metode === "DELETE") {
       const navn = decodeURIComponent(id);

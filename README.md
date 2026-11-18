@@ -16,7 +16,7 @@ Nettsiden til Taffelakademiet for Samvær og Etegilder.
 | `assets/land-modell.js`, `assets/land-kart.js`, `assets/land-editor.js` | Drømmelandet: fagmodellen (klima, geologi, valgordning, vetospillere, Lijphart, ressursforbannelse), kart og flagg, og veiviseren i åtte steg |
 | `gjest.html` | Gjester i spillhallen: brødrenes gjestelenker, registrering og innlogging for gjester |
 | `velkommen.html` | Registrering fra den personlige invitasjonslenken |
-| `gjester.html` | Administratorens oversikt over gjestene på spillsiden: hvem som har sjekket inn, lenke for nytt passord, og «Fjern helt», som også sletter alt gjesten har gjort i spillene (listen over tabeller står i `FJERN_GJEST` i API-et) |
+| `gjester.html` | Administratorens oversikt over gjestene på spillsiden: hvem som har sjekket inn, lenke for nytt passord, og «Fjern helt», som også sletter alt gjesten har gjort i spillene (listen over tabeller står i `FJERN_GJEST` i API-et) Administratoren kan også gi en gjest nytt navn («Endre navn»): navnet byttes overalt i spillene, og gjesten logger inn med det nye navnet og samme passord |
 | `nyttpassord.html` | Nytt passord fra en lenke som administratoren lager på `invitasjoner.html` (under «Glemt passord?»). Lenken virker i tre dager og bare til passordet er byttet |
 | `invitasjoner.html` | Oversikt over invitasjonslenker (kun administratorer) |
 | `moter.html`, `mote.html` | Møtene: kommende og avholdte møter, kalenderfil, og egen side per møte med bilder og poster |
