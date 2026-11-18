@@ -23,7 +23,7 @@ Nettsiden til Taffelakademiet for Samvær og Etegilder.
 | `spill.html`, `assets/spill.js` | Spillet Idus Martiae, med tavle for brødrene |
 | `symposion.html`, `assets/symposion.js`, `lib/symposion.js` | Spillet Symposion, den felles byen. Regler og serverlogikk ligger i `lib/symposion.js` |
 | `hotell.html`, `assets/hotell.js`, `lib/hotell.js` | Tafse Hotell: rom der brødrene styrer hver sin figur og prater. Hver bror har et eget rom som vokser med villaen i Symposion og innredes fra butikken: møbler, veggpynt, tepper, trofeer, gulv- og veggstiler, klær og kjæledyr. Katalogen, prisene og kravene til trofeene ligger i `lib/hotell.js`, tegningene i `assets/hotell.js` |
-| `lib/auditoriet.js` | Auditoriet i Tafse Hotell: Professor Sokrates Lund, som øver disputas med den som står på talerstolen. Personligheten, samtalegangen og oppsettet ved OsloMet, UiO og Aix-Marseille står i `INSTRUKS`. Bruker Cloudflare Workers AI (se oppsett, punkt 7) |
+| `lib/auditoriet.js` | Auditoriet i Tafse Hotell: Professor Sokrates Lund, som øver disputas med den som står på talerstolen. Personligheten står i `INSTRUKS`, oppsettet ved OsloMet, UiO og Aix-Marseille i `LAERESTEDER` og sidesporene i `SIDESPOR`. Bruker Cloudflare Workers AI (se oppsett, punkt 7) |
 | `lib/premier.js` | Premiene fra spillene, som brukes i Tafse Hotell: hvilken premie hvert spill gir, hvor mange poeng som gir én premie, og lommeboka som samler oliven, vin og marmor (Symposion), drakmer (Tartaros) og resten |
 | `tartaros.html`, `assets/tartaros.js`, `lib/tartaros.js` | Spillet Tartaros: overlev ti minutter i underverdenen. Våpen, fiender og tall ligger øverst i `assets/tartaros.js`, drakmer, gunst og tavle i `lib/tartaros.js` |
 | `murbrekker.html`, `assets/murbrekker.js` | Spillet Murbrekker (Breakout), med toppliste for uka og for alle tider |
@@ -56,7 +56,7 @@ Nettsiden til Taffelakademiet for Samvær og Etegilder.
 6. **Domene:** Pages-prosjektet › Custom domains › legg til `tafse.no` og følg instruksene.
 7. **Professoren i auditoriet:** Pages-prosjektet › Settings › Bindings › Add › Workers AI.
    Variable name: `AI`. Publiser på nytt (punkt 5). Gratiskvoten er 10 000 «Neurons» i døgnet,
-   og professoren stopper selv etter 300 svar i døgnet. Vil du prøve en annen språkmodell, legg til
+   og professoren stopper selv etter 500 svar i døgnet. Vil du prøve en annen språkmodell, legg til
    variabelen `PROFESSOR_MODELL` (for eksempel `@cf/zai-org/glm-4.7-flash`) under Variables and Secrets.
 
 Tabellene i databasen lages automatisk første gang noen logger inn.
