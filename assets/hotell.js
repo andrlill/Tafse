@@ -1706,16 +1706,17 @@
   }
 
   // Første gang: lag figuren din før du slipper inn
-  function visInnsjekk() {
+  function visInnsjekk(paNytt) {
     rot.innerHTML = `<div class="h-innsjekk">
       <canvas id="h-speil" width="480" height="640" aria-hidden="true"></canvas>
       <div>
-        <p class="overline">Innsjekking</p>
-        <h2>Lag figuren din</h2>
+        <p class="overline">${paNytt ? "Nye figurer" : "Innsjekking"}</p>
+        <h2>${paNytt ? "Lag figuren din på nytt" : "Lag figuren din"}</h2>
+        ${paNytt ? `<p><strong>Figurene på hotellet er tegnet om, og har fått ansikt.</strong> Velg hvordan du vil se ut. Denne gangen er det gratis, og rommet, møblene og alt annet du har er som før.</p>` : ""}
         ${new URLSearchParams(location.search).get("innsjekk") ? `<p><strong>Du må sjekke inn før du kan spille.</strong> Det gjør du bare én gang.</p>` : ""}
-        <p>Bestem hvordan du ser ut. Når du sjekker inn, får du et rom her på hotellet og et hus i Symposion, og du blir synlig for de andre i spillene. Velg med omhu: å bytte hud, hår, skjegg eller toga senere koster 100 oliven.</p>
+        <p${paNytt ? " hidden" : ""}>Bestem hvordan du ser ut. Når du sjekker inn, får du et rom her på hotellet og et hus i Symposion, og du blir synlig for de andre i spillene. Velg med omhu: å bytte hud, hår, skjegg eller toga senere koster 100 oliven.</p>
         <div id="h-garderobe"></div>
-        <button class="knapp" type="button" id="h-sjekkinn">Sjekk inn som ${esc(vis(MEG))}</button>
+        ${paNytt ? `<p class="dempet">Å bytte hud, hår, skjegg eller toga senere koster 100 oliven.</p>` : ""}<button class="knapp" type="button" id="h-sjekkinn">${paNytt ? "Ferdig" : `Sjekk inn som ${esc(vis(MEG))}`}</button>
         <p class="melding feil" id="h-innfeil" hidden></p>
       </div></div>`;
     visGarderobe();
@@ -1736,13 +1737,14 @@
     requestAnimationFrame(ramme);
     document.getElementById("h-sjekkinn").addEventListener("click", async (e) => {
       e.currentTarget.disabled = true;
-      look = { ...look, klar: "ja" };
+      look = { ...look, klar: "ja", v: "2" };
       try {
         await api("hotell/utseende", post(look)); aktiv = false;
         // Velkomstplakaten først. Kom man hit fra et annet spill, slipper man inn der etterpå.
         const til = new URLSearchParams(location.search).get("til") || "";
         const videre = /^[\w-]+\.html(\?[^\s]*)?$/.test(til) && !til.startsWith("hotell.html") ? til : null;
         start();
+        if (paNytt) return;
         visPlakat(() => { if (videre) location.href = videre; });
       }
       catch (err) { const f = document.getElementById("h-innfeil"); f.textContent = err.message; f.hidden = false; e.currentTarget.disabled = false; }
@@ -1764,6 +1766,9 @@
     let profil = null;
     try { profil = (await api("hotell/profil")).utseende; } catch (_) {}
     look = utseende(profil, MEG);
-    if (!profil || profil.klar !== "ja") visInnsjekk(); else start();
+    // De som sjekket inn før figurene ble tegnet om, lager figuren sin på nytt én gang
+    if (!profil || profil.klar !== "ja") visInnsjekk();
+    else if (profil.v !== "2") { look = { ...look, klar: undefined }; visInnsjekk(true); }
+    else start();
   })();
 })();
