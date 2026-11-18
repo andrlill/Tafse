@@ -632,53 +632,71 @@
   // ---------- Figurene ----------
   // Tegner en figur med føttene i origo. c er lerretet, a er utseendet, o sier hva figuren gjør.
   function figur(c, a, o) {
+    // Figuren tegnes piksel for piksel med føttene i origo, ca. 84 piksler høy: stort hode med
+    // tydelig ansikt, mørk kontur og skygge på høyre side. px() bruker doble piksler (til klær og tilbehør).
     const u = 2, t = o.t, dans = o.gest === "dans";
-    const hud = a.hud, hudM = mork(hud, 0.84), toga = a.toga, togaM = mork(toga, 0.78), har = a.harfarge;
+    const hud = a.hud, hudM = mork(hud, 0.82), hudK = mork(hud, 0.45), toga = a.toga, togaM = mork(toga, 0.78), togaK = mork(toga, 0.42), har = a.harfarge, harL = mork(har, 1.35), harK = mork(har, 0.5);
     const kant = toga === "#c9a24a" ? "#8e2f52" : "#c9a24a";
     if (o.flip) c.scale(-1, 1);
     const px = (x, y, w, h, f) => { c.fillStyle = f; c.fillRect(x * u, y * u, w * u, h * u); };
+    const q = (x, y, w, h, f) => { c.fillStyle = f; c.fillRect(x, y, w, h); };
+    // Avrundet boks med kontur
+    const rund = (x, y, w, h, r, f) => { q(x + r, y, w - 2 * r, h, f); q(x, y + r, w, h - 2 * r, f); if (r > 1) q(x + 1, y + 1, w - 2, h - 2, f); };
+    const boks = (x, y, w, h, r, f, k) => { rund(x, y, w, h, r, k); rund(x + 1, y + 1, w - 2, h - 2, Math.max(1, r - 1), f); };
 
     // Det som henger bak figuren tegnes først
     const ned = o.sitter ? 4 : 0;
     if (a.pynt === "pynt_vinger") { const v = Math.sin(t * 3); for (const [x1, x2, x3] of [[-12, -14, -11], [6, 7, 6]]) { px(x1, -29 + ned - v, 6, 4, "#f5efe0"); px(x2, -25 + ned - v, 7, 6, "#ece4d2"); px(x3, -19 + ned, 5, 5, "#d8cdb4"); } }
     if (a.pynt === "pynt_kappe" && !o.bak) px(-8, -24 + ned, 16, o.sitter ? 14 : 19, "#6b1f3a");
-    if (a.har === "langt") px(-7, -36 + (o.sitter ? 4 : 0), 14, 14, har);
-    if (o.sitter) { px(-5, -5, 4, 5, hud); px(1, -5, 4, 5, hudM); px(-5, -1, 5, 1, "#6b4a2a"); px(1, -1, 5, 1, "#6b4a2a"); c.translate(0, 4 * u); }
+    if (a.har === "langt") { boks(-16, -76 + ned * u, 32, 34, 3, har, harK); }
+
+    // Bein og sandaler
+    const bein = (x, loft, farge) => { boks(x, -19, 8, 19 - loft, 1, farge, hudK); q(x, -3 - loft, 9, 3, "#4a2f1c"); q(x + 1, -8 - loft, 6, 1, "#6b4a2a"); };
+    if (o.sitter) { boks(-10, -11, 9, 10, 1, hud, hudK); boks(1, -11, 9, 10, 1, hudM, hudK); q(-10, -3, 10, 3, "#4a2f1c"); q(1, -3, 10, 3, "#4a2f1c"); c.translate(0, 4 * u); }
+    else { const l = o.gaar ? (Math.sin(t * 11) > 0 ? 1 : -1) : 0; bein(-9, l > 0 ? 4 : 0, hud); bein(1, l < 0 ? 4 : 0, hudM); }
+
+    // Kroppen: toga med skygge, skrå kant og belte
+    boks(-13, -49, 26, 34, 2, toga, togaK);
+    q(5, -47, 7, 30, togaM); q(-12, -19, 24, 3, togaM);
+    if (!o.bak) for (let i = 0; i < 9; i++) q(-12 + i * 2.5, -47 + i * 2.4, 5, 3, kant);
+    q(-12, -27, 24, 2, kant); q(-12, -25, 24, 1, togaK);
+
+    // Armer: erme øverst, hud nederst
+    const arm = (x, y, h, farge, erme) => { boks(x, y, 7, h, 2, farge, hudK); boks(x, y, 7, Math.min(9, h), 2, erme, togaK); };
+    const opp = (x, farge, erme, dx = 0) => { boks(x, -47, 7, 8, 2, erme, togaK); boks(x + dx, -66, 7, 21, 2, farge, hudK); };
+    if (dans) { opp(-20, hud, toga); opp(13, hudM, togaM); }
     else {
-      const l = o.gaar ? (Math.sin(t * 11) > 0 ? 1 : -1) : 0;
-      px(-5, -9, 4, 9 - (l > 0 ? 2 : 0), hud); px(1, -9, 4, 9 - (l < 0 ? 2 : 0), hudM);
-      px(-5, -1 - (l > 0 ? 2 : 0), 5, 1, "#6b4a2a"); px(1, -1 - (l < 0 ? 2 : 0), 5, 1, "#6b4a2a");
-    }
-    // Toga med skrå kant og belte
-    px(-6, -23, 12, 15, toga); px(3, -23, 3, 15, togaM); px(-6, -9, 12, 1, togaM);
-    if (!o.bak) for (let i = 0; i < 5; i++) px(-6 + i * 2, -23 + i * 2, 3, 2, kant);
-    px(-6, -13, 12, 1, kant);
-    // Armer
-    if (dans) { px(-10, -31, 3, 9, hud); px(7, -31, 3, 9, hudM); px(-9, -22, 3, 3, toga); px(6, -22, 3, 3, togaM); }
-    else {
-      px(-9, -22, 3, 4, toga); px(-9, -18, 3, 6, hud);
-      if (o.gest === "vink") { px(6, -22, 3, 3, togaM); px(7 + Math.round(Math.sin(t * 14)), -31, 3, 9, hudM); }
-      else if (o.gest === "klapp") { const k = Math.sin(t * 16) > 0 ? 1 : 0; px(6, -22, 3, 3, togaM); px(-4 - k, -21, 3, 3, hud); px(1 + k, -21, 3, 3, hudM); }
-      else if (o.gest === "skal") { px(6, -22, 3, 3, togaM); px(7, -30, 3, 8, hudM); px(6, -35, 5, 5, "#e2c174"); px(7, -36, 3, 1, "#8e2f52"); }
-      else { px(6, -22, 3, 4, togaM); px(6, -18, 3, 6, hudM); }
+      arm(-19, -47, 22, hud, toga);
+      if (o.gest === "vink") opp(13, hudM, togaM, Math.round(Math.sin(t * 14) * 2));
+      else if (o.gest === "skal") { opp(13, hudM, togaM); boks(11, -76, 11, 11, 2, "#e2c174", "#8a6f33"); q(13, -76, 7, 2, "#8e2f52"); }
+      else if (o.gest === "klapp") { const k = Math.sin(t * 16) > 0 ? 2 : 0; boks(13, -47, 7, 9, 2, togaM, togaK); boks(-8 - k, -43, 7, 7, 2, hud, hudK); boks(1 + k, -43, 7, 7, 2, hudM, hudK); }
+      else arm(12, -47, 22, hudM, togaM);
     }
     if (a.pynt === "pynt_kappe") { if (o.bak) { px(-7, -24, 14, o.sitter ? 13 : 18, "#8e2f52"); px(-7, -24, 14, 2, "#c9a24a"); } else { px(-6, -24, 12, 2, "#8e2f52"); px(-1, -24, 2, 2, "#e2c174"); } }
     if (a.pynt === "pynt_dolk") { if (o.bak) { px(-1, -25, 2, 5, "#3a2a18"); px(-3, -20, 6, 1, "#c9a24a"); } else { px(5, -29, 2, 5, "#3a2a18"); px(4, -25, 4, 1, "#c9a24a"); } }
-    // Hode, ansikt og hår
-    px(-2, -25, 4, 2, hudM);
-    px(-6, -36, 12, 11, hud); px(4, -36, 2, 11, hudM);
+
+    // Hals og hode
+    q(-4, -52, 8, 5, hudM); q(-5, -52, 1, 4, hudK); q(4, -52, 1, 4, hudK);
+    q(-16, -66, 3, 7, hudK); q(-15, -65, 2, 5, hud); q(13, -66, 3, 7, hudK); q(13, -65, 2, 5, hudM);   // ører
+    boks(-14, -78, 28, 28, 4, hud, hudK);
+    q(8, -75, 5, 22, hudM); q(-10, -52, 20, 1, hudM);
     if (!o.bak) {
-      px(-4, -31, 2, 2, "#1c1612"); px(1, -31, 2, 2, "#1c1612");
-      if (a.briller === "ja") { const g = "#c9a24a"; px(-5, -32, 4, 1, g); px(0, -32, 4, 1, g); px(-5, -29, 4, 1, g); px(0, -29, 4, 1, g); px(-5, -32, 1, 4, g); px(-2, -32, 1, 4, g); px(0, -32, 1, 4, g); px(3, -32, 1, 4, g); px(-1, -31, 1, 1, g); }
-      if (a.skjegg === "ja") { px(-6, -28, 12, 3, har); px(-2, -27, 3, 1, mork(har, 0.55)); }
-      else px(-2, -27, 3, 1, mork(hud, 0.6));
-    } else if (a.har !== "skallet") px(-6, -36, 12, 9, har);
-    if (a.har === "kort") { px(-6, -38, 12, 3, har); px(-6, -35, 1, 3, har); px(5, -35, 1, 3, har); }
-    else if (a.har === "langt") { px(-7, -38, 14, 4, har); px(-7, -34, 2, 10, har); px(5, -34, 2, 10, har); }
-    else if (a.har === "krøller") { px(-7, -39, 14, 4, har); px(-8, -37, 2, 5, har); px(6, -37, 2, 5, har); px(-5, -40, 3, 1, har); px(1, -40, 4, 1, har); }
-    else if (a.har === "knute") { px(-6, -38, 12, 3, har); px(-2, -41, 4, 3, har); }
-    else { px(-6, -34, 1, 3, har); px(5, -34, 1, 3, har); }
-    // Hodeplagg fra butikken
+      // Øyne med hvitt, pupill og glimt, og øyenbryn i hårfargen
+      for (const x of [-9, 3]) { q(x, -67, 6, 7, "#ffffff"); q(x, -68, 6, 1, hudK); q(x + 2, -66, 4, 5, "#2b1a10"); q(x + 2, -66, 2, 2, "#5a4636"); q(x + 4, -65, 1, 1, "#ffffff"); q(x - 1, -71, 8, 2, a.har === "skallet" ? hudK : harK); }
+      q(-1, -60, 3, 2, hudM); q(0, -58, 2, 1, hudK);                               // nese
+      q(-10, -59, 4, 2, mork(hud, 0.93)); q(7, -59, 4, 2, mork(hud, 0.78));       // kinn
+      if (a.briller === "ja") { const g = "#c9a24a"; for (const x of [-11, 1]) { q(x, -69, 10, 1, g); q(x, -60, 10, 1, g); q(x, -69, 1, 10, g); q(x + 9, -69, 1, 10, g); } q(-2, -66, 4, 1, g); }
+      if (a.skjegg === "ja") { boks(-13, -59, 26, 10, 3, har, harK); q(-9, -61, 7, 3, har); q(2, -61, 7, 3, har); q(-4, -56, 8, 2, "#7a2f2a"); q(-9, -52, 18, 1, harL); }
+      else { q(-5, -55, 10, 1, "#7a2f2a"); q(-6, -56, 1, 1, "#7a2f2a"); q(5, -56, 1, 1, "#7a2f2a"); q(-3, -54, 6, 1, mork(hud, 0.7)); }   // smil
+    } else if (a.har !== "skallet") boks(-14, -78, 28, 22, 4, har, harK);
+    // Hår
+    if (a.har === "kort") { boks(-15, -82, 30, 12, 4, har, harK); q(-14, -72, 3, 8, har); q(11, -72, 3, 8, har); q(-9, -72, 5, 2, har); q(1, -72, 7, 2, har); q(-9, -80, 12, 2, harL); }
+    else if (a.har === "langt") { boks(-16, -82, 32, 13, 4, har, harK); q(-15, -71, 4, 22, har); q(11, -71, 4, 22, har); q(-16, -71, 1, 22, harK); q(15, -71, 1, 22, harK); q(-11, -72, 9, 3, har); q(-9, -80, 12, 2, harL); }
+    else if (a.har === "krøller") { for (const [x, y] of [[-16, -76], [-12, -82], [-5, -85], [3, -85], [9, -81], [12, -75]]) boks(x, y, 10, 10, 3, har, harK); q(-12, -76, 24, 5, har); for (const [x, y] of [[-10, -80], [-2, -82], [6, -80]]) q(x, y, 3, 2, harL); if (!o.bak) { q(-15, -70, 3, 6, har); q(12, -70, 3, 6, har); } }
+    else if (a.har === "knute") { boks(-5, -89, 10, 9, 3, har, harK); boks(-15, -82, 30, 11, 4, har, harK); q(-14, -72, 2, 5, har); q(12, -72, 2, 5, har); q(-8, -80, 10, 2, harL); q(-2, -87, 3, 2, harL); }
+    else { q(-9, -76, 8, 2, mork(hud, 1.12)); q(-14, -70, 2, 5, harK); q(12, -70, 2, 5, harK); }
+    // Hodeplagg fra butikken (tegnet for et litt mindre hode, så de strekkes litt)
+    c.translate(0, -1 * u); c.scale(1.17, 1);
     const h = a.hode;
     if (h === "hode_krans") { px(-7, -38, 14, 2, "#5f7d3d"); for (const x of [-8, -4, 2, 6]) px(x, -39, 2, 2, "#7a9a52"); px(-1, -39, 2, 1, "#e2c174"); }
     else if (h === "hode_hjelm") { px(-7, -41, 14, 7, "#b08d57"); px(-7, -41, 14, 1, "#c9a66a"); px(-7, -34, 2, 7, "#b08d57"); px(5, -34, 2, 7, "#9a7a48"); if (!o.bak) px(-1, -34, 2, 3, "#b08d57"); px(-3, -45, 7, 4, "#b5282a"); px(-1, -48, 3, 3, "#b5282a"); }
