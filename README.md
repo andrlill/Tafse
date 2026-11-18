@@ -104,6 +104,29 @@ Bjellen i toppmenyen viser varsler til den som er logget inn: svar på egne post
 man har kommentert, skåler, nye saker, stemmer og kommentarer på egne saker, og utfallet av egne saker.
 Varslene lages i `functions/api/` (søk etter `varsle(`). Leste varsler eldre enn 90 dager ryddes bort.
 
+## To nettsteder: Tafse og Tafse-spill
+
+Hovedsiden (tafse.pages.dev) og spillsiden (tafsespill.pages.dev) bygges fra den samme koden og
+deler den samme D1-databasen, så brukere, passord, poeng, Symposion og hotellet er felles.
+Porten i `functions/_middleware.js` bestemmer hva hver side viser:
+
+- **Spillsiden** kjenner seg igjen på variabelen `NETTSTED=spill`. Man må være logget inn (bror eller
+  gjest) for å komme inn, og første gang sjekker man inn på hotellet: lager figur og får hus i
+  Symposion. Før det slipper man ikke inn i de andre spillene, og man vises ikke for de andre.
+  Alt som ikke er spill, sendes til hovedsiden. Siden har eget preg (TAFSE SPILL, turkis ramme).
+- **Hovedsiden** sender spillene og spillhallen videre til spillsiden når variabelen `SPILLSIDE`
+  (adressen til spillsiden) er satt. Uten den virker alt som før.
+- Innloggingen følger med mellom sidene med en billett (`/api/billett`) som gjelder i ett minutt.
+
+Oppsett av spillsiden i Cloudflare:
+
+1. Workers & Pages › Create › Pages › koble til `andrlill/Tafse`, prosjektnavn `tafsespill`, ingen byggekommando, utdatamappe `/`.
+2. I det nye prosjektet › Settings: koble D1-databasen som `DB` (den samme som hovedsiden), Workers AI som `AI`,
+   legg inn hemmeligheten `TAFSE_PASSORD` (samme verdi som hovedsiden) og variabelen `NETTSTED` = `spill`.
+   Har hovedsiden `PROFESSOR_MODELL`, legg den inn her også. Bygg på nytt.
+3. Når spillsiden virker: legg til variabelen `SPILLSIDE` = `https://tafsespill.pages.dev` i hovedsidens prosjekt, og bygg hovedsiden på nytt.
+   Har spillsiden fått en annen adresse, legg også `HOVEDSIDE` = `https://tafse.pages.dev` inn i spillsidens prosjekt.
+
 ## Personvern og tilgang
 
 Hele nettstedet er stengt for alle som ikke er innlogget som bror. Porten ligger i

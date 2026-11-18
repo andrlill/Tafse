@@ -48,9 +48,13 @@ function settRolle(r) {
 }
 const settGjestemerke = (pa) => settRolle(pa ? "gjest" : "");
 const visningsnavn = (navn) => String(navn || "").replace(/ \(gjest\)$/, "");
+// Spillsiden (tafsespill) er et eget nettsted med samme kode. Porten (functions/_middleware.js)
+// setter et merke, så siden vet hvor den er før noe er lastet.
+const SPILLSIDE = /(?:^|;\s*)tafsenettsted=spill/.test(document.cookie);
+if (SPILLSIDE) document.documentElement.classList.add("spillside");
 const gjestTillatt = () => herSide() === "gjest" || GJESTESPILL.some(([s]) => s === herSide());
 // Full meny bare for brødre. Sider utenfor spillhallen slipper serveren bare brødre inn på.
-const visBrorside = () => rolle() === "bror" || (!gjestTillatt() && rolle() !== "gjest");
+const visBrorside = () => !SPILLSIDE && (rolle() === "bror" || (!gjestTillatt() && rolle() !== "gjest"));
 
 function menyHtml() {
   const her = herSide();
@@ -68,8 +72,11 @@ function oppdaterMeny() {
   const merke = document.querySelector(".topp .merke");
   if (merke) merke.href = visBrorside() ? "index.html" : "gjest.html";
   const bunntekst = document.querySelector(".bunn .bunn-tekst");
-  if (bunntekst && !bunntekst.classList.contains("bunn-status")) bunntekst.textContent = visBrorside() ? "Taffelakademiet for Samvær og Etegilder" : "";
+  if (bunntekst && !bunntekst.classList.contains("bunn-status")) bunntekst.textContent = bunnTekst();
 }
+
+const bunnTekst = () => (visBrorside() ? "Taffelakademiet for Samvær og Etegilder" : SPILLSIDE ? "Spillhallen til Taffelakademiet" : "");
+const merkeTekst = () => (SPILLSIDE ? `TAFSE<em>SPILL</em>` : "TAFSE");
 
 function byggRamme() {
   const meny = menyHtml();
@@ -77,7 +84,7 @@ function byggRamme() {
   topp.className = "topp";
   topp.innerHTML = `<div class="meander" aria-hidden="true"></div>
   <div class="topp-inner">
-    <a class="merke" href="${visBrorside() ? "index.html" : "gjest.html"}">${LOGO}<span>TAFSE</span></a>
+    <a class="merke" href="${visBrorside() ? "index.html" : "gjest.html"}">${LOGO}<span>${merkeTekst()}</span></a>
     <nav class="meny" id="hovedmeny" aria-label="Hovedmeny">${meny}</nav>
     <div class="varsel" id="varsel" hidden>
       <button class="varsel-knapp" type="button" aria-expanded="false" aria-controls="varsel-panel" aria-label="Varsler"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15L6 16z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><span class="varsel-tall" hidden></span></button>
@@ -99,7 +106,7 @@ function byggRamme() {
   const bunn = document.createElement("footer");
   bunn.className = "bunn";
   bunn.innerHTML = `<div class="meander" aria-hidden="true"></div>
-  <p class="bunn-tekst">${visBrorside() ? "Taffelakademiet for Samvær og Etegilder" : ""}</p>
+  <p class="bunn-tekst">${bunnTekst()}</p>
   <p class="bunn-tekst bunn-status" style="padding-top:0; font-style:normal"></p>`;
   document.body.append(bunn);
 }
@@ -268,7 +275,7 @@ function visInnloggetLinje() {
   p.innerHTML = GJEST
     ? `Innlogget som <strong>${esc(visningsnavn(MEG))}</strong> · <a href="#" id="loggut">Logg ut</a>`
     : MEG
-    ? `Innlogget som <strong>${esc(MEG)}</strong>${paaGjesteside() ? ` · <a href="gjest.html">Inviter en gjest</a>` : ""}${ADMIN ? ` · <a href="invitasjoner.html">Invitasjoner</a>` : ""} · <a href="#" id="loggut">Logg ut</a>`
+    ? `Innlogget som <strong>${esc(MEG)}</strong>${SPILLSIDE ? ` · <a href="api/billett?til=index.html">Til Tafse</a>` : ""}${paaGjesteside() ? ` · <a href="gjest.html">Inviter en gjest</a>` : ""}${ADMIN ? ` · <a href="invitasjoner.html">Invitasjoner</a>` : ""} · <a href="#" id="loggut">Logg ut</a>`
     : paaGjesteside() ? `<a href="gjest.html">Logg inn i spillhallen</a>` : "";
   const l = document.getElementById("loggut");
   if (l) l.addEventListener("click", async (e) => {

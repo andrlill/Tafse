@@ -243,7 +243,7 @@ async function lagGjesteokt(env, gjest, url) {
   return `tafsegjest=${b64(gjest.navn)}.${utloper}.${sig}; Path=/; Max-Age=${OKT_DAGER * 86400}; HttpOnly; SameSite=Lax${sikker}`;
 }
 
-async function hvemErGjest(request, env, db) {
+export async function hvemErGjest(request, env, db) {
   const c = lesCookie(request, "tafsegjest");
   if (!c) return null;
   const [n64, utloper, sig] = c.split(".");
@@ -307,7 +307,47 @@ const postLenke = (post) => (post.mote && post.mote !== "salongen" ? `mote.html?
 
 // Gjestelenken til en bror, avledet av brorens navn og akademipassordet
 const gjestekode = async (env, bror) => (await hmac(env.TAFSE_PASSORD, `gjest|${bror}`)).slice(0, 20);
-const gjesteNavn = (navn) => `${navn} (gjest)`;
+export const gjesteNavn = (navn) => `${navn} (gjest)`;
+
+// ---------- To nettsteder: hovedsiden og spillsiden ----------
+// Begge bygges fra denne koden og deler databasen. Spillsiden kjenner seg igjen på variabelen
+// NETTSTED=spill i Cloudflare. Hovedsiden sender spillene over til spillsiden når variabelen
+// SPILLSIDE (adressen, f.eks. https://tafsespill.pages.dev) er satt. Se README.
+export const erSpillside = (env) => env.NETTSTED === "spill";
+export const annenSide = (env) => (erSpillside(env) ? env.HOVEDSIDE || "https://tafse.pages.dev" : env.SPILLSIDE || "").replace(/\/+$/, "");
+
+// Har spilleren sjekket inn på spillsiden? Det betyr figur på hotellet og hus i Symposion.
+export async function innsjekket(db, navn) {
+  try {
+    const r = await db.prepare("SELECT (SELECT 1 FROM symposion_gods WHERE navn = ?) AS hus, (SELECT utseende FROM hotell_gjest WHERE navn = ?) AS figur").bind(navn, navn).first();
+    return !!(r && r.hus && /"klar":"ja"/.test(r.figur || ""));
+  } catch (_) { return false; }
+}
+
+// En billett tar innloggingen med fra den ene siden til den andre. Den gjelder i ett minutt,
+// og bygger på passordet, så den slutter å virke hvis passordet byttes.
+const BILLETT_SEK = 60;
+const trygtMal = (til) => { const t = String(til || "").replace(/^\/+/, ""); return /^[\w\-./]*(\?[^\s]*)?(#[^\s]*)?$/.test(t) && !t.includes("//") && !t.startsWith("api/") ? t : ""; };
+async function lagBillett(env, db, request) {
+  const bror = await hvemErInnlogget(request, env, db);
+  const gjest = bror ? null : await hvemErGjest(request, env, db);
+  if (!bror && !gjest) return null;
+  const type = bror ? "b" : "g";
+  const rad = await db.prepare(`SELECT navn, hash FROM ${bror ? "brukere" : "gjester"} WHERE navn = ?`).bind(bror || gjest).first();
+  if (!rad) return null;
+  const ut = Date.now() + BILLETT_SEK * 1000;
+  return `${type}.${b64(rad.navn)}.${ut}.${await hmac(env.TAFSE_PASSORD, `billett|${type}|${rad.navn}|${ut}|${rad.hash.slice(0, 16)}`)}`;
+}
+async function innlosBillett(env, db, billett, url) {
+  const [type, n64, ut, sig] = String(billett).split(".");
+  if (!["b", "g"].includes(type) || !(Number(ut) > Date.now()) || !sig) return null;
+  let navn;
+  try { navn = unb64(n64); } catch (_) { return null; }
+  const rad = await db.prepare(`SELECT navn, hash FROM ${type === "b" ? "brukere" : "gjester"} WHERE navn = ?`).bind(navn).first();
+  if (!rad || rad.navn !== navn) return null;
+  if (!likt(sig, await hmac(env.TAFSE_PASSORD, `billett|${type}|${navn}|${ut}|${rad.hash.slice(0, 16)}`))) return null;
+  return type === "b" ? lagOkt(env, rad, url) : lagGjesteokt(env, rad, url);
+}
 
 // Lenke for nytt passord, laget av en administrator. Koden bygger på det nåværende passordet,
 // så lenken slutter å virke når passordet er byttet, og den går ut etter NULLSTILL_DAGER.
@@ -355,6 +395,22 @@ export async function onRequest({ request, env, params }) {
   const metode = request.method;
   const url = new URL(request.url);
 
+  // --- Billett: innloggingen følger med mellom hovedsiden og spillsiden ---
+  // Med ?b= løses billetten inn her. Uten lages en billett, og man sendes til den andre siden.
+  if (ressurs === "billett" && metode === "GET") {
+    const til = trygtMal(url.searchParams.get("til"));
+    const videre = (sted, cookie) => {
+      const h = new Headers({ Location: sted, "Cache-Control": "no-store" });
+      if (cookie) h.append("Set-Cookie", cookie);
+      return new Response(null, { status: 302, headers: h });
+    };
+    if (url.searchParams.get("b")) return videre(`/${til}`, await innlosBillett(env, db, url.searchParams.get("b"), url));
+    const annen = annenSide(env);
+    if (!annen) return videre(`/${til}`);
+    const billett = await lagBillett(env, db, request);
+    return videre(billett ? `${annen}/api/billett?b=${encodeURIComponent(billett)}&til=${encodeURIComponent(til)}` : `${annen}/${til}`);
+  }
+
   // --- Innlogging og brukere ---
   if (ressurs === "brukere" && metode === "GET") {
     if (!(await hvemErInnlogget(request, env, db))) return feil(401, "Ikke innlogget");
@@ -365,9 +421,9 @@ export async function onRequest({ request, env, params }) {
     const navn = await hvemErInnlogget(request, env, db);
     if (!navn) {
       const gjest = await hvemErGjest(request, env, db);
-      if (gjest) return json({ innlogget: false, gjest: true, navn: gjesteNavn(gjest) });
+      if (gjest) return json({ innlogget: false, gjest: true, navn: gjesteNavn(gjest), spillside: erSpillside(env) });
     }
-    return json({ innlogget: !!navn, navn, admin: !!navn && (await erAdmin(env, url, navn)) });
+    return json({ innlogget: !!navn, navn, admin: !!navn && (await erAdmin(env, url, navn)), spillside: erSpillside(env) });
   }
 
   // --- Gjester (bare spillene) ---
@@ -809,14 +865,27 @@ export async function onRequest({ request, env, params }) {
   }
 
   // --- Tafse Hotell. Logikken ligger i lib/hotell.js ---
+  // Gjester har ingen varselbjelle, så spillvarsler til dem sendes ikke
+  const varsleBrodre = (d, mottakere, v) => varsle(d, mottakere.filter((n) => !n.endsWith(" (gjest)")), v);
+
   if (ressurs === "hotell" && (metode === "GET" || metode === "POST")) {
-    return hotell({ db, ai: env.AI, modell: env.PROFESSOR_MODELL, meg, metode, handling: id, request, url, medlemmer: await medlemsliste(env, url), json, feil, lesJson });
+    // Bare brødre som har sjekket inn (laget figur), har rom og vises i hotellet
+    const inne = new Set((await db.prepare(`SELECT navn FROM hotell_gjest WHERE utseende LIKE '%"klar":"ja"%'`).all()).results.map((r) => r.navn));
+    const medlemmer = (await medlemsliste(env, url)).filter((n) => inne.has(n));
+    const svar = await hotell({ db, ai: env.AI, modell: env.PROFESSOR_MODELL, meg, metode, handling: id, request, url, medlemmer, json, feil, lesJson });
+    // Innsjekk: den som har laget figur, får også hus i Symposion
+    if ((metode === "POST" && id === "utseende") || (metode === "GET" && id === "profil")) {
+      const rad = await db.prepare("SELECT utseende FROM hotell_gjest WHERE navn = ?").bind(meg).first();
+      const harHus = await db.prepare("SELECT 1 AS ja FROM symposion_gods WHERE navn = ?").bind(meg).first();
+      if (rad && /"klar":"ja"/.test(rad.utseende || "") && !harHus) {
+        await symposion({ db, meg, metode: "POST", handling: "flytt-inn", request: new Request(url, { method: "POST", body: "{}", headers: { "Content-Type": "application/json" } }), json, feil, lesJson, varsle: varsleBrodre });
+      }
+    }
+    return svar;
   }
 
   // --- Spillet: Symposion (den felles byen). Logikken ligger i lib/symposion.js ---
   if (ressurs === "symposion" && (metode === "GET" || metode === "POST")) {
-    // Gjester har ingen varselbjelle, så varsler til dem sendes ikke
-    const varsleBrodre = (d, mottakere, v) => varsle(d, mottakere.filter((n) => !n.endsWith(" (gjest)")), v);
     return symposion({ db, meg, metode, handling: id, request, json, feil, lesJson, varsle: varsleBrodre });
   }
 

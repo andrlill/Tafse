@@ -1501,7 +1501,8 @@
       <div>
         <p class="overline">Innsjekking</p>
         <h2>Lag figuren din</h2>
-        <p>Før portieren slipper deg inn, må du bestemme hvordan du ser ut. Du kan bytte om i garderoben senere.</p>
+        ${new URLSearchParams(location.search).get("innsjekk") ? `<p><strong>Du må sjekke inn før du kan spille.</strong> Det gjør du bare én gang.</p>` : ""}
+        <p>Bestem hvordan du ser ut. Når du sjekker inn, får du et rom her på hotellet og et hus i Symposion, og du blir synlig for de andre i spillene. Du kan bytte klær i garderoben senere.</p>
         <div id="h-garderobe"></div>
         <button class="knapp" type="button" id="h-sjekkinn">Sjekk inn som ${esc(vis(MEG))}</button>
         <p class="melding feil" id="h-innfeil" hidden></p>
@@ -1525,7 +1526,13 @@
     document.getElementById("h-sjekkinn").addEventListener("click", async (e) => {
       e.currentTarget.disabled = true;
       look = { ...look, klar: "ja" };
-      try { await api("hotell/utseende", post(look)); aktiv = false; start(); }
+      try {
+        await api("hotell/utseende", post(look)); aktiv = false;
+        // Kom man hit fra et annet spill, slipper man inn der nå
+        const til = new URLSearchParams(location.search).get("til") || "";
+        if (/^[\w-]+\.html(\?[^\s]*)?$/.test(til) && !til.startsWith("hotell.html")) { location.href = til; return; }
+        start();
+      }
       catch (err) { const f = document.getElementById("h-innfeil"); f.textContent = err.message; f.hidden = false; e.currentTarget.disabled = false; }
     });
   }
@@ -1539,7 +1546,7 @@
 
   (async () => {
     if (!(await hvemErJeg())) {
-      rot.innerHTML = `<p class="tomt">Du må <a href="salongen.html">logge inn</a> for å sjekke inn på hotellet.</p>`;
+      rot.innerHTML = `<p class="tomt">Du må <a href="${SPILLSIDE ? "gjest.html" : "salongen.html"}">logge inn</a> for å sjekke inn på hotellet.</p>`;
       return;
     }
     let profil = null;

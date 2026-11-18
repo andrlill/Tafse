@@ -1104,3 +1104,11 @@ a.liten-knapp { text-decoration: none; display: inline-flex; align-items: center
 details.glemt > summary { cursor: pointer; list-style: none; display: inline-block; font-family: var(--display); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--dempet); }
 details.glemt > summary::-webkit-details-marker { display: none; }
 details.glemt > summary:hover, details.glemt[open] > summary { color: var(--gull); }
+
+/* Spillsiden (tafsespill): samme stil, men med turkis i stedet for gull i rammen, så man ser hvor man er */
+.merke em { font-style: normal; color: #6fc3c9; margin-left: .3em; }
+.spillside .meander { filter: hue-rotate(150deg) saturate(.85) brightness(1.05); }
+.spillside .topp { background: linear-gradient(180deg, rgba(111,195,201,.06), transparent); }
+.spillside .meny a.aktiv { border-bottom-color: #6fc3c9; }
+.spillside .spillhall { display: none; }   /* toppmenyen viser allerede alle spillene */
+@media (min-width: 1241px) { .spillside .meny { gap: 15px; } .spillside .meny a { white-space: nowrap; letter-spacing: .1em; font-size: 13px; } }
