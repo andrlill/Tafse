@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gjestene · TAFSE</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main class="side smal">
+  <p class="overline">Kun for administrator</p>
+  <h1 class="side-tittel">Gjestene</h1>
+  <div id="innhold"><p class="dempet">Laster …</p></div>
+</main>
+<script src="assets/app.js"></script>
+<script>
+// Administratorens oversikt over gjestene på spillsiden: se hvem som finnes, send lenke for nytt
+// passord, og fjern gjester. «Fjern helt» sletter også alt gjesten har gjort i spillene.
+const boks = document.getElementById("innhold");
+let gjester = [];
+
+async function kopier(tekst, knapp) {
+  try { await navigator.clipboard.writeText(tekst); }
+  catch (_) { const t = document.createElement("textarea"); t.value = tekst; document.body.append(t); t.select(); document.execCommand("copy"); t.remove(); }
+  const for_ = knapp.textContent; knapp.textContent = "Kopiert"; setTimeout(() => (knapp.textContent = for_), 1500);
+}
+
+function tegn() {
+  const inne = gjester.filter((g) => g.spill).length;
+  boks.innerHTML = gjester.length ? `
+    <p><strong>${gjester.length}</strong> ${gjester.length === 1 ? "gjest" : "gjester"}, og ${inne} av dem har sjekket inn.</p>
+    <div class="innlegg-liste">${gjester.map((g, n) => `
+      <article class="innlegg">
+        <div class="innlegg-topp">
+          <h3>${esc(g.navn)}</h3>
+          <span class="merkelapp ${g.spill ? "status-vedtatt" : ""}">${g.spill ? "Sjekket inn" : "Ikke sjekket inn"}</span>
+        </div>
+        <p class="dempet" style="margin:4px 0 12px">Invitert av ${esc(g.invitert_av || "ukjent")}, ${esc(tidTekst(g.opprettet))}</p>
+        <div class="handlinger">
+          <button class="liten-knapp" type="button" data-passord="${n}">Kopier lenke for nytt passord</button>
+          <button class="liten-knapp" type="button" data-fjern="${n}">Fjern helt</button>
+        </div>
+      </article>`).join("")}</div>
+    <p class="dempet" style="font-size:15px; margin-top:24px">«Fjern helt» sletter brukeren og alt gjesten har gjort i spillene: figur, rom, møbler, hus i Symposion, poeng, premier og varsler. Det kan ikke angres.</p>`
+    : `<p class="tomt">Ingen gjester ennå.</p>`;
+}
+
+async function last() {
+  try { gjester = await api("gjester"); tegn(); }
+  catch (err) { boks.innerHTML = `<p class="melding feil">${esc(err.message)}</p>`; }
+}
+
+boks.addEventListener("click", async (e) => {
+  const k = e.target.closest("button");
+  if (!k) return;
+  if (k.dataset.passord) {
+    const g = gjester[k.dataset.passord];
+    kopier(`Hei ${g.navn}! Her er en lenke der du kan lage nytt passord på Tafse-spill. Den virker i tre dager og bare én gang:\n\n${location.origin}/${g.nullstill}`, k);
+  }
+  if (k.dataset.fjern) {
+    const g = gjester[k.dataset.fjern];
+    if (!k.dataset.sikker) { k.dataset.sikker = "1"; k.textContent = `Sikker? Fjern ${g.navn} for godt`; k.classList.add("skalt"); return; }
+    k.disabled = true;
+    try { await api(`gjester/${encodeURIComponent(g.navn)}?alt=1`, { method: "DELETE" }); await last(); }
+    catch (err) { k.disabled = false; k.textContent = err.message; }
+  }
+});
+
+(async () => {
+  if (!(await hvemErJeg()) || !ADMIN) { boks.innerHTML = `<p class="tomt">Denne siden er bare for administratoren.</p>`; return; }
+  last();
+})();
+</script>
+</body>
+</html>

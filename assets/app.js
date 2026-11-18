@@ -282,7 +282,7 @@ function visInnloggetLinje() {
   p.innerHTML = GJEST
     ? `Innlogget som <strong>${esc(visningsnavn(MEG))}</strong> · <a href="#" id="loggut">Logg ut</a>`
     : MEG
-    ? `Innlogget som <strong>${esc(MEG)}</strong>${paaGjesteside() ? ` · <a href="gjest.html">Inviter en gjest</a>` : ""}${ADMIN && !SPILLSIDE ? ` · <a href="invitasjoner.html">Invitasjoner</a>` : ""} · <a href="#" id="loggut">Logg ut</a>`
+    ? `Innlogget som <strong>${esc(MEG)}</strong>${paaGjesteside() ? ` · <a href="gjest.html">Inviter en gjest</a>` : ""}${ADMIN ? (SPILLSIDE ? ` · <a href="gjester.html">Gjestene</a>` : ` · <a href="invitasjoner.html">Invitasjoner</a>`) : ""} · <a href="#" id="loggut">Logg ut</a>`
     : paaGjesteside() ? `<a href="gjest.html">Logg inn i spillhallen</a>` : "";
   const l = document.getElementById("loggut");
   if (l) l.addEventListener("click", async (e) => {

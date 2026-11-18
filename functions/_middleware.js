@@ -8,7 +8,7 @@
 // kan spille noe annet. Alt som ikke er spill, sendes tilbake til hovedsiden.
 import { GJESTESPILL, hvemErInnlogget, hvemErGjest, gjesteNavn, innsjekket, erSpillside, annenSide } from "./api/[[sti]].js";
 
-const SPILLSIDER = new Set(["gjest", "honningfella", ...GJESTESPILL]);
+const SPILLSIDER = new Set(["gjest", "gjester", "honningfella", ...GJESTESPILL]);
 const APNE_SIDER = new Set(["gjest", "velkommen", "nyttpassord", ...SPILLSIDER]);
 const MERKE = "tafsenettsted=spill; Path=/; Max-Age=31536000; SameSite=Lax";   // så siden vet hvor den er før noe er lastet
 
@@ -46,7 +46,7 @@ export async function onRequest(context) {
     if (!SPILLSIDER.has(side)) return billett(url);                       // over til hovedsiden
     if (side === "gjest") return privat(next, MERKE);                     // spillhallen: innlogging og invitasjoner
     if (!bror && !gjest) return videre("/gjest.html");
-    if (side !== "hotell" && !(await innsjekket(env.DB, bror || gjesteNavn(gjest)))) return videre(`/hotell.html?innsjekk=1&til=${encodeURIComponent(url.pathname.replace(/^\//, "") + url.search)}`);
+    if (side !== "hotell" && side !== "gjester" && !(await innsjekket(env.DB, bror || gjesteNavn(gjest)))) return videre(`/hotell.html?innsjekk=1&til=${encodeURIComponent(url.pathname.replace(/^\//, "") + url.search)}`);
     return privat(next, MERKE);
   }
 

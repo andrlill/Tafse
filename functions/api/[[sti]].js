@@ -309,6 +309,16 @@ const postLenke = (post) => (post.mote && post.mote !== "salongen" ? `mote.html?
 const gjestekode = async (env, bror) => (await hmac(env.TAFSE_PASSORD, `gjest|${bror}`)).slice(0, 20);
 export const gjesteNavn = (navn) => `${navn} (gjest)`;
 
+// Hvor en gjest finnes i spillene: tabell og kolonne med gjestens navn. Brukes når en gjest fjernes helt.
+const FJERN_GJEST = [
+  ["hotell_gjest", "navn"], ["hotell_rom", "navn"], ["hotell_mobel", "eier"], ["hotell_prat", "navn"], ["hotell_gjestebok", "eier"], ["hotell_gjestebok", "navn"],
+  ["hotell_gave", "fra"], ["hotell_gave", "til"], ["hotell_respekt", "fra"], ["hotell_respekt", "til"], ["hotell_skatt", "navn"], ["auditoriet_samtale", "navn"],
+  ["symposion_gods", "navn"], ["symposion_logg", "navn"], ["symposion_bidrag", "navn"], ["symposion_handling", "fra"], ["symposion_handling", "til"],
+  ["symposion_statue", "navn"], ["symposion_tagg", "fra"], ["symposion_tagg", "til"],
+  ["premier", "navn"], ["tartaros", "navn"], ["tartaros_profil", "navn"], ["tall2048", "navn"], ["murbrekker", "navn"], ["tetris", "navn"], ["snake", "navn"],
+  ["spillresultater", "navn"], ["honningfella", "navn"], ["varsler", "mottaker"], ["varsler", "avsender"],
+];
+
 // ---------- To nettsteder: hovedsiden og spillsiden ----------
 // Begge bygges fra denne koden og deler databasen. Spillsiden kjenner seg igjen på variabelen
 // NETTSTED=spill i Cloudflare. Hovedsiden sender alltid spillene over til spillsiden.
@@ -559,7 +569,15 @@ export async function onRequest({ request, env, params }) {
       return json(ut);
     }
     if (id && metode === "DELETE") {
-      await db.prepare("DELETE FROM gjester WHERE navn = ?").bind(decodeURIComponent(id)).run();
+      const navn = decodeURIComponent(id);
+      await db.prepare("DELETE FROM gjester WHERE navn = ?").bind(navn).run();
+      // Med ?alt=1 fjernes også alt gjesten har gjort i spillene: figur, rom, hus, poeng, premier og varsler
+      if (url.searchParams.get("alt") === "1") {
+        const g = gjesteNavn(navn);
+        const jobber = FJERN_GJEST.map(([tabell, kolonne]) => db.prepare(`DELETE FROM ${tabell} WHERE ${kolonne} = ?`).bind(g));
+        jobber.push(db.prepare("UPDATE symposion_gods SET slave_til = NULL WHERE slave_til = ?").bind(g));
+        for (const j of jobber) { try { await j.run(); } catch (_) {} }   // en tabell som ikke finnes ennå, hoppes over
+      }
       return json({ ok: true });
     }
   }
