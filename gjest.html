@@ -22,7 +22,24 @@ const q = new URLSearchParams(location.search);
 const json = (data) => ({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
 
 const spilliste = () => `<div class="gjest-spill">${GJESTESPILL.map(([s, n]) => `<a class="knapp sekundar" href="${s}.html">${esc(n)}</a>`).join("")}</div>
-  <p><button class="liten-knapp" type="button" onclick="visPlakat()">Slik henger spillene sammen</button></p>`;
+  <p><button class="liten-knapp" type="button" onclick="visPlakat()">Slik henger spillene sammen</button></p>
+  <section id="ukestavle" aria-live="polite"></section>`;
+
+// Ukens tre beste i hvert spill. Hentes etter at siden er tegnet.
+async function visUkestavle(meg) {
+  const boksen = document.getElementById("ukestavle");
+  if (!boksen) return;
+  let d;
+  try { d = await api("ukestavle"); } catch (_) { return; }
+  const tall = (n) => Number(n).toLocaleString("nb-NO");
+  boksen.innerHTML = `<h2 class="uke-tittel">Ukens topp tre</h2>
+    <div class="uke-rutenett">${d.spill.map((s) => `<article class="uke-kort">
+      <h3><a href="${esc(s.side)}.html">${esc(s.navn)}</a><span>${esc(s.enhet)}</span></h3>
+      ${s.topp.length ? `<ol>${s.topp.map((r, i) => `<li class="${r.navn === meg ? "meg" : ""}"><span class="uke-plass">${i + 1}</span><span class="uke-navn">${esc(visningsnavn(r.navn))}</span><strong>${tall(r.poeng)}</strong></li>`).join("")}</ol>`
+        : `<p class="dempet">Ingen ennå. Førsteplassen er ledig.</p>`}
+    </article>`).join("")}</div>
+    <p class="dempet uke-fot">Uka begynner mandag. Tavlene viser det beste resultatet til hver spiller.</p>`;
+}
 
 async function kopier(tekst, knapp) {
   try { await navigator.clipboard.writeText(tekst); }
@@ -42,6 +59,7 @@ function visInnloggetGjest(navn, ny) {
     ${spilliste()}
     <p><button class="liten-knapp" type="button" id="gjest-ut">Logg ut</button></p>`;
   loggUtKnapp();
+  visUkestavle(navn);
 }
 
 async function visBror(navn) {
@@ -62,6 +80,7 @@ ${SPILLSIDE ? "" : `<p>Gjester kan spille ${GJESTESPILL.map(([, n]) => n).join("
     <p class="dempet" style="font-size:15px">Lenken kan brukes av flere. Gjestene registreres som invitert av deg.</p>`;
   boks.querySelector("#kopier-melding").addEventListener("click", (e) => kopier(melding, e.currentTarget));
   boks.querySelector("#kopier-lenke").addEventListener("click", (e) => kopier(lenke, e.currentTarget));
+  if (SPILLSIDE) visUkestavle(navn);
 }
 
 function visRegistrering(fra, kode) {

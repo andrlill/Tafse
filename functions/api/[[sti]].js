@@ -18,7 +18,7 @@ const STEMMER = ["for", "mot", "avstar"];
 const OKT_DAGER = 365;
 // Spillene gjester kan spille
 // Det gjester får bruke av API-et utenom spillene
-const GJESTE_API = ["innboks"];
+const GJESTE_API = ["innboks", "ukestavle"];
 export const GJESTESPILL = ["tartaros", "spill", "2048", "murbrekker", "tetris", "snake", "hotell", "symposion"];
 const MAKS_GJESTER = 500;
 
@@ -1040,6 +1040,28 @@ export async function onRequest({ request, env, params }) {
         .bind(meg, poeng, ...verdier, naa()).run();
       return json({ ok: true, premie: await premie(db, meg, ressurs, poeng) }, 201);
     }
+  }
+
+  // --- Spillhallen: ukens tre beste i hvert spill ---
+  // Poengspillene teller beste resultat per spiller siden mandag. Hotellet teller respekt fått denne uka.
+  // Symposion har ingen ukepoeng, så der vises æren i alt.
+  if (ressurs === "ukestavle" && metode === "GET") {
+    const n = new Date(Date.now() + 3600000);
+    const mandagDag = new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate() - ((n.getUTCDay() + 6) % 7)));
+    const mandag = new Date(mandagDag.getTime() - 3600000).toISOString();
+    const uke = (tabell, poeng = "poeng") => db.prepare(`SELECT navn, MAX(${poeng}) AS poeng FROM ${tabell} WHERE opprettet >= ? GROUP BY navn ORDER BY poeng DESC, MIN(opprettet) LIMIT 3`).bind(mandag);
+    const spill = [
+      ["tartaros", "Tartaros", "poeng", uke("tartaros")],
+      ["symposion", "Symposion", "ære i alt", db.prepare("SELECT navn, aere AS poeng FROM symposion_gods WHERE aere > 0 ORDER BY aere DESC, opprettet LIMIT 3")],
+      ["spill", "Idus Martiae", "poeng", uke("spillresultater", "CAST(sekunder AS INTEGER) + kolleger - sar")],
+      ["2048", "2048", "poeng", uke("tall2048")],
+      ["murbrekker", "Murbrekker", "poeng", uke("murbrekker")],
+      ["tetris", "Tetris", "poeng", uke("tetris")],
+      ["snake", "Snake", "poeng", uke("snake")],
+      ["hotell", "Tafse Hotell", "respekt denne uka", db.prepare("SELECT til AS navn, COUNT(*) AS poeng FROM hotell_respekt WHERE dag >= ? GROUP BY til ORDER BY poeng DESC, MIN(id) LIMIT 3").bind(mandagDag.toISOString().slice(0, 10))],
+    ];
+    const svar = await db.batch(spill.map((x) => x[3]));
+    return json({ fra: mandag, spill: spill.map(([side, navn, enhet], i) => ({ side, navn, enhet, topp: svar[i].results })) });
   }
 
   // --- Varsler ---

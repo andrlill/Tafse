@@ -1008,6 +1008,23 @@ a.liten-knapp { text-decoration: none; display: inline-flex; align-items: center
 /* Gjester i spillhallen */
 .gjest-spill { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0 24px; }
 .gjest-spill .knapp { text-decoration: none; }
+/* Ukens topp tre i spillhallen */
+.uke-tittel { font-size: 20px; color: var(--gull); letter-spacing: .1em; margin: 32px 0 12px; }
+.uke-rutenett { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.uke-kort { border: 1px solid var(--linje); background: var(--flate); padding: 14px 16px 12px; }
+.uke-kort h3 { margin: 0 0 8px; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 15px; letter-spacing: .1em; text-transform: uppercase; }
+.uke-kort h3 a { color: var(--gull-lys); text-decoration: none; }
+.uke-kort h3 a:hover { text-decoration: underline; }
+.uke-kort h3 span { font-family: var(--brod, inherit); font-size: 13px; letter-spacing: 0; text-transform: none; color: var(--dempet); font-weight: 400; white-space: nowrap; }
+.uke-kort ol { list-style: none; margin: 0; padding: 0; }
+.uke-kort li { display: grid; grid-template-columns: 22px 1fr auto; gap: 8px; align-items: baseline; padding: 5px 0; border-top: 1px solid var(--linje); font-size: 17px; }
+.uke-kort li.meg { color: var(--gull-lys); }
+.uke-plass { font-family: var(--display); font-size: 13px; color: var(--gull); }
+.uke-kort li:first-child .uke-plass { font-weight: 700; }
+.uke-navn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.uke-kort strong { font-weight: 500; font-variant-numeric: tabular-nums; }
+.uke-kort p { margin: 0; font-size: 16px; padding: 5px 0; border-top: 1px solid var(--linje); }
+.uke-fot { font-size: 15px; margin-top: 10px; }
 .gjest-rad { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--linje); flex-wrap: wrap; }
 .gjest-handlinger { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0; }
 
