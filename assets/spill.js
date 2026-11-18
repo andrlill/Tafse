@@ -549,7 +549,7 @@
         lagret.textContent = "Klarte ikke å lagre resultatet.";
       }
     } else {
-      lagret.innerHTML = `<a href="salongen.html">Logg inn</a> for å komme på tavlen.`;
+      lagret.innerHTML = `<a href="${loggInnSide()}">Logg inn</a> for å komme på tavlen.`;
     }
   }
 

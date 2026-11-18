@@ -246,7 +246,7 @@
     const kreves = (id) => `${b[b[id].krever[0]].navn.toLowerCase()} på nivå ${b[id].krever[1]}`;
     const rader = (l) => l.map((c) => `<tr>${c.map((x) => `<td>${x}</td>`).join("")}</tr>`).join("");
     return `
-      <p>Symposion er en felles by på en øy. Hver bror og hver gjest har et gods som produserer oliven, vin og marmor, også når man er borte. Med det bygger man ut godset, reiser byens monumenter og innreder rommet sitt i Tafse Hotell.</p>
+      <p>Symposion er en felles by på en øy. Hver spiller har et gods som produserer oliven, vin og marmor, også når man er borte. Med det bygger man ut godset, reiser byens monumenter og innreder rommet sitt i Tafse Hotell.</p>
       <h3>Høsting</h3>
       <p>Godset produserer hele tiden, men lageret rommer bare noen timer (3 timer pluss villanivået). Trykk «Høst» før det blir fullt, ellers går resten tapt. Gullringen på kartet viser hvor godset ditt ligger, og en olivenboble dukker opp over det når det er noe å høste.</p>
       <h3>Bygging</h3>
@@ -289,8 +289,8 @@
     if (lagerSum() >= 15) return "Avlingen er klar. Trykk på «Høst».";
     const rad = Object.keys(T.regler.bygg).find((id) => m.apen[id] && harRad(m.kost[id]));
     if (rad) return `Du har råd til å ${m.bygg[rad] ? "utvide" : "anlegge"} ${T.regler.bygg[rad].navn.toLowerCase()}.`;
-    if (andre.some((s) => !s.skjenket)) return "Trykk på godset til en bror og skjenk ham et glass. Dere tjener begge på det.";
-    if (!andre.length) return "Du er første mann i byen. Få med deg brødrene!";
+    if (andre.some((s) => !s.skjenket)) return "Trykk på godset til en av de andre og skjenk et glass. Dere tjener begge på det.";
+    if (!andre.length) return "Du er den første i byen. Få med deg de andre!";
     return "Godset jobber for deg mens du er borte. Kom tilbake før lageret er fullt.";
   }
 
@@ -377,7 +377,7 @@
         ${rangOgButikk()}</section>`;
     }
     const sp = T.spillere.find((s) => s.navn === valgt);
-    if (!sp) return `<section class="sy-panel"><p class="sy-etikett">Ledig tomt</p><p>${esc(valgt)} har ikke flyttet inn ennå. <a href="salongen.html">Mas på ham i Salongen.</a></p><button class="liten-knapp" type="button" data-hjem>Til godset mitt</button></section>`;
+    if (!sp) return `<section class="sy-panel"><p class="sy-etikett">Ledig tomt</p><p>${esc(valgt)} har ikke sjekket inn ennå.</p><button class="liten-knapp" type="button" data-hjem>Til godset mitt</button></section>`;
     const b = sp.bygg;
     const nask = sp.nasket ? "Nasket i dag" : m.naskIgjen <= 0 ? "Ikke flere nask i dag" : sp.bytte < 5 ? "Nyhøstet, ingenting å naske" : `Nask ca. ${tall(sp.bytte)} oliven`;
     return `<section class="sy-panel">
@@ -424,7 +424,7 @@
   // ---------- Tegn alt ----------
   function tegn() {
     if (!T.meg) {
-      rot.innerHTML = `<div class="sy-kartboks">${kart()}<div class="sy-velkommen"><p class="overline">En ny by reiser seg</p><h2>Brødrene bygger Symposion</h2>
+      rot.innerHTML = `<div class="sy-kartboks">${kart()}<div class="sy-velkommen"><p class="overline">En ny by reiser seg</p><h2>Bygg Symposion sammen</h2>
         <p>Flytt inn, så får du et lite gods med en olivenlund på øya. Høst, bygg ut og hjelp de andre. Sammen reiser dere byens monumenter.</p>
         <div class="sy-velkomstknapper"><button class="knapp" type="button" data-gjor="flytt-inn">Flytt inn</button><button class="liten-knapp" type="button" data-info>Slik spiller du</button></div>
         <p class="dempet">${T.spillere.length ? `${T.spillere.length} har flyttet inn så langt.` : "Bli første mann i byen."}</p></div></div>`;
@@ -603,7 +603,7 @@
 
   (async () => {
     if (!(await hvemErJeg())) {
-      rot.innerHTML = `<p class="tomt">Byen er for brødrene og gjestene deres. <a href="salongen.html">Logg inn</a> for å flytte inn, eller <a href="gjest.html">logg inn som gjest</a>.</p>`;
+      rot.innerHTML = `<p class="tomt"><a href="${loggInnSide()}">Logg inn</a> for å flytte inn i byen.</p>`;
       return;
     }
     await hent();

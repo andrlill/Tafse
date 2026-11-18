@@ -51,7 +51,7 @@ const visningsnavn = (navn) => String(navn || "").replace(/ \(gjest\)$/, "");
 // Spillsiden (tafsespill) er et eget nettsted med samme kode. Porten (functions/_middleware.js)
 // setter et merke, så siden vet hvor den er før noe er lastet.
 const SPILLSIDE = /(?:^|;\s*)tafsenettsted=spill/.test(document.cookie);
-if (SPILLSIDE) document.documentElement.classList.add("spillside");
+if (SPILLSIDE) { document.documentElement.classList.add("spillside"); document.title = document.title.replace(/· TAFSE$/, "· Tafse-spill"); }
 const gjestTillatt = () => herSide() === "gjest" || GJESTESPILL.some(([s]) => s === herSide());
 // Full meny bare for brødre. Sider utenfor spillhallen slipper serveren bare brødre inn på.
 const visBrorside = () => !SPILLSIDE && (rolle() === "bror" || (!gjestTillatt() && rolle() !== "gjest"));
@@ -75,7 +75,9 @@ function oppdaterMeny() {
   if (bunntekst && !bunntekst.classList.contains("bunn-status")) bunntekst.textContent = bunnTekst();
 }
 
-const bunnTekst = () => (visBrorside() ? "Taffelakademiet for Samvær og Etegilder" : SPILLSIDE ? "Spillhallen til Taffelakademiet" : "");
+const bunnTekst = () => (visBrorside() ? "Taffelakademiet for Samvær og Etegilder" : "");
+// Hvor man logger inn: spillhallen på spillsiden, salongen på hovedsiden
+const loggInnSide = () => (SPILLSIDE ? "gjest.html" : "salongen.html");
 const merkeTekst = () => (SPILLSIDE ? `TAFSE<em>SPILL</em>` : "TAFSE");
 
 function byggRamme() {
@@ -165,6 +167,7 @@ let MEG = null; // navnet til den som er logget inn
 let ADMIN = false;
 let GJEST = false; // gjester er bare innlogget på spillsidene, som «Navn (gjest)»
 const GJESTESPILL = [["tartaros", "Tartaros"], ["symposion", "Symposion"], ["spill", "Idus Martiae"], ["2048", "2048"], ["murbrekker", "Murbrekker"], ["tetris", "Tetris"], ["snake", "Snake"], ["hotell", "Tafse Hotell"]];
+const SPILLSIDER_STAMMER = ["gjest", "honningfella", ...GJESTESPILL.map(([s]) => s)];
 const paaGjesteside = () => GJESTESPILL.some(([s]) => s === (location.pathname.split("/").pop() || "").replace(/\.html$/, ""));
 
 async function api(sti, valg = {}) {
@@ -202,7 +205,11 @@ let varslene = [];
 async function hentVarsler() {
   if (!MEG || document.hidden) return;
   try {
-    const { varsler, uleste } = await api("varsler");
+    const svar = await api("varsler");
+    // Spillsiden viser bare varsler fra spillene
+    const erSpill = (v) => SPILLSIDER_STAMMER.includes(String(v.lenke || "").replace(/^\//, "").split(/[.?#]/)[0]);
+    const varsler = SPILLSIDE ? svar.varsler.filter(erSpill) : svar.varsler;
+    const uleste = SPILLSIDE ? varsler.filter((v) => !v.lest).length : svar.uleste;
     varslene = varsler;
     const tall = document.querySelector(".varsel-tall");
     tall.hidden = !uleste;
@@ -275,7 +282,7 @@ function visInnloggetLinje() {
   p.innerHTML = GJEST
     ? `Innlogget som <strong>${esc(visningsnavn(MEG))}</strong> · <a href="#" id="loggut">Logg ut</a>`
     : MEG
-    ? `Innlogget som <strong>${esc(MEG)}</strong>${SPILLSIDE ? ` · <a href="api/billett?til=index.html">Til Tafse</a>` : ""}${paaGjesteside() ? ` · <a href="gjest.html">Inviter en gjest</a>` : ""}${ADMIN ? ` · <a href="invitasjoner.html">Invitasjoner</a>` : ""} · <a href="#" id="loggut">Logg ut</a>`
+    ? `Innlogget som <strong>${esc(MEG)}</strong>${paaGjesteside() ? ` · <a href="gjest.html">Inviter en gjest</a>` : ""}${ADMIN && !SPILLSIDE ? ` · <a href="invitasjoner.html">Invitasjoner</a>` : ""} · <a href="#" id="loggut">Logg ut</a>`
     : paaGjesteside() ? `<a href="gjest.html">Logg inn i spillhallen</a>` : "";
   const l = document.getElementById("loggut");
   if (l) l.addEventListener("click", async (e) => {

@@ -435,7 +435,7 @@
         lagret.textContent = "Klarte ikke å lagre resultatet.";
       }
     } else {
-      lagret.innerHTML = `<a href="salongen.html">Logg inn</a> for å komme på tavlen. Skåren er lagret i denne nettleseren.`;
+      lagret.innerHTML = `<a href="${loggInnSide()}">Logg inn</a> for å komme på tavlen. Skåren er lagret i denne nettleseren.`;
     }
   }
 
@@ -454,7 +454,7 @@
   // ---------- Tavlen ----------
   async function lastTavle() {
     if (!(await hvemErJeg())) {
-      tavle.innerHTML = `<p class="dempet">Tavlen er bare for brødrene. <a href="salongen.html">Logg inn</a> for å se den og komme på den.</p>`;
+      tavle.innerHTML = `<p class="dempet"><a href="${loggInnSide()}">Logg inn</a> for å se tavlen og komme på den.</p>`;
       return;
     }
     try {

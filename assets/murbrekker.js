@@ -245,7 +245,7 @@
     meldingEl.hidden = false;
     const ok = await lagre();
     const l = document.getElementById("m-lagret");
-    if (l) l.innerHTML = ok ? "Ført i protokollen." + premieTekst(ok) : (typeof MEG === "undefined" || !MEG) ? `<a href="salongen.html">Logg inn</a> for å komme på tavlen.` : "";
+    if (l) l.innerHTML = ok ? "Ført i protokollen." + premieTekst(ok) : (typeof MEG === "undefined" || !MEG) ? `<a href="${loggInnSide()}">Logg inn</a> for å komme på tavlen.` : "";
   }
   // Et spill som avbrytes teller også, hvis det er verdt noe
   async function avbryt() {
@@ -276,7 +276,7 @@
   }
   async function lastTavle() {
     if (!(await hvemErJeg())) {
-      tavle.innerHTML = `<p class="dempet">Tavlen er bare for brødrene. <a href="salongen.html">Logg inn</a> for å se den og komme på den.</p>`;
+      tavle.innerHTML = `<p class="dempet"><a href="${loggInnSide()}">Logg inn</a> for å se tavlen og komme på den.</p>`;
       return;
     }
     try {

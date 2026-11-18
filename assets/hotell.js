@@ -1546,7 +1546,7 @@
 
   (async () => {
     if (!(await hvemErJeg())) {
-      rot.innerHTML = `<p class="tomt">Du må <a href="${SPILLSIDE ? "gjest.html" : "salongen.html"}">logge inn</a> for å sjekke inn på hotellet.</p>`;
+      rot.innerHTML = `<p class="tomt">Du må <a href="${loggInnSide()}">logge inn</a> for å sjekke inn på hotellet.</p>`;
       return;
     }
     let profil = null;

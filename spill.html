@@ -58,7 +58,7 @@
 window.lastToppliste = async () => {
   const boks = document.getElementById("toppliste");
   if (!(await hvemErJeg())) {
-    boks.innerHTML = `<p class="dempet">Tavlen er bare for brødrene. <a href="salongen.html">Logg inn</a> for å se den og komme på den.</p>`;
+    boks.innerHTML = `<p class="dempet"><a href="${loggInnSide()}">Logg inn</a> for å se tavlen og komme på den.</p>`;
     return;
   }
   try {
