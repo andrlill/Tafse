@@ -56,15 +56,17 @@ kreverInnlogging(boks, async () => {
   const base = `${location.origin}/velkommen.html`;
   const lenke = (i) => `${base}?navn=${encodeURIComponent(i.navn)}&kode=${i.kode}`;
   const mangler = liste.filter((i) => !i.registrert).length;
+  const iSpill = liste.filter((i) => i.spill).length;
 
   boks.innerHTML = `
+    <p><strong>${iSpill} av ${liste.length}</strong> brødre har sjekket inn på Tafse-spill.</p>
     <p>Send hver bror sin personlige lenke. Når han åpner den, må han velge profilbilde, skrive om seg selv og hva TAFSE betyr for ham, og lage et passord. ${mangler ? `${mangler} av ${liste.length} har ikke laget bruker ennå.` : "Alle har laget bruker."}</p>
     <div class="innlegg-liste">
       ${liste.map((i, n) => `
         <article class="innlegg">
           <div class="innlegg-topp">
             <h3>${esc(i.navn)}</h3>
-            <span class="merkelapp ${i.registrert ? "status-vedtatt" : ""}">${i.registrert ? "Registrert" : "Ikke registrert"}</span>
+            <span style="display:flex; gap:8px; flex-wrap:wrap">${i.registrert ? `<span class="merkelapp ${i.spill ? "status-vedtatt" : ""}">${i.spill ? "Sjekket inn på Tafse-spill" : "Ikke på Tafse-spill ennå"}</span>` : ""}<span class="merkelapp ${i.registrert ? "status-vedtatt" : ""}">${i.registrert ? "Registrert" : "Ikke registrert"}</span></span>
           </div>
           ${i.registrert ? `
           <details class="glemt"><summary>Glemt passord?</summary>
@@ -90,7 +92,7 @@ kreverInnlogging(boks, async () => {
     try {
       const g = await api("gjester");
       gjesteboks.innerHTML = g.length
-        ? g.map((x) => `<div class="gjest-rad"><span><strong>${esc(x.navn)}</strong> <span class="dempet">invitert av ${esc(x.invitert_av || "ukjent")}, ${esc(tidTekst(x.opprettet))}</span></span><span class="handlinger" style="margin:0"><button class="liten-knapp" type="button" data-glemtgjest="${esc(x.nullstill)}" data-navn="${esc(x.navn)}" title="Kopier en lenke der gjesten kan lage nytt passord">Glemt passord</button><button class="liten-knapp" type="button" data-fjern="${esc(x.navn)}">Fjern</button></span></div>`).join("")
+        ? g.map((x) => `<div class="gjest-rad"><span><strong>${esc(x.navn)}</strong> <span class="dempet">invitert av ${esc(x.invitert_av || "ukjent")}, ${esc(tidTekst(x.opprettet))}${x.spill ? ", sjekket inn" : ", ikke sjekket inn"}</span></span><span class="handlinger" style="margin:0"><button class="liten-knapp" type="button" data-glemtgjest="${esc(x.nullstill)}" data-navn="${esc(x.navn)}" title="Kopier en lenke der gjesten kan lage nytt passord">Glemt passord</button><button class="liten-knapp" type="button" data-fjern="${esc(x.navn)}">Fjern</button></span></div>`).join("")
         : `<p class="tom-tekst">Ingen gjester ennå.</p>`;
     } catch (err) {
       gjesteboks.innerHTML = `<p class="melding feil">${esc(err.message)}</p>`;

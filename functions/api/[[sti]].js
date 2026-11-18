@@ -555,7 +555,7 @@ export async function onRequest({ request, env, params }) {
     if (!id && metode === "GET") {
       const { results } = await db.prepare("SELECT navn, hash, invitert_av, opprettet FROM gjester ORDER BY opprettet DESC").all();
       const ut = [];
-      for (const g of results) ut.push({ navn: g.navn, invitert_av: g.invitert_av, opprettet: g.opprettet, nullstill: await nullstillLenke(env, "gjest", g) });
+      for (const g of results) ut.push({ navn: g.navn, invitert_av: g.invitert_av, opprettet: g.opprettet, nullstill: await nullstillLenke(env, "gjest", g), spill: await innsjekket(db, gjesteNavn(g.navn)) });
       return json(ut);
     }
     if (id && metode === "DELETE") {
@@ -571,7 +571,7 @@ export async function onRequest({ request, env, params }) {
     const liste = [];
     for (const navn of await medlemsliste(env, url)) {
       const b = registrerte.get(navn);
-      liste.push({ navn, registrert: !!b, kode: await invitasjonskode(env, navn), nullstill: b ? await nullstillLenke(env, "bror", b) : null });
+      liste.push({ navn, registrert: !!b, kode: await invitasjonskode(env, navn), nullstill: b ? await nullstillLenke(env, "bror", b) : null, spill: b ? await innsjekket(db, navn) : false });
     }
     return json(liste);
   }
