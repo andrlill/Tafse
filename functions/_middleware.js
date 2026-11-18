@@ -1,12 +1,12 @@
 // Port for begge nettstedene, som bygges fra den samme koden og deler databasen.
 //
-// Hovedsiden (tafse.pages.dev): bare innloggede brødre ser Tafse-sidene. Når variabelen
-// SPILLSIDE er satt i Cloudflare, sendes spillene og spillhallen over dit, med innloggingen på kjøpet.
+// Hovedsiden (tafse.pages.dev): bare innloggede brødre ser Tafse-sidene. Spillene og spillhallen
+// sendes over til spillsiden, med innloggingen på kjøpet.
 //
 // Spillsiden (variabelen NETTSTED=spill): man må være logget inn, som bror eller gjest, for å
 // komme inn. Første gang sjekker man inn på hotellet (lager figur og får hus i Symposion) før man
 // kan spille noe annet. Alt som ikke er spill, sendes tilbake til hovedsiden.
-import { GJESTESPILL, hvemErInnlogget, hvemErGjest, gjesteNavn, innsjekket, erSpillside } from "./api/[[sti]].js";
+import { GJESTESPILL, hvemErInnlogget, hvemErGjest, gjesteNavn, innsjekket, erSpillside, annenSide } from "./api/[[sti]].js";
 
 const SPILLSIDER = new Set(["gjest", "honningfella", ...GJESTESPILL]);
 const APNE_SIDER = new Set(["gjest", "velkommen", "nyttpassord", ...SPILLSIDER]);
@@ -51,7 +51,7 @@ export async function onRequest(context) {
   }
 
   // Hovedsiden
-  if (env.SPILLSIDE && SPILLSIDER.has(side)) {
+  if (annenSide(env) && SPILLSIDER.has(side)) {
     // Spillhallen her er bare innloggingssiden for den som ikke er logget inn
     const blirHer = side === "gjest" && !bror && !gjest && !url.searchParams.get("fra");
     if (!blirHer) return billett(url);

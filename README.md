@@ -114,8 +114,8 @@ Porten i `functions/_middleware.js` bestemmer hva hver side viser:
   gjest) for å komme inn, og første gang sjekker man inn på hotellet: lager figur og får hus i
   Symposion. Før det slipper man ikke inn i de andre spillene, og man vises ikke for de andre.
   Alt som ikke er spill, sendes til hovedsiden. Siden har eget preg (TAFSE SPILL, turkis ramme).
-- **Hovedsiden** sender spillene og spillhallen videre til spillsiden når variabelen `SPILLSIDE`
-  (adressen til spillsiden) er satt. Uten den virker alt som før.
+- **Hovedsiden** sender alltid spillene og spillhallen videre til spillsiden (https://tafsespill.pages.dev,
+  eller adressen i variabelen `SPILLSIDE` hvis den er satt).
 - Innloggingen følger med mellom sidene med en billett (`/api/billett`) som gjelder i ett minutt.
 
 Oppsett av spillsiden i Cloudflare:
@@ -124,8 +124,8 @@ Oppsett av spillsiden i Cloudflare:
 2. I det nye prosjektet › Settings: koble D1-databasen som `DB` (den samme som hovedsiden), Workers AI som `AI`,
    legg inn hemmeligheten `TAFSE_PASSORD` (samme verdi som hovedsiden) og variabelen `NETTSTED` = `spill`.
    Har hovedsiden `PROFESSOR_MODELL`, legg den inn her også. Bygg på nytt.
-3. Når spillsiden virker: legg til variabelen `SPILLSIDE` = `https://tafsespill.pages.dev` i hovedsidens prosjekt, og bygg hovedsiden på nytt.
-   Har spillsiden fått en annen adresse, legg også `HOVEDSIDE` = `https://tafse.pages.dev` inn i spillsidens prosjekt.
+3. Får sidene andre adresser enn tafse.pages.dev og tafsespill.pages.dev, legg adressene inn som `SPILLSIDE` i hovedsidens
+   prosjekt og `HOVEDSIDE` i spillsidens prosjekt.
 
 ## Personvern og tilgang
 

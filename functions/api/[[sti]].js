@@ -311,10 +311,10 @@ export const gjesteNavn = (navn) => `${navn} (gjest)`;
 
 // ---------- To nettsteder: hovedsiden og spillsiden ----------
 // Begge bygges fra denne koden og deler databasen. Spillsiden kjenner seg igjen på variabelen
-// NETTSTED=spill i Cloudflare. Hovedsiden sender spillene over til spillsiden når variabelen
-// SPILLSIDE (adressen, f.eks. https://tafsespill.pages.dev) er satt. Se README.
+// NETTSTED=spill i Cloudflare. Hovedsiden sender alltid spillene over til spillsiden.
+// Adressene kan overstyres med variablene SPILLSIDE og HOVEDSIDE. Se README.
 export const erSpillside = (env) => env.NETTSTED === "spill";
-export const annenSide = (env) => (erSpillside(env) ? env.HOVEDSIDE || "https://tafse.pages.dev" : env.SPILLSIDE || "").replace(/\/+$/, "");
+export const annenSide = (env) => (erSpillside(env) ? env.HOVEDSIDE || "https://tafse.pages.dev" : env.SPILLSIDE || "https://tafsespill.pages.dev").replace(/\/+$/, "");
 
 // Har spilleren sjekket inn på spillsiden? Det betyr figur på hotellet og hus i Symposion.
 export async function innsjekket(db, navn) {
