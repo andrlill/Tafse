@@ -1528,10 +1528,11 @@
       look = { ...look, klar: "ja" };
       try {
         await api("hotell/utseende", post(look)); aktiv = false;
-        // Kom man hit fra et annet spill, slipper man inn der nå
+        // Velkomstplakaten først. Kom man hit fra et annet spill, slipper man inn der etterpå.
         const til = new URLSearchParams(location.search).get("til") || "";
-        if (/^[\w-]+\.html(\?[^\s]*)?$/.test(til) && !til.startsWith("hotell.html")) { location.href = til; return; }
+        const videre = /^[\w-]+\.html(\?[^\s]*)?$/.test(til) && !til.startsWith("hotell.html") ? til : null;
         start();
+        visPlakat(() => { if (videre) location.href = videre; });
       }
       catch (err) { const f = document.getElementById("h-innfeil"); f.textContent = err.message; f.hidden = false; e.currentTarget.disabled = false; }
     });

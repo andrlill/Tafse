@@ -21,7 +21,8 @@ const boks = document.getElementById("innhold");
 const q = new URLSearchParams(location.search);
 const json = (data) => ({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
 
-const spilliste = () => `<div class="gjest-spill">${GJESTESPILL.map(([s, n]) => `<a class="knapp sekundar" href="${s}.html">${esc(n)}</a>`).join("")}</div>`;
+const spilliste = () => `<div class="gjest-spill">${GJESTESPILL.map(([s, n]) => `<a class="knapp sekundar" href="${s}.html">${esc(n)}</a>`).join("")}</div>
+  <p><button class="liten-knapp" type="button" onclick="visPlakat()">Slik henger spillene sammen</button></p>`;
 
 async function kopier(tekst, knapp) {
   try { await navigator.clipboard.writeText(tekst); }

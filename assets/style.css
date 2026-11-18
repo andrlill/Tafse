@@ -1112,3 +1112,17 @@ details.glemt > summary:hover, details.glemt[open] > summary { color: var(--gull
 .spillside .meny a.aktiv { border-bottom-color: #6fc3c9; }
 .spillside .spillhall { display: none; }   /* toppmenyen viser allerede alle spillene */
 @media (min-width: 1241px) { .spillside .meny { gap: 15px; } .spillside .meny a { white-space: nowrap; letter-spacing: .1em; font-size: 13px; } }
+
+/* Velkomstplakaten på spillsiden */
+.plakat .overline { margin: 22px 0 6px; }
+.plakat-ingress { font-size: 19px; color: var(--gull-lys); margin: 0 0 4px; }
+.plakat-to { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.plakat-to p { margin: 0; }
+.plakat-tabell td:first-child a { text-decoration: none; font-family: var(--display); letter-spacing: .06em; }
+.plakat-prikk { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
+.plakat-tips { margin: 16px 0 6px; padding-left: 20px; }
+.plakat-tips li { margin: 4px 0; }
+.plakat-slik { display: none; }
+@media (max-width: 640px) { .plakat-to { grid-template-columns: 1fr; gap: 0; } .plakat-tabell td:last-child, .plakat-tabell th:last-child { display: none; } .plakat-slik { display: block; font-size: 14px; color: var(--dempet); margin-left: 18px; } }
+@media (max-width: 520px) { .spillside .merke span { font-size: 18px; letter-spacing: .16em; } .spillside .merke { gap: 8px; } .spillside .merke svg { width: 34px; height: 26px; } }
+@media (max-width: 360px) { .spillside .merke svg { display: none; } .spillside .merke span { font-size: 16px; } }

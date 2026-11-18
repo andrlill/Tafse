@@ -628,6 +628,42 @@ function premieTekst(svar) {
   return ` Du fikk <strong>${p.antall.toLocaleString("nb-NO")} ${esc(p.navn)}</strong> til <a href="hotell.html">Tafse Hotell</a>${p.dobbel ? ", dobbelt opp for dagens første spill" : ""}.`;
 }
 
+// Velkomstplakaten på spillsiden: hvordan hotellet, Symposion og spillene henger sammen.
+// Vises etter innsjekken og fra spillhallen. vedLukk kjøres når plakaten lukkes.
+const PREMIER = [
+  ["Symposion", "symposion", "oliven, vin og marmor", "#9db36a", "Høstes på godset ditt, også mens du er borte"],
+  ["Tartaros", "tartaros", "drakmer", "#e2c174", "Mynter, bosser og tid i hvert tokt"],
+  ["2048", "2048", "mosaikkbiter", "#6fc3c9", "1 for hver 100 poeng"],
+  ["Murbrekker", "murbrekker", "teglstein", "#c8683f", "1 for hver 50 poeng"],
+  ["Tetris", "tetris", "steinblokker", "#9a8fd0", "1 for hver 300 poeng"],
+  ["Snake", "snake", "slangeskinn", "#7fb04f", "1 for hver 5 poeng"],
+  ["Idus Martiae", "spill", "dolker", "#c9c9d2", "1 for hver 2 poeng"],
+];
+function visPlakat(vedLukk) {
+  visInfo("Velkommen til Tafse-spill", `
+    <div class="plakat">
+      <p class="plakat-ingress">Alle spillene henger sammen. Det du vinner i ett spill, kan du bruke på hotellet.</p>
+      <div class="plakat-to">
+        <section><p class="overline">Tafse Hotell</p>
+          <p>Her møtes alle. Gå rundt, prat, skål og besøk rommene til de andre. Du har fått ditt eget rom, og under det ligger butikken med møbler, klær og kjæledyr.</p></section>
+        <section><p class="overline">Symposion</p>
+          <p>Du har fått et hus i byen. Høst oliven, vin og marmor, bygg ut godset og ofre til gudene hver dag. Jo større villa, jo større blir rommet ditt på hotellet.</p></section>
+      </div>
+      <p class="overline">Slik tjener du til butikken</p>
+      <table class="tavle plakat-tabell"><thead><tr><th>Spill</th><th>Du får</th><th>Slik</th></tr></thead><tbody>
+        ${PREMIER.map(([navn, side, premie, farge, slik]) => `<tr><td><a href="${side}.html">${navn}</a></td><td><i class="plakat-prikk" style="background:${farge}"></i>${premie}<span class="plakat-slik">${slik}</span></td><td>${slik}</td></tr>`).join("")}
+      </tbody></table>
+      <ul class="plakat-tips">
+        <li>Dagens første spill i hvert spill gir <strong>dobbel premie</strong>.</li>
+        <li>Noen møbler koster flere slags premier, andre bare én. Trofeene krever i tillegg en bragd i spillet, for eksempel brikken 2048.</li>
+        <li>Drakmene fra Tartaros kan også brukes på varige oppgraderinger i leiren der.</li>
+      </ul>
+      <p><button class="knapp" type="button" data-lukk>Sett i gang</button></p>
+    </div>`);
+  const d = document.getElementById("infoboks");
+  if (vedLukk) d.addEventListener("close", vedLukk, { once: true });
+}
+
 function visInfo(tittel, innhold) {
   let d = document.getElementById("infoboks");
   if (!d) {
