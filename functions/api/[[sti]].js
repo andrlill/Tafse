@@ -1061,8 +1061,20 @@ export async function onRequest({ request, env, params }) {
       ["snake", "Snake", "poeng", uke("snake")],
       ["hotell", "Tafse Hotell", "respekt denne uka", db.prepare("SELECT til AS navn, COUNT(*) AS poeng FROM hotell_respekt WHERE dag >= ? GROUP BY til ORDER BY poeng DESC, MIN(id) LIMIT 3").bind(mandagDag.toISOString().slice(0, 10))],
     ];
-    const svar = await db.batch(spill.map((x) => x[3]));
-    return json({ fra: mandag, spill: spill.map(([side, navn, enhet], i) => ({ side, navn, enhet, topp: svar[i].results })) });
+    // De ti siste spilte rundene, på tvers av poengspillene (D1 tåler ikke lange UNION-er, så hver tabell hentes for seg)
+    const SISTE = [["tartaros", "tartaros", "poeng"], ["spill", "spillresultater", "CAST(sekunder AS INTEGER) + kolleger - sar"],
+      ["2048", "tall2048", "poeng"], ["murbrekker", "murbrekker", "poeng"], ["tetris", "tetris", "poeng"], ["snake", "snake", "poeng"]];
+    const svar = await db.batch([...spill.map((x) => x[3]),
+      ...SISTE.map(([side, tabell, poeng]) => db.prepare(`SELECT ? AS side, navn, ${poeng} AS poeng, opprettet FROM ${tabell} ORDER BY opprettet DESC LIMIT 10`).bind(side))]);
+    const spillnavn = Object.fromEntries(spill.map(([side, navn]) => [side, navn]));
+    const siste = svar.slice(spill.length).flatMap((r) => r.results)
+      .sort((x, y) => (x.opprettet < y.opprettet ? 1 : -1)).slice(0, 10)
+      .map((r) => ({ ...r, spill: spillnavn[r.side] }));
+    return json({
+      fra: mandag,
+      spill: spill.map(([side, navn, enhet], i) => ({ side, navn, enhet, topp: svar[i].results })),
+      siste,
+    });
   }
 
   // --- Varsler ---

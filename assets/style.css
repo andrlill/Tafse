@@ -1285,3 +1285,18 @@ p.h-merket { margin: 10px 0; }
 .sy-festknapper { display: flex; gap: 10px; flex-wrap: wrap; }
 .sy-festknapper .knapp { flex: 1 1 200px; }
 .sy-nabolag { font-family: var(--display); font-size: 8.5px; letter-spacing: .3em; text-transform: uppercase; fill: #a89a6c; opacity: .8; paint-order: stroke; stroke: #23221a; stroke-width: 2.5px; pointer-events: none; }
+
+/* Spillhallen: siste ti spill */
+.siste-spill { list-style: none; margin: 0; padding: 0; border: 1px solid var(--linje); background: var(--flate); max-width: 760px; }
+.siste-spill li { display: grid; grid-template-columns: minmax(0, 1fr) 130px 90px 160px; grid-template-areas: "navn spill poeng tid"; gap: 12px; align-items: baseline; padding: 8px 16px; border-top: 1px solid var(--linje); font-size: 17px; }
+.siste-spill li:first-child { border-top: 0; }
+.siste-spill .uke-navn { grid-area: navn; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.siste-spill li.meg .uke-navn { color: var(--gull-lys); }
+.siste-spill a { grid-area: spill; color: var(--gull); text-decoration: none; font-size: 15px; }
+.siste-spill a:hover { text-decoration: underline; }
+.siste-spill strong { grid-area: poeng; font-weight: 500; font-variant-numeric: tabular-nums; text-align: right; }
+.siste-spill time { grid-area: tid; color: var(--dempet); font-size: 14px; text-align: right; white-space: nowrap; }
+@media (max-width: 560px) {
+  .siste-spill li { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "navn poeng" "spill tid"; row-gap: 2px; padding: 8px 12px; }
+  .siste-spill a, .siste-spill time { font-size: 14px; }
+}

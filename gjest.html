@@ -38,7 +38,13 @@ async function visUkestavle(meg) {
       ${s.topp.length ? `<ol>${s.topp.map((r, i) => `<li class="${r.navn === meg ? "meg" : ""}"><span class="uke-plass">${i + 1}</span><span class="uke-navn">${esc(visningsnavn(r.navn))}</span><strong>${tall(r.poeng)}</strong></li>`).join("")}</ol>`
         : `<p class="dempet">Ingen ennå. Førsteplassen er ledig.</p>`}
     </article>`).join("")}</div>
-    <p class="dempet uke-fot">Uka begynner mandag. Tavlene viser det beste resultatet til hver spiller.</p>`;
+    <p class="dempet uke-fot">Uka begynner mandag. Tavlene viser det beste resultatet til hver spiller.</p>
+    ${d.siste && d.siste.length ? `<h2 class="uke-tittel">Siste ti spill</h2>
+    <ol class="siste-spill">${d.siste.map((r) => `<li class="${r.navn === meg ? "meg" : ""}">
+      <span class="uke-navn">${esc(visningsnavn(r.navn))}</span>
+      <a href="${esc(r.side)}.html">${esc(r.spill)}</a>
+      <strong>${tall(r.poeng)}</strong>
+      <time>${esc(tidTekst(r.opprettet))}</time></li>`).join("")}</ol>` : ""}`;
 }
 
 async function kopier(tekst, knapp) {
