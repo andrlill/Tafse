@@ -46,31 +46,58 @@
   // Opptil åtte gods får plass i én ring. Blir det flere, fordeles de på to eller tre ringer, og
   // byen krympes så alt får plass på øya. Da zoomer man inn for å se detaljene.
   const RING = (r) => ({ rx: 388 + 200 * r, ry: 160 + 100 * r });
-  function plasser() {
-    const navn = T.spillere.map((s) => s.navn), ut = new Map(), n = navn.length;
+  // Hvor mange gods hver ring får, og hvor mye hver ring er vridd. Ringene ligger tett øverst og
+  // nederst på øya, så vi prøver de fordelingene som finnes og velger den der de to godsene som
+  // står nærmest hverandre, står lengst fra hverandre. Regnes ut én gang per antall spillere.
+  const OPPSETT = new Map();
+  const punkt = (r, j, ant, vri) => {
+    const ring = RING(r), v = ((-90 + ((j + vri) * 360) / ant) * Math.PI) / 180;
+    const x = 500 + Math.cos(v) * ring.rx, y = 404 + Math.sin(v) * ring.ry;
+    return { x, y, s: 1.0 + (0.3 * (y - 250)) / 304 };
+  };
+  function oppsett(n) {
+    if (OPPSETT.has(n)) return OPPSETT.get(n);
     const ringer = n <= 8 ? 1 : n <= 20 ? 2 : 3;
-    const vekt = [1, 1.6, 2.2].slice(0, ringer), sum = vekt.reduce((a, x) => a + x, 0);
-    const antall = vekt.map((v) => Math.max(ringer > 1 ? 4 : 0, Math.round((n * v) / sum)));
-    antall[ringer - 1] = n - antall.slice(0, -1).reduce((a, x) => a + x, 0);
-    // Ringene ligger tett øverst og nederst på øya. Der skal et gods i én ring stå i luka mellom to
-    // gods i ringen innenfor, så annenhver ring vris en halv plass, og antallene får samme paritet.
-    for (let r = 1; r < ringer - 1; r++) if (antall[r] % 2 !== antall[0] % 2) antall[r] += 1;
-    antall[ringer - 1] = n - antall.slice(0, -1).reduce((a, x) => a + x, 0);
-    const nederst = (ant, halv) => (halv ? ant % 2 === 0 : ant % 2 === 1); // står det et gods rett sør?
-    let i = 0, forrige = null;
-    antall.forEach((ant, r) => {
-      const ring = RING(r);
-      let halv = r % 2 === 1;
-      if (forrige !== null && nederst(ant, halv) === forrige) halv = !halv;
-      forrige = nederst(ant, halv);
-      for (let j = 0; j < ant; j++) {
-        const v = ((-90 + ((j + (halv ? 0 : 0.5)) * 360) / ant) * Math.PI) / 180;
-        const x = 500 + Math.cos(v) * ring.rx, y = 404 + Math.sin(v) * ring.ry;
-        ut.set(navn[i + j], { x, y, s: 1.0 + (0.3 * (y - 250)) / 304 });
+    let best = { antall: [n], vri: [0.5] };
+    if (ringer > 1) {
+      const vekt = [1, 1.6, 2.2].slice(0, ringer), sum = vekt.reduce((a, x) => a + x, 0);
+      const ideal = vekt.map((v) => (n * v) / sum), VRI = [0, 0.25, 0.5, 0.75];
+      const fordelinger = [];
+      for (let a = Math.max(3, Math.round(ideal[0]) - 2); a <= Math.round(ideal[0]) + 2; a++) {
+        if (ringer === 2) { if (n - a >= 4) fordelinger.push([a, n - a]); continue; }
+        for (let b = Math.max(4, Math.round(ideal[1]) - 2); b <= Math.round(ideal[1]) + 2; b++) if (n - a - b >= 5) fordelinger.push([a, b, n - a - b]);
       }
+      let bestPoeng = -1;
+      const vrier = ringer === 2 ? VRI.flatMap((a) => VRI.map((b) => [a, b])) : VRI.flatMap((a) => VRI.flatMap((b) => VRI.map((c) => [a, b, c])));
+      for (const antall of fordelinger) for (const vri of vrier) {
+        const pk = antall.flatMap((ant, r) => Array.from({ length: ant }, (_, j) => punkt(r, j, ant, vri[r])));
+        // Et gods med palass, flagg og navn er rundt 150 bredt og 135 høyt. Tempelet midt i byen
+        // regnes som en nabo, så ingen havner rett foran eller bak det.
+        let minst = Infinity;
+        for (let i = 0; i < pk.length && minst > bestPoeng; i++) {
+          minst = Math.min(minst, Math.max(Math.abs(pk[i].x - 500) / 130, Math.abs(pk[i].y - 318) / 120));
+          for (let j = i + 1; j < pk.length; j++) {
+            const sm = (pk[i].s + pk[j].s) / 2;
+            minst = Math.min(minst, Math.max(Math.abs(pk[i].x - pk[j].x) / (150 * sm), Math.abs(pk[i].y - pk[j].y) / (135 * sm)));
+          }
+        }
+        // Like gode løsninger: foretrekk den som ligger nærmest den naturlige fordelingen
+        const poeng = minst - 0.01 * antall.reduce((a, x, r) => a + Math.abs(x - ideal[r]), 0);
+        if (poeng > bestPoeng) { bestPoeng = poeng; best = { antall, vri }; }
+      }
+    }
+    OPPSETT.set(n, best);
+    return best;
+  }
+  function plasser() {
+    const navn = T.spillere.map((s) => s.navn), ut = new Map();
+    const { antall, vri } = oppsett(navn.length);
+    let i = 0;
+    antall.forEach((ant, r) => {
+      for (let j = 0; j < ant; j++) ut.set(navn[i + j], punkt(r, j, ant, vri[r]));
       i += ant;
     });
-    ut.krymp = 388 / RING(ringer - 1).rx;
+    ut.krymp = 388 / RING(antall.length - 1).rx;
     return ut;
   }
   // Fra byens koordinater til kartets, etter krympingen
@@ -124,11 +151,13 @@
       const gruve = b.gruve ? `<g transform="translate(63 3)"><path d="M-11 0 Q-10 -15 0 -16 Q10 -15 11 0 Z" fill="#5d5a4c"/><path d="M-6 0 V-6 Q0 -12 6 -6 V0 Z" fill="#14130d"/><path d="M-6 -6 Q0 -12 6 -6" fill="none" stroke="#8a6a45" stroke-width="1.4"/>${b.gruve >= 4 ? `<circle cx="-7" cy="-11" r="1.2" fill="#e6e8ee"/>` : ""}<circle cx="5" cy="-13" r="1.2" fill="#e6e8ee" class="sy-flamme"/></g>` : "";
       const trinn = b.villa <= 2 ? 0 : b.villa <= 4 ? 1 : b.villa <= 7 ? 2 : 3;
       const tak = [-28, -35, -43, -62][trinn];
-      const hoyde = [-44, -52, -60, -80][trinn] - (sp.rang >= 1 ? 16 : 0);
+      const hp = harPynt(sp.rang);
+      const hoyde = [-44, -52, -60, -80][trinn] - (hp.has("flagg") ? 16 : 0) - (hp.has("stjerne") ? 14 : 0);
+      const mosaikk = hp.has("mosaikk") ? `<ellipse rx="57" ry="14.4" fill="none" stroke="#6fc3c9" stroke-width="2.4" stroke-dasharray="3 3" opacity=".85"/><ellipse rx="51" ry="12.4" fill="none" stroke="#c9a24a" stroke-width="1.1" stroke-dasharray="1.5 4"/>` : "";
       const merke = mitt
         ? `<g class="sy-dupp sy-klar" data-klar hidden><circle cy="${hoyde - 6}" r="11" fill="#141310" stroke="#c9a24a"/><g transform="translate(-8 ${hoyde - 14})">${IKON.oliven.replace('class="sy-ikon"', 'width="16" height="16"')}</g></g>`
         : !sp.skjenket && T.meg ? `<g class="sy-dupp${sp.skjenketMeg ? " sy-gjengjeld" : ""}"><path d="M-4 ${hoyde - 12} h8 l-1 4 q4 5 0 11 h-6 q-4 -6 0 -11 z" fill="${sp.skjenketMeg ? "#c2557f" : "#c9a24a"}" stroke="${sp.skjenketMeg ? "#f2e3b4" : "#14130d"}" stroke-width="1"/>${sp.skjenketMeg ? `<circle cx="7" cy="${hoyde - 13}" r="3.2" fill="#f2c14e" stroke="#14130d" stroke-width=".8"/>` : ""}</g>` : "";
-      inn = `${sp.rang >= 4 ? `<ellipse rx="78" ry="24" fill="url(#sy-glod)"/>` : ""}<ellipse rx="64" ry="17" fill="#3b3824"/><ellipse rx="64" ry="17" class="sy-ring" fill="none"/>${stein}${gruve}${tre}<g>${villa(b.villa, sp.hjemme)}</g>${vin}${kuber}${pynt(sp.rang, tak)}${taggSvg(sp.tagg, mitt)}${merke}`;
+      inn = `${hp.has("fakler") ? `<ellipse rx="78" ry="24" fill="url(#sy-glod)"/>` : ""}<ellipse rx="64" ry="17" fill="#3b3824"/>${mosaikk}<ellipse rx="64" ry="17" class="sy-ring" fill="none"/>${stein}${gruve}${tre}<g>${villa(b.villa, sp.hjemme)}</g>${vin}${kuber}${pynt(sp.rang, tak)}${taggSvg(sp.tagg, mitt)}${merke}`;
     }
     return `<g class="${klasse}" data-navn="${esc(navn)}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${s.toFixed(3)})" tabindex="0" role="button" aria-label="${esc(godsNavn(navn))}">
       <ellipse rx="70" ry="60" cy="-22" fill="transparent"/>${inn}
@@ -136,18 +165,26 @@
       ${sp && sp.rang ? `<text y="25" text-anchor="middle" class="sy-tittel">${esc(T.regler.ranger[sp.rang].tittel)}</text>` : ""}</g></g>`;
   }
 
-  // Rangpynt: flagg (rådsmann), laurbærkrans (senator), statue (arkont), fakler (symposiark)
+  // Rangpynt: hver rang legger til én ting på godset, og man beholder alt fra rangene under
+  const PYNT = { flagg: "et flagg på taket", amforaer: "amforaer ved døra", krans: "en laurbærkrans rundt godset", mosaikk: "mosaikk rundt huset", statue: "en statue i hagen",
+    fontene: "en fontene foran huset", orn: "en gullørn på flaggstanga", fakler: "fakler og gullglød", stjerne: "en stjerne over huset" };
+  const harPynt = (r) => new Set(T.regler.ranger.slice(0, r + 1).map((x) => x.pynt).filter(Boolean));
   function pynt(r, tak) {
     if (!r) return "";
+    const har = harPynt(r);
     let s = "";
-    if (r >= 1) s += `<g class="sy-flagg"><path d="M0 ${tak} v-17" stroke="#c9a24a" stroke-width="1.6"/><path d="M0.8 ${tak - 17} q7 -2 13 2 q-6 3 -13 6 z" fill="#8e2f52"/><path d="M0.8 ${tak - 17} q7 -2 13 2" fill="none" stroke="#c9a24a" stroke-width=".8"/></g>`;
-    if (r >= 2) s += [-1, 1].map((side) => `<g transform="scale(${side} 1)">${[0, 1, 2, 3, 4].map((k) => {
+    if (har.has("amforaer")) s += [-10, 10].map((x) => `<path transform="translate(${x} 5)" d="M-2 -8 h4 l-.6 2 q2.6 2.6 0 6 h-2.8 q-2.6 -3.4 0 -6 z" fill="#b5651d" stroke="#14130d" stroke-width=".5"/>`).join("");
+    if (har.has("fontene")) s += `<g transform="translate(19 14)"><ellipse rx="7.4" ry="2.8" fill="#bdb49d"/><ellipse rx="5.6" ry="1.9" fill="#5fa8f0"/><path d="M0 0 v-6" stroke="#ece5d3" stroke-width="1.8"/><ellipse cy="-6" rx="3.2" ry="1.1" fill="#ece5d3"/><path d="M0 -7 q-3 -4.4 -4.4 1 M0 -7 q3 -4.4 4.4 1" fill="none" stroke="#9fd0ff" stroke-width="1" class="sy-flamme"/></g>`;
+    if (har.has("orn")) s += `<g transform="translate(0 ${tak - 19})"><path d="M0 0 q-4 -5 -9 -1.4 q4.4 -.2 5.6 3.4 z M0 0 q4 -5 9 -1.4 q-4.4 -.2 -5.6 3.4 z" fill="#e2c174" stroke="#14130d" stroke-width=".4"/><circle r="1.7" fill="#e2c174"/></g>`;
+    if (har.has("stjerne")) s += `<path transform="translate(0 ${tak - 33})" d="M0 -6 L1.6 -1.6 L6 0 L1.6 1.6 L0 6 L-1.6 1.6 L-6 0 L-1.6 -1.6 Z" fill="#f2e3b4" stroke="#c9a24a" stroke-width=".5" class="sy-flamme"/>`;
+    if (har.has("flagg")) s += `<g class="sy-flagg"><path d="M0 ${tak} v-17" stroke="#c9a24a" stroke-width="1.6"/><path d="M0.8 ${tak - 17} q7 -2 13 2 q-6 3 -13 6 z" fill="#8e2f52"/><path d="M0.8 ${tak - 17} q7 -2 13 2" fill="none" stroke="#c9a24a" stroke-width=".8"/></g>`;
+    if (har.has("krans")) s += [-1, 1].map((side) => `<g transform="scale(${side} 1)">${[0, 1, 2, 3, 4].map((k) => {
       const v = (Math.PI * (0.16 + k * 0.1));
       const x = -Math.cos(v) * 46, y = 12 + Math.sin(v) * 7 - k * 0.6;
       return `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="4" ry="1.8" fill="#e2c174" transform="rotate(${(-30 + k * 12) * 1} ${x.toFixed(1)} ${y.toFixed(1)})"/>`;
     }).join("")}<path d="M-47 11 Q-30 22 -6 20" fill="none" stroke="#c9a24a" stroke-width="1"/></g>`).join("");
-    if (r >= 3) s += `<g transform="translate(-62 8)"><rect x="-6" y="-4" width="12" height="6" fill="#bdb49d"/><rect x="-5" y="-6" width="10" height="2" fill="#ece5d3"/><circle cy="-21" r="3" fill="#ece5d3"/><path d="M-3 -18 h6 l1 12 h-8 z" fill="#ece5d3"/><path d="M3 -16 l5 -6" stroke="#ece5d3" stroke-width="2" stroke-linecap="round"/></g>`;
-    if (r >= 4) s += [-48, 48].map((x) => `<g transform="translate(${x} 14)"><path d="M-3 0 h6 l-1 -7 h-4 z" fill="#5a4630"/><path d="M-4 -7 h8 l-1 -2 h-6 z" fill="#c9a24a"/><path d="M0 -9 q-4 -5 0 -11 q4 6 0 11" fill="#f2c14e" class="sy-flamme"/></g>`).join("");
+    if (har.has("statue")) s += `<g transform="translate(-62 8)"><rect x="-6" y="-4" width="12" height="6" fill="#bdb49d"/><rect x="-5" y="-6" width="10" height="2" fill="#ece5d3"/><circle cy="-21" r="3" fill="#ece5d3"/><path d="M-3 -18 h6 l1 12 h-8 z" fill="#ece5d3"/><path d="M3 -16 l5 -6" stroke="#ece5d3" stroke-width="2" stroke-linecap="round"/></g>`;
+    if (har.has("fakler")) s += [-48, 48].map((x) => `<g transform="translate(${x} 14)"><path d="M-3 0 h6 l-1 -7 h-4 z" fill="#5a4630"/><path d="M-4 -7 h8 l-1 -2 h-6 z" fill="#c9a24a"/><path d="M0 -9 q-4 -5 0 -11 q4 6 0 11" fill="#f2c14e" class="sy-flamme"/></g>`).join("");
     return s;
   }
 
@@ -393,9 +430,9 @@
       </ul>
       <p>Trykk på et gods på kartet eller et navn på ærestavlen for å besøke.</p>
       <h3>Ære og rang</h3>
-      <p>Ære får du bare for å gi: skjenke naboene, ta dagens runde, gi til byggverkene og holde fest for folkene dine. Ære kan ikke brukes på noe, men all ære du har fått, gir rang og pynt på godset:</p>
+      <p>Ære får du bare for å gi: skjenke naboene, ta dagens runde, gi til byggverkene og holde fest for folkene dine. Ære kan ikke brukes på noe, men all ære du har fått, gir rang og pynt på godset. Hver rang legger til noe nytt, og du beholder alt du har fått før:</p>
       <table class="tavle"><thead><tr><th>Rang</th><th>Ære</th><th>Pynt</th></tr></thead><tbody>
-        ${rader(R.ranger.map((r) => [r.tittel, r.fra.toLocaleString("nb-NO"), { flagg: "Flagg på taket", krans: "Laurbærkrans", statue: "Statue i hagen", fakler: "Fakler og gullglød" }[r.pynt] || "·"]))}
+        ${rader(R.ranger.map((r) => [r.tittel, r.fra.toLocaleString("nb-NO"), (PYNT[r.pynt] ? PYNT[r.pynt].replace(/^(en|et) /, "").replace(/^./, (c) => c.toUpperCase()) : "") || "·"]))}
       </tbody></table>
       <h3>Torget</h3>
       <p>Under godset ditt kan du kjøpe ${Object.values(R.butikk).map((v) => `${v.navn.toLowerCase()} (${Object.entries(v.pris).map(([r, n]) => `${tall(n)} ${rn(r)}`).join(" og ")})`).join(", ").replace(/, ([^,]*)$/, " og $1")}.</p>`;
@@ -453,7 +490,6 @@
     const neste = R[m.rang + 1];
     const fra = R[m.rang].fra;
     const andel = neste ? Math.min(100, ((m.aere - fra) / (neste.fra - fra)) * 100) : 100;
-    const PYNT = { flagg: "et flagg på taket", krans: "en laurbærkrans rundt godset", statue: "en statue i hagen", fakler: "fakler og gullglød" };
     const vare = (id) => {
       const v = T.regler.butikk[id];
       let status = "", sperret = !harRad(v.pris);
