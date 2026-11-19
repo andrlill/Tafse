@@ -340,7 +340,7 @@
     // Råvarer man ikke har kommet til ennå, vises ikke, så toppen holder seg ryddig i starten
     const kilde = { honning: "bigard", solv: "gruve", purpur: "havn", krydder: "havn" };
     const kjent = ALLE.filter((r) => !kilde[r] || m.bygg[kilde[r]] > 0 || m.beholdning[r] >= 1);
-    const brikker = [...kjent, "aere"].map((r) => `<div class="sy-brikke" data-brikke="${r}" title="${r === "aere" ? "Ære du kan bruke i æresbutikken" : rn(r)}">${IKON[r]}<strong>${tall(r === "aere" ? m.aereIgjen : m.beholdning[r])}</strong><span>${r === "aere" ? "ære" : rn(r)}</span></div>`).join("");
+    const brikker = [...kjent, "aere"].map((r) => `<div class="sy-brikke" data-brikke="${r}" title="${r === "aere" ? "All ære du har fått for å gi til andre" : rn(r)}">${IKON[r]}<strong>${tall(r === "aere" ? m.aere : m.beholdning[r])}</strong><span>${r === "aere" ? "ære" : rn(r)}</span></div>`).join("");
     const prikker = Array.from({ length: 7 }, (_, i) => `<i class="${i < (m.kanOfre ? m.streak % 7 === 0 && m.streak ? 0 : Math.min(m.streak, 6) : m.streak) ? "full" : ""}"></i>`).join("");
     const offer = m.kanOfre
       ? `<button class="knapp sy-offer" type="button" data-gjor="offer">Ofre til gudene<small>${gave(m.nesteOffer)}</small></button>`
@@ -372,6 +372,7 @@
       <p>Hvert nivå koster 65 % mer enn det forrige. Høyeste nivå er ${R.maksNiva}, og ${b.havn.maks} for havnen.</p>
       <h3>Folkene på godset</h3>
       <p>Ansett folk under «Folkene på godset». Hver arbeider gir ${Math.round(R.ansattProd * 100)} % mer i bygget sitt for hvert nivå, forvalteren gir én time større lager per nivå, og nattevakten gjør at naskere får med seg ${Math.round(R.vaktAndel * 100)} % mindre per nivå. Alle kan forfremmes til nivå ${R.ansattMaks}. De dyreste vil ha lønn i honning og sølv.</p>
+      <p>Én gang om dagen kan du holde fest for folkene dine. Den koster en times produksjon av oliven og vin, og honning hvis du har bigård. Festen gir ære, mer jo flere og bedre folk du har, og etterpå jobber hele godset ${Math.round(R.fest.bonus * 100)} % bedre i ${R.fest.varer} timer.</p>
       <h3>Havnen og toktene</h3>
       <p>Skipet seiler til ${Object.values(T.meg ? T.meg.reisemal : {}).map((x) => `${x.navn} (${x.timer >= 1 ? `${Math.round(x.timer * 10) / 10} t` : `${Math.round(x.timer * 60)} min`})`).join(", ").replace(/, ([^,]*)$/, " eller $1") || "Kreta, Tyros eller Egypt"} og kommer hjem med krydder og purpur, som du ikke kan lage selv. Du betaler lasten når skipet legger fra, og losser det selv når det er hjemme. Velg tokt etter når du kommer innom neste gang. Lasten blir ${Math.round(R.toktLast * 100)} % større for hvert havnenivå. Av og til møter skipet storm eller medvind.</p>
       <h3>Villaen og rommet ditt</h3>
@@ -392,11 +393,12 @@
       </ul>
       <p>Trykk på et gods på kartet eller et navn på ærestavlen for å besøke.</p>
       <h3>Ære og rang</h3>
-      <p>Du får ære for å bygge, ansette, seile, ofre, skjenke, tagge og gi til byggverkene. All ære du har tjent, gir rang og pynt på godset:</p>
+      <p>Ære får du bare for å gi: skjenke naboene, ta dagens runde, gi til byggverkene og holde fest for folkene dine. Ære kan ikke brukes på noe, men all ære du har fått, gir rang og pynt på godset:</p>
       <table class="tavle"><thead><tr><th>Rang</th><th>Ære</th><th>Pynt</th></tr></thead><tbody>
         ${rader(R.ranger.map((r) => [r.tittel, r.fra.toLocaleString("nb-NO"), { flagg: "Flagg på taket", krans: "Laurbærkrans", statue: "Statue i hagen", fakler: "Fakler og gullglød" }[r.pynt] || "·"]))}
       </tbody></table>
-      <p>Ære kan også brukes i æresbutikken under godset ditt: ${Object.values(R.butikk).map((v) => `${v.navn.toLowerCase()} (${v.pris})`).join(", ")}. Det du bruker der, trekkes ikke fra rangen.</p>`;
+      <h3>Torget</h3>
+      <p>Under godset ditt kan du kjøpe ${Object.values(R.butikk).map((v) => `${v.navn.toLowerCase()} (${Object.entries(v.pris).map(([r, n]) => `${tall(n)} ${rn(r)}`).join(" og ")})`).join(", ").replace(/, ([^,]*)$/, " og $1")}.</p>`;
   }
 
   function tips() {
@@ -454,19 +456,19 @@
     const PYNT = { flagg: "et flagg på taket", krans: "en laurbærkrans rundt godset", statue: "en statue i hagen", fakler: "fakler og gullglød" };
     const vare = (id) => {
       const v = T.regler.butikk[id];
-      let status = "", sperret = m.aereIgjen < v.pris;
+      let status = "", sperret = !harRad(v.pris);
       if (v.perDag) { const n = m.kjopt[id]; status = `${n} av ${v.perDag} kjøpt i dag`; if (n >= v.perDag) sperret = true; }
       if (id === "slave" && m.slaveTil) status = `Jobber til ${new Date(m.slaveTil).toLocaleDateString("nb-NO", { weekday: "long", day: "numeric", month: "long" })}`;
       if (id === "statue" && m.kjopt.statue) { status = "Står på agoraen"; sperret = true; }
       return `<article class="sy-vare"><h4>${esc(v.navn)}</h4><p>${esc(v.tekst)}</p>${status ? `<p class="sy-varestatus">${esc(status)}</p>` : ""}
-        <button class="liten-knapp sy-utvid${sperret ? "" : " sy-rad"}" type="button" data-kjop="${id}" ${sperret ? "disabled" : ""}>${id === "slave" && m.slaveTil ? "Forleng" : "Kjøp"} · ${v.pris} ${IKON.aere}</button></article>`;
+        <button class="liten-knapp sy-utvid${sperret ? "" : " sy-rad"}" type="button" data-kjop="${id}" ${sperret ? "disabled" : ""}>${id === "slave" && m.slaveTil ? "Forleng" : "Kjøp"} · ${pris(v.pris)}</button></article>`;
     };
     return `<div class="sy-rangboks">
       <div class="sy-rangtopp"><div><p class="sy-etikett">Din rang</p><h3>${esc(R[m.rang].tittel)}</h3>
-        <p class="dempet">${tall(m.aere)} ære tjent totalt${neste ? ` · ${tall(neste.fra - m.aere)} til ${neste.tittel.toLowerCase()}, som gir ${PYNT[neste.pynt]}` : " · Høyeste rang i byen"}</p></div></div>
+        <p class="dempet">${tall(m.aere)} ære${neste ? ` · ${tall(neste.fra - m.aere)} til ${neste.tittel.toLowerCase()}, som gir ${PYNT[neste.pynt]}` : " · Høyeste rang i byen"}</p>
+        <p class="dempet sy-butikkfot">Ære får du for å gi: skjenke naboene, gi til byggverkene og holde fest for folkene dine.</p></div></div>
       <div class="sy-lager sy-rangstrek"><span style="width:${andel}%"></span></div>
-      <p class="sy-etikett" style="margin-top:18px">Æresbutikken · du har ${tall(m.aereIgjen)} ${IKON.aere} å bruke</p>
-      <p class="dempet sy-butikkfot">Det du bruker her, trekkes ikke fra rangen din.</p>
+      <p class="sy-etikett" style="margin-top:18px">Torget</p>
       <div class="sy-butikk">${Object.keys(T.regler.butikk).map(vare).join("")}</div></div>`;
   }
 
@@ -484,8 +486,13 @@
       return `<article class="sy-vare sy-folk${x.niva ? " ansatt" : ""}"><h4>${esc(a.navn)}<span class="sy-prikker">${prikker}</span></h4><p>${esc(a.tekst)}</p>
         <p class="sy-varestatus">${x.niva ? `Nå: ${virk(x.niva)}` : "Ikke ansatt"}${x.kost ? ` · neste nivå: ${virk(x.niva + 1)}` : ""}</p>${knapp}</article>`;
     }).join("");
+    const F = m.fest;
+    const festen = !F.ansatte ? "" : F.til
+      ? `<div class="sy-fest paa"><div><h4>Det er fest på godset</h4><p class="dempet">Alle jobber ${Math.round(F.bonus * 100)} % bedre til kl. ${new Date(F.til).toLocaleTimeString("nb-NO", { hour: "2-digit", minute: "2-digit" })}.</p></div></div>`
+      : `<div class="sy-fest"><div><h4>Hold fest for folkene</h4><p class="dempet">${F.holdt ? "Folkene har festet nok for i dag. Ny fest i morgen." : `Gir +${F.aere} ære, og hele godset jobber ${Math.round(F.bonus * 100)} % bedre i ${F.varer} timer.`}</p></div>
+        <button class="knapp${!F.holdt && harRad(F.pris) ? "" : " sekundar"}" type="button" data-gjor="fest" ${F.holdt || !harRad(F.pris) ? "disabled" : ""}>${F.holdt ? "Festet i dag" : "Hold fest"}<small>${pris(F.pris)}</small></button></div>`;
     return `<div class="sy-rangboks" id="sy-folk"><p class="sy-etikett">Folkene på godset</p>
-      <p class="dempet sy-butikkfot">Ansatte gjør godset mer effektivt. De kan forfremmes fem ganger.</p><div class="sy-butikk">${kort}</div></div>`;
+      <p class="dempet sy-butikkfot">Ansatte gjør godset mer effektivt. De kan forfremmes fem ganger.</p>${festen}<div class="sy-butikk">${kort}</div></div>`;
   }
 
   const varighet = (timer) => (timer >= 1 ? `${Math.round(timer * 10) / 10} t`.replace(".", ",") : `${Math.round(timer * 60)} min`);
@@ -507,7 +514,7 @@
       inn = `<div class="sy-butikk">${Object.entries(m.reisemal).map(([id, x]) => {
         if (!x.apen) return `<article class="sy-vare last"><h4>${esc(x.navn)}</h4><p>Krever havn på nivå ${x.havn}.</p></article>`;
         const far = Object.entries(x.gir).map(([r, [a, b]]) => `<span class="sy-pris">${a}–${b}${IKON[r]}</span>`).join(" ");
-        return `<article class="sy-vare"><h4>${esc(x.navn)}<span class="sy-toktvarighet">${varighet(x.timer)}</span></h4><p>Hjem med ${far}</p><p class="sy-varestatus">+${x.aere} ære</p>
+        return `<article class="sy-vare"><h4>${esc(x.navn)}<span class="sy-toktvarighet">${varighet(x.timer)}</span></h4><p>Hjem med ${far}</p>
           <button class="liten-knapp sy-utvid${harRad(x.pris) ? " sy-rad" : ""}" type="button" data-tokt="${id}" ${harRad(x.pris) ? "" : "disabled"}>Send skipet · ${pris(x.pris)}</button></article>`;
       }).join("")}</div>`;
     }
@@ -531,7 +538,7 @@
       <div class="sy-taggrad"><input type="text" name="tekst" maxlength="${T.regler.taggMaks}" placeholder="Skriv noe på veggen" autocomplete="off" ${tom ? "disabled" : ""} required>
       <div class="sy-farger" role="radiogroup" aria-label="Farge">${FARGER.map((f) => `<button type="button" class="sy-farge${f === taggFarge ? " valgt" : ""}" data-farge="${f}" style="background:${f}" aria-label="Farge" aria-checked="${f === taggFarge}" role="radio" ${tom ? "disabled" : ""}></button>`).join("")}</div>
       <button class="knapp" type="submit" ${tom ? "disabled" : ""}>${sp.tagget ? "Tagget i dag" : m.taggIgjen <= 0 ? "Tom for maling" : "Tagg huset"}</button></div>
-      <p class="dempet sy-taggfot">Huset produserer ${Math.round(T.regler.taggStraff * 100)} % mindre til eieren vasker. Du får +3 ære, og eieren får beskjed.</p></form>`;
+      <p class="dempet sy-taggfot">Huset produserer ${Math.round(T.regler.taggStraff * 100)} % mindre til eieren vasker. Eieren får beskjed.</p></form>`;
   }
 
   const skjenkTekst = () => { const g = T.meg.skjenk.gave; return Object.keys(g).length ? Object.entries(g).map(([r, n]) => `${tall(n)} ${rn(r)}`).join(", ").replace(/, ([^,]*)$/, " og $1") : "et tomt glass"; };
@@ -691,19 +698,20 @@
     if (!s) return;
     if (s.type === "host") { if (Object.keys(s.fikk).length) { sprett(gave(s.fikk)); } }
     else if (s.type === "offer") { sprett(gave(s.fikk)); toast(`Gudene er fornøyde. Dag ${s.streak} av 7 på rad.`); }
-    else if (s.type === "bygg") toast(`${T.regler.bygg[s.bygg].navn} er nå på nivå ${s.niva}. +${10 * s.niva} ære.`);
+    else if (s.type === "bygg") toast(`${T.regler.bygg[s.bygg].navn} er nå på nivå ${s.niva}.`);
     else if (s.type === "skjenk") {
       toast(`${s.gjengjeld ? "Gjengjeldt skål" : "Skål"}, ${visningsnavn(s.til)}! +${s.aere} ære.`);
       if (s.runde) setTimeout(() => { sprett(gave(s.runde.fikk)); toast(`Dagens runde er tatt! ${gave(s.runde.fikk)} og +${s.runde.aere} ære.`); }, 1800);
     }
     else if (s.type === "nask") toast(`Du nasket ${s.fikk.oliven} oliven fra ${s.til}. Han har fått beskjed.`);
     else if (s.type === "gi") toast(s.ferdig ? `${s.ferdig} står ferdig! Alle produserer 10 % mer.` : `Takk! +${s.aere} ære.`);
-    else if (s.type === "tagg") toast(`Huset til ${s.til} har fått ny utsmykning. +${s.aere} ære.`);
+    else if (s.type === "tagg") toast(`Huset til ${visningsnavn(s.til)} har fått ny utsmykning.`);
     else if (s.type === "vask") toast(`Rent igjen. ${s.fra} får prøve seg på nytt en annen dag.`);
     else if (s.type === "kjop") toast(s.vare === "statue" ? "Statuen din står nå på agoraen." : s.vare === "slave" ? "Vaskeslaven er ansatt. Han tar tagger etter en time." : `${s.navn} kjøpt.`);
-    else if (s.type === "ansett") toast(s.niva === 1 ? `${s.navn} er ansatt. +${s.aere} ære.` : `${s.navn} er forfremmet til nivå ${s.niva}. +${s.aere} ære.`);
+    else if (s.type === "ansett") toast(s.niva === 1 ? `${s.navn} er ansatt.` : `${s.navn} er forfremmet til nivå ${s.niva}.`);
+    else if (s.type === "fest") toast(`Skål for folkene! +${s.aere} ære, og godset jobber bedre en stund.`);
     else if (s.type === "tokt") toast(`Skipet har lagt fra mot ${s.mal}. God vind!`);
-    else if (s.type === "loss") { sprett(gave(s.fikk)); toast(`${s.hendelse === "storm" ? "Skipet kom gjennom en storm og mistet halve lasten." : s.hendelse === "medvind" ? "Medvind hele veien! Skipet kom hjem med ekstra last." : `Skipet er losset etter toktet til ${s.mal}.`} +${s.aere} ære.`); }
+    else if (s.type === "loss") { sprett(gave(s.fikk)); toast(`${s.hendelse === "storm" ? "Skipet kom gjennom en storm og mistet halve lasten." : s.hendelse === "medvind" ? "Medvind hele veien! Skipet kom hjem med ekstra last." : `Skipet er losset etter toktet til ${s.mal}.`}`); }
     else if (s.type === "flytt-inn") { toast("Velkommen til byen. Godset ditt er merket med gull."); zoomTilGods(T.meg.navn); }
     if (s.nyRang) setTimeout(() => toast(`Du er utnevnt til ${s.nyRang.toLowerCase()}! Se på huset ditt.`), 1800);
     for (const r of Object.keys(s.fikk || {})) {

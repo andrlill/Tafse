@@ -1254,3 +1254,11 @@ p.h-merket { margin: 10px 0; }
 .sy-runde .sy-etikett, .sy-runde .sy-prikker { margin: 0; }
 .sy-runde.ferdig { border-style: solid; border-color: #4a4026; }
 .sy-gjengjeld { animation-duration: .9s; }
+.sy-fest { display: flex; gap: 14px 18px; align-items: center; justify-content: space-between; flex-wrap: wrap; border: 1px solid #4a4026; background: var(--bunn); padding: 12px 16px; margin-bottom: 12px; }
+.sy-fest > div { flex: 1 1 240px; }
+.sy-fest h4 { margin: 0 0 2px; font-family: var(--display); font-size: 16px; letter-spacing: .04em; }
+.sy-fest p { margin: 0 !important; }
+.sy-fest .knapp { min-width: 200px; display: inline-flex; flex-direction: column; align-items: center; }
+.sy-fest .knapp:disabled { opacity: .55; cursor: default; }
+.sy-fest.paa { border-color: var(--gull); background: #1f1a0e; }
+@media (max-width: 760px) { .sy-fest .knapp { width: 100%; } }
