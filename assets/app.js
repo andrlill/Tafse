@@ -222,10 +222,10 @@ async function hentVarsler() {
     const varsler = SPILLSIDE ? svar.varsler.filter(erSpill) : svar.varsler;
     const uleste = SPILLSIDE ? varsler.filter((v) => !v.lest).length : svar.uleste;
     varslene = varsler;
-    const tall = document.querySelector(".varsel-tall");
+    const tall = document.querySelector("#varsel .varsel-tall");
     tall.hidden = !uleste;
     tall.textContent = uleste > 9 ? "9+" : uleste;
-    document.querySelector(".varsel-knapp").setAttribute("aria-label", uleste ? `Varsler, ${uleste} uleste` : "Varsler");
+    document.querySelector("#varsel .varsel-knapp").setAttribute("aria-label", uleste ? `Varsler, ${uleste} uleste` : "Varsler");
     tegnVarsler();
   } catch (_) {}
 }
