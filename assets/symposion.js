@@ -127,7 +127,7 @@
       const hoyde = [-44, -52, -60, -80][trinn] - (sp.rang >= 1 ? 16 : 0);
       const merke = mitt
         ? `<g class="sy-dupp sy-klar" data-klar hidden><circle cy="${hoyde - 6}" r="11" fill="#141310" stroke="#c9a24a"/><g transform="translate(-8 ${hoyde - 14})">${IKON.oliven.replace('class="sy-ikon"', 'width="16" height="16"')}</g></g>`
-        : !sp.skjenket && T.meg ? `<g class="sy-dupp"><path d="M-4 ${hoyde - 12} h8 l-1 4 q4 5 0 11 h-6 q-4 -6 0 -11 z" fill="#c9a24a" stroke="#14130d" stroke-width="1"/></g>` : "";
+        : !sp.skjenket && T.meg ? `<g class="sy-dupp${sp.skjenketMeg ? " sy-gjengjeld" : ""}"><path d="M-4 ${hoyde - 12} h8 l-1 4 q4 5 0 11 h-6 q-4 -6 0 -11 z" fill="${sp.skjenketMeg ? "#c2557f" : "#c9a24a"}" stroke="${sp.skjenketMeg ? "#f2e3b4" : "#14130d"}" stroke-width="1"/>${sp.skjenketMeg ? `<circle cx="7" cy="${hoyde - 13}" r="3.2" fill="#f2c14e" stroke="#14130d" stroke-width=".8"/>` : ""}</g>` : "";
       inn = `${sp.rang >= 4 ? `<ellipse rx="78" ry="24" fill="url(#sy-glod)"/>` : ""}<ellipse rx="64" ry="17" fill="#3b3824"/><ellipse rx="64" ry="17" class="sy-ring" fill="none"/>${stein}${gruve}${tre}<g>${villa(b.villa, sp.hjemme)}</g>${vin}${kuber}${pynt(sp.rang, tak)}${taggSvg(sp.tagg, mitt)}${merke}`;
     }
     return `<g class="${klasse}" data-navn="${esc(navn)}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${s.toFixed(3)})" tabindex="0" role="button" aria-label="${esc(godsNavn(navn))}">
@@ -385,7 +385,8 @@
       <p>Alle reiser sammen ${R.monumenter.map((m) => m.navn).join(", ").replace(/, ([^,]*)$/, " og $1")}, ett om gangen. Gi det byggverket trenger under «Felles byggverk». De to siste krever sølv, krydder og purpur. Hvert ferdige byggverk gir alle 10 % mer produksjon, og hver gave gir deg ære.</p>
       <h3>Naboene</h3>
       <ul>
-        <li><strong>Skjenk:</strong> én gang om dagen per nabo. Han får vin, du får oliven og ære.</li>
+        <li><strong>Skjenk:</strong> én gang om dagen per nabo. Naboen får vin, du får oliven og ære. Gavene følger godset ditt: begge deler tilsvarer 20 minutter av din egen produksjon, så et større gods skjenker rausere. Har naboen allerede skjenket deg i dag (vinrød krukke på kartet), får du dobbelt med oliven for å skjenke tilbake.</li>
+        <li><strong>Dagens runde:</strong> skjenk ${R.rundeMal} naboer på én dag, så får du én times avling av alt godset ditt lager, og ${R.rundeAere} ære.</li>
         <li><strong>Nask:</strong> ta litt av en nabos uhøstede oliven, ${R.naskPerDag} ganger om dagen. Han får beskjed.</li>
         <li><strong>Tagg:</strong> spray en tekst på en nabos hus, ${R.taggPerDag} ganger om dagen. Huset produserer ${Math.round(R.taggStraff * 100)} % mindre til eieren har skrubbet det bort.</li>
       </ul>
@@ -403,12 +404,14 @@
     const andre = T.spillere.filter((s) => s.navn !== m.navn);
     if (T.spillere.find((s) => s.navn === m.navn)?.tagg) return "Noen har tagget huset ditt! Skrubb det bort, ellers går det ut over avlingen.";
     if (m.tokt && (m.tokt.hjemme || Date.parse(m.tokt.hjem) <= Date.now())) return `Skipet er hjemme fra ${m.tokt.navn}. Loss det i havnen.`;
+    const venter = andre.filter((s) => s.skjenketMeg && !s.skjenket);
+    if (venter.length && !m.kanOfre) return `${venter.map((s) => visningsnavn(s.navn)).slice(0, 3).join(", ").replace(/, ([^,]*)$/, " og $1")}${venter.length > 3 ? " og flere" : ""} har skjenket deg i dag. Skjenk tilbake og få dobbelt.`;
     if (m.kanOfre) return "Gudene venter på dagens offer. Kom innom hver dag, så vokser gaven.";
     if (lagerSum() >= 15) return "Avlingen er klar. Trykk på «Høst».";
     const rad = Object.keys(T.regler.bygg).find((id) => m.apen[id] && harRad(m.kost[id]));
     if (rad) return `Du har råd til å ${m.bygg[rad] ? "utvide" : "anlegge"} ${T.regler.bygg[rad].navn.toLowerCase()}.`;
     if (m.bygg.havn && !m.tokt) return "Skipet ligger til kai. Send det på tokt.";
-    if (andre.some((s) => !s.skjenket)) return "Trykk på godset til en av de andre og skjenk et glass. Dere tjener begge på det.";
+    if (andre.some((s) => !s.skjenket)) return m.skjenk.runde.gjort < m.skjenk.runde.mal ? `Skjenk ${m.skjenk.runde.mal - m.skjenk.runde.gjort} naboer til, så tar du dagens runde og får én times avling.` : "Trykk på godset til en av de andre og skjenk et glass. Dere tjener begge på det.";
     if (!andre.length) return "Du er den første i byen. Få med deg de andre!";
     return "Godset jobber for deg mens du er borte. Kom tilbake før lageret er fullt.";
   }
@@ -525,10 +528,20 @@
     if (sp.tagg) return `<div class="sy-taggboks"><p class="sy-etikett">Spraybøksa</p><p>Huset er allerede tagget av <strong>${esc(visningsnavn(sp.tagg.fra))}</strong>: <span class="sy-taggsitat" style="color:${sp.tagg.farge}">${esc(sp.tagg.tekst)}</span>. ${esc(visningsnavn(sp.navn))} må vaske før noen kan tagge igjen.</p></div>`;
     const tom = m.taggIgjen <= 0 || sp.tagget;
     return `<form class="sy-taggboks" data-taggskjema="${esc(sp.navn)}"><p class="sy-etikett">Spraybøksa · ${m.taggIgjen} av ${T.regler.taggPerDag} tagger igjen i dag</p>
-      <div class="sy-taggrad"><input type="text" name="tekst" maxlength="${T.regler.taggMaks}" placeholder="Skriv noe på veggen hans" autocomplete="off" ${tom ? "disabled" : ""} required>
+      <div class="sy-taggrad"><input type="text" name="tekst" maxlength="${T.regler.taggMaks}" placeholder="Skriv noe på veggen" autocomplete="off" ${tom ? "disabled" : ""} required>
       <div class="sy-farger" role="radiogroup" aria-label="Farge">${FARGER.map((f) => `<button type="button" class="sy-farge${f === taggFarge ? " valgt" : ""}" data-farge="${f}" style="background:${f}" aria-label="Farge" aria-checked="${f === taggFarge}" role="radio" ${tom ? "disabled" : ""}></button>`).join("")}</div>
       <button class="knapp" type="submit" ${tom ? "disabled" : ""}>${sp.tagget ? "Tagget i dag" : m.taggIgjen <= 0 ? "Tom for maling" : "Tagg huset"}</button></div>
-      <p class="dempet sy-taggfot">Huset hans produserer ${Math.round(T.regler.taggStraff * 100)} % mindre til han vasker. Du får +3 ære, og han får beskjed.</p></form>`;
+      <p class="dempet sy-taggfot">Huset produserer ${Math.round(T.regler.taggStraff * 100)} % mindre til eieren vasker. Du får +3 ære, og eieren får beskjed.</p></form>`;
+  }
+
+  // Dagens runde: framdrift mot bonusen for å skjenke mange nok på én dag
+  function runde() {
+    const r = T.meg.skjenk.runde;
+    if (!r.mal) return "";
+    const ferdig = r.gjort >= r.mal;
+    const prikker = Array.from({ length: r.mal }, (_, i) => `<i class="${i < r.gjort ? "full" : ""}"></i>`).join("");
+    return `<div class="sy-runde${ferdig ? " ferdig" : ""}"><span class="sy-etikett">Dagens runde</span><span class="sy-prikker">${prikker}</span>
+      <span class="dempet">${ferdig ? "Runden er tatt i dag. Ny runde i morgen." : `Skjenk ${r.mal - r.gjort} ${r.mal - r.gjort === 1 ? "nabo" : "naboer"} til og få ${gave(r.fikk)} og +${r.aere} ære.`}</span></div>`;
   }
 
   function panel() {
@@ -554,9 +567,12 @@
         <div class="sy-hodeknapper"><a class="liten-knapp" href="hotell.html?rom=${encodeURIComponent(`hjem:${sp.navn}`)}">Gå inn i huset</a>
         <button class="liten-knapp" type="button" data-hjem>Til godset mitt</button></div></div>
       <div class="sy-besok">
-        <button class="knapp" type="button" data-skjenk="${esc(sp.navn)}" ${sp.skjenket ? "disabled" : ""}>${sp.skjenket ? "Skjenket i dag" : "Skjenk et glass vin"}<small>${sp.skjenket ? "Kom igjen i morgen" : `Han får vin, du får +10 oliven og +5 ære`}</small></button>
-        <button class="knapp sekundar" type="button" data-nask="${esc(sp.navn)}" ${sp.nasket || m.naskIgjen <= 0 || sp.bytte < 5 ? "disabled" : ""}>${nask}<small>${m.naskIgjen} av ${T.regler.naskPerDag} nask igjen i dag. Han får beskjed.</small></button>
+        <button class="knapp${sp.skjenketMeg && !sp.skjenket ? " sy-offer" : ""}" type="button" data-skjenk="${esc(sp.navn)}" ${sp.skjenket ? "disabled" : ""}>${sp.skjenket ? "Skjenket i dag" : sp.skjenketMeg ? "Skjenk tilbake" : "Skjenk et glass vin"}<small>${sp.skjenket ? "Kom igjen i morgen" : sp.skjenketMeg
+          ? `${esc(visningsnavn(sp.navn))} skjenket deg i dag. Du får dobbelt: +${tall(m.skjenk.oliven * 2)} oliven og +${m.skjenk.aere + m.skjenk.gjengjeldAere} ære`
+          : `Godset får ${tall(m.skjenk.vin)} vin, du får +${tall(m.skjenk.oliven)} oliven og +${m.skjenk.aere} ære`}</small></button>
+        <button class="knapp sekundar" type="button" data-nask="${esc(sp.navn)}" ${sp.nasket || m.naskIgjen <= 0 || sp.bytte < 5 ? "disabled" : ""}>${nask}<small>${m.naskIgjen} av ${T.regler.naskPerDag} nask igjen i dag. Eieren får beskjed.</small></button>
       </div>
+      ${runde()}
       ${taggSkjema(sp)}</section>`;
   }
 
@@ -674,7 +690,10 @@
     if (s.type === "host") { if (Object.keys(s.fikk).length) { sprett(gave(s.fikk)); } }
     else if (s.type === "offer") { sprett(gave(s.fikk)); toast(`Gudene er fornøyde. Dag ${s.streak} av 7 på rad.`); }
     else if (s.type === "bygg") toast(`${T.regler.bygg[s.bygg].navn} er nå på nivå ${s.niva}. +${10 * s.niva} ære.`);
-    else if (s.type === "skjenk") toast(`Skål, ${s.til}! +10 oliven og +5 ære.`);
+    else if (s.type === "skjenk") {
+      toast(`${s.gjengjeld ? "Gjengjeldt skål" : "Skål"}, ${visningsnavn(s.til)}! +${tall(s.fikk.oliven)} oliven og +${s.aere} ære.`);
+      if (s.runde) setTimeout(() => { sprett(gave(s.runde.fikk)); toast(`Dagens runde er tatt! ${gave(s.runde.fikk)} og +${s.runde.aere} ære.`); }, 1800);
+    }
     else if (s.type === "nask") toast(`Du nasket ${s.fikk.oliven} oliven fra ${s.til}. Han har fått beskjed.`);
     else if (s.type === "gi") toast(s.ferdig ? `${s.ferdig} står ferdig! Alle produserer 10 % mer.` : `Takk! +${s.aere} ære.`);
     else if (s.type === "tagg") toast(`Huset til ${s.til} har fått ny utsmykning. +${s.aere} ære.`);

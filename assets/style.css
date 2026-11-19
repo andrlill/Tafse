@@ -1250,3 +1250,7 @@ p.h-merket { margin: 10px 0; }
 /* Symposion: kortene i panelet skal ikke sprenge bredden på mobil */
 @media (max-width: 760px) { .sy-rangboks .sy-butikk { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
 @media (max-width: 760px) { .sy-zoom { flex-direction: row; left: 8px; bottom: 8px; } .sy-zoom button { width: 38px; height: 38px; } }
+.sy-runde { display: flex; gap: 6px 14px; align-items: center; flex-wrap: wrap; margin-top: 14px; padding: 10px 14px; border: 1px dashed var(--linje); }
+.sy-runde .sy-etikett, .sy-runde .sy-prikker { margin: 0; }
+.sy-runde.ferdig { border-style: solid; border-color: #4a4026; }
+.sy-gjengjeld { animation-duration: .9s; }
