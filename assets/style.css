@@ -1300,3 +1300,67 @@ p.h-merket { margin: 10px 0; }
   .siste-spill li { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "navn poeng" "spill tid"; row-gap: 2px; padding: 8px 12px; }
   .siste-spill a, .siste-spill time { font-size: 14px; }
 }
+
+/* Symposion: levende kart, kort på kartet og gjøremål */
+.sy-hurtig { cursor: pointer; }
+@media (hover: hover) { .sy-hurtig:hover circle[stroke], .sy-hurtig:hover path[stroke] { stroke: #fff; } }
+.sy-royk circle { opacity: 0; transform-box: fill-box; transform-origin: center; animation: sy-royk 4s ease-out infinite; }
+@keyframes sy-royk { 0% { opacity: 0; transform: translate(0, 0) scale(.5); } 20% { opacity: .5; } 100% { opacity: 0; transform: translate(9px, -30px) scale(1.9); } }
+.sy-sky { animation: sy-sky 200s linear infinite; }
+@keyframes sy-sky { from { transform: translateX(-130px); } to { transform: translateX(1130px); } }
+.sy-fugl { animation: sy-fugl 60s linear infinite; }
+.sy-fugl path { animation: sy-vinge .7s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes sy-fugl { from { transform: translate(-40px, 10px); } 50% { transform: translate(500px, -14px); } to { transform: translate(1040px, 6px); } }
+@keyframes sy-vinge { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(.35); } }
+.sy-gange { animation: sy-gange .55s ease-in-out infinite; }
+@keyframes sy-gange { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.4px); } }
+.sy-seiler { animation: sy-seiler 46s ease-in-out infinite; }
+@keyframes sy-seiler { 0%, 100% { transform: translateX(-12px); } 50% { transform: translateX(16px); } }
+.sy-folk, #sy-luft, .sy-sky, .sy-fugler { pointer-events: none; }
+.sy-bobleinn { animation: sy-boble 5.2s ease both; transform-box: fill-box; transform-origin: 50% 100%; }
+@keyframes sy-boble { 0% { opacity: 0; transform: scale(.6); } 7% { opacity: 1; transform: scale(1.04); } 10% { transform: scale(1); } 88% { opacity: 1; } 100% { opacity: 0; } }
+.sy-bobletekst { font-family: var(--brod, "EB Garamond", serif); font-style: italic; font-size: 9.5px; fill: #14130d; }
+.sy-bobletid { font-family: var(--display); font-size: 5.5px; letter-spacing: .14em; text-transform: uppercase; fill: #7a6d49; }
+.sy-gnist circle { animation: sy-gnist .75s ease-out both; }
+@keyframes sy-gnist { from { opacity: 1; transform: translate(0, 0); } to { opacity: 0; transform: translate(var(--dx), var(--dy)); } }
+
+.sy-gjoremal { position: absolute; left: 10px; top: 10px; right: 10px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; z-index: 2; pointer-events: none; }
+.sy-gjoremal > * { pointer-events: auto; }
+.sy-brikkeknapp { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 6px 12px; border: 1px solid var(--gull); background: rgba(11, 11, 10, .86); color: var(--tekst); font: inherit; font-size: 15px; cursor: pointer; }
+.sy-brikkeknapp .sy-ikon { width: 16px; height: 16px; flex: none; }
+.sy-brikkeknapp.viktig { animation: sy-puls 2.2s ease-in-out infinite; color: var(--gull-lys); }
+@media (hover: hover) { .sy-brikkeknapp:hover { background: #2a2210; } }
+.sy-fasemerke { margin-left: auto; padding: 4px 10px; background: rgba(11, 11, 10, .6); font-family: var(--display); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--gull-lys); pointer-events: none; }
+
+.sy-kort { position: absolute; right: 10px; top: 54px; width: 300px; max-height: calc(100% - 64px); overflow-y: auto; z-index: 3; display: flex; flex-direction: column; gap: 10px; padding: 16px 18px 18px; border: 1px solid var(--gull); background: rgba(14, 13, 11, .95); box-shadow: 0 10px 30px rgba(0, 0, 0, .6); animation: sy-kortinn .22s ease both; }
+@keyframes sy-kortinn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.sy-kort h3 { margin: 0; font-size: 21px; padding-right: 30px; }
+.sy-kort p { margin: 0; }
+.sy-kort .sy-etikett { padding-right: 34px; }
+.sy-kortfakta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 15px; color: var(--dempet); }
+.sy-kortfakta .sy-ikon { width: 15px; height: 15px; }
+.sy-kortfakta strong { color: var(--gull-lys); font-weight: 500; }
+.sy-kortnote { font-size: 15px; line-height: 1.4; }
+.sy-kort .knapp { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.sy-kort .knapp small { font-size: 13px; letter-spacing: 0; text-transform: none; font-family: var(--brod, inherit); opacity: .85; }
+.sy-kort .knapp:disabled { opacity: .5; cursor: default; }
+.sy-kortrad { display: flex; gap: 8px; flex-wrap: wrap; }
+.sy-kortrad > * { flex: 1 1 auto; text-align: center; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+.sy-kortlukk { position: absolute; right: 6px; top: 6px; width: 40px; height: 40px; border: 0; background: none; color: var(--dempet); font-size: 26px; line-height: 1; cursor: pointer; }
+.sy-kortlukk:hover { color: var(--gull-lys); }
+.sy-kort .sy-taggboks { border: 0; padding: 0; margin: 0; background: none; }
+.sy-kort .sy-taggrad { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+.sy-kort .sy-taggfot { font-size: 13px; }
+@media (max-width: 760px) {
+  /* På smal skjerm ligger kortet rett under kartet, så hele kartet er synlig */
+  .sy-kort { position: static; width: auto; max-height: none; border-width: 1px 0 0; box-shadow: none; padding: 12px 14px 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .sy-kort > * { grid-column: 1 / -1; }
+  .sy-kort > .knapp { grid-column: auto; padding: 10px 8px; }
+  .sy-kort > .knapp:only-of-type { grid-column: 1 / -1; }
+  .sy-kort h3 { font-size: 19px; }
+  .sy-fasemerke { display: none; }
+  .sy-brikkeknapp { font-size: 14px; padding: 5px 10px; }
+}
+@media (prefers-reduced-motion: reduce) { .sy-royk circle, .sy-sky, .sy-fugl, .sy-fugl path, .sy-gange, .sy-seiler, .sy-kort, .sy-brikkeknapp.viktig { animation: none; } .sy-royk circle { opacity: .35; } }
+.sy-kort .sy-taggrad input { flex: 0 0 auto; }
+.sy-kartflate { position: relative; }

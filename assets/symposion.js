@@ -40,6 +40,28 @@
   const lagerSum = () => RESS.reduce((s, r) => s + Math.floor(lager(r)), 0);
   const harRad = (k) => k && Object.entries(k).every(([r, n]) => T.meg.beholdning[r] >= n);
 
+  // ---------- Døgnet på øya ----------
+  // Kartet følger klokka i Oslo: natt, morgen, dag og kveld har hver sin himmel, sitt hav og sitt lys.
+  // (?tid=natt|morgen|dag|kveld i adressen overstyrer, til testing.)
+  const PALETT = {
+    natt:   { himmel: ["#07080d", "#151a2a", "#4a3a22"], hav: ["#2a3138", "#121c22", "#0a0f12"], land: ["#4a4830", "#2f2e1e", "#23221a"], strand: "#9a8552", fjell: "#12141a", bakke: "#3b3824", vei: "#7a6d49", sky: .1, stjerner: 1 },
+    morgen: { himmel: ["#2b2a4a", "#a8687a", "#f2c08a"], hav: ["#9a8088", "#3d5563", "#16262e"], land: ["#75703f", "#504e30", "#38371f"], strand: "#c9ad72", fjell: "#3a3550", bakke: "#5b562f", vei: "#a39160", sky: .55, stjerner: .3 },
+    dag:    { himmel: ["#4587bd", "#93c2de", "#e6eedc"], hav: ["#86b8c8", "#2f7389", "#184c5e"], land: ["#98995a", "#737746", "#565c36"], strand: "#e3cf97", fjell: "#6c83a1", bakke: "#80814a", vei: "#d3c28d", sky: .9, stjerner: 0 },
+    kveld:  { himmel: ["#191a36", "#7a3d5c", "#e88f4c"], hav: ["#a06c50", "#3a3a4e", "#141a24"], land: ["#6b5f3a", "#474029", "#2f2b1c"], strand: "#b9965e", fjell: "#2a2238", bakke: "#514a2b", vei: "#96835a", sky: .5, stjerner: .35 },
+  };
+  const osloTime = () => {
+    const [t, m] = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Oslo", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date()).split(":").map(Number);
+    return (t % 24) + m / 60;
+  };
+  const TVUNGEN_FASE = new URLSearchParams(location.search).get("tid");
+  function fase() {
+    if (PALETT[TVUNGEN_FASE]) return TVUNGEN_FASE;
+    const t = osloTime();
+    return t < 5.5 ? "natt" : t < 8.5 ? "morgen" : t < 17.5 ? "dag" : t < 21 ? "kveld" : "natt";
+  }
+  const FASENAVN = { natt: "Natt på øya", morgen: "Morgen på øya", dag: "Dag på øya", kveld: "Kveld på øya" };
+  const roligBevegelse = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
   // ---------- Bykartet ----------
   const W = 1000, H = 640, TOPP = 44, HH = H - TOPP;
   // BYEN ER DELT I NABOLAG ETTER ÆRE. De fire med mest ære bor på Akropolis, på hver side av
@@ -153,15 +175,22 @@
       const hp = harPynt(sp.rang);
       const hoyde = [-44, -52, -60, -80][trinn] - (hp.has("flagg") ? 16 : 0) - (hp.has("stjerne") ? 14 : 0);
       const mosaikk = hp.has("mosaikk") ? `<ellipse rx="57" ry="14.4" fill="none" stroke="#6fc3c9" stroke-width="2.4" stroke-dasharray="3 3" opacity=".85"/><ellipse rx="51" ry="12.4" fill="none" stroke="#c9a24a" stroke-width="1.1" stroke-dasharray="1.5 4"/>` : "";
+      // Merkene over husene er knapper: boblen over ditt eget høster, og begeret over en nabo skjenker.
       const merke = mitt
-        ? `<g class="sy-dupp sy-klar" data-klar hidden><circle cy="${hoyde - 6}" r="11" fill="#141310" stroke="#c9a24a"/><g transform="translate(-8 ${hoyde - 14})">${IKON.oliven.replace('class="sy-ikon"', 'width="16" height="16"')}</g></g>`
-        : !sp.skjenket && T.meg ? `<g class="sy-dupp${sp.skjenketMeg ? " sy-gjengjeld" : ""}"><path d="M-4 ${hoyde - 12} h8 l-1 4 q4 5 0 11 h-6 q-4 -6 0 -11 z" fill="${sp.skjenketMeg ? "#c2557f" : "#c9a24a"}" stroke="${sp.skjenketMeg ? "#f2e3b4" : "#14130d"}" stroke-width="1"/>${sp.skjenketMeg ? `<circle cx="7" cy="${hoyde - 13}" r="3.2" fill="#f2c14e" stroke="#14130d" stroke-width=".8"/>` : ""}</g>` : "";
-      inn = `${hp.has("fakler") ? `<ellipse rx="78" ry="24" fill="url(#sy-glod)"/>` : ""}<ellipse rx="64" ry="17" fill="#3b3824"/>${mosaikk}<ellipse rx="64" ry="17" class="sy-ring" fill="none"/>${stein}${gruve}${tre}<g>${villa(b.villa, sp.hjemme)}</g>${vin}${kuber}${pynt(sp.rang, tak)}${taggSvg(sp.tagg, mitt)}${merke}`;
+        ? `<g class="sy-dupp sy-klar sy-hurtig" data-klar data-hurtig="host" hidden><title>Høst avlingen</title><circle cy="${hoyde - 6}" r="17" fill="transparent"/><circle cy="${hoyde - 6}" r="11" fill="#141310" stroke="#c9a24a"/><g transform="translate(-8 ${hoyde - 14})">${IKON.oliven.replace('class="sy-ikon"', 'width="16" height="16"')}</g></g>`
+        : !sp.skjenket && T.meg ? `<g class="sy-dupp sy-hurtig${sp.skjenketMeg ? " sy-gjengjeld" : ""}" data-hurtig="skjenk" data-til="${esc(navn)}"><title>Skjenk ${esc(visningsnavn(navn))} et glass</title><circle cy="${hoyde - 2}" r="16" fill="transparent"/><path d="M-4 ${hoyde - 12} h8 l-1 4 q4 5 0 11 h-6 q-4 -6 0 -11 z" fill="${sp.skjenketMeg ? "#c2557f" : "#c9a24a"}" stroke="${sp.skjenketMeg ? "#f2e3b4" : "#14130d"}" stroke-width="1"/>${sp.skjenketMeg ? `<circle cx="7" cy="${hoyde - 13}" r="3.2" fill="#f2c14e" stroke="#14130d" stroke-width=".8"/>` : ""}</g>` : "";
+      inn = `${hp.has("fakler") ? `<ellipse rx="78" ry="24" fill="url(#sy-glod)"/>` : ""}<ellipse rx="64" ry="17" fill="${PALETT[fase()].bakke}"/>${mosaikk}<ellipse rx="64" ry="17" class="sy-ring" fill="none"/>${stein}${gruve}${tre}${sp.hjemme ? royk(trinn, tak) : ""}<g>${villa(b.villa, sp.hjemme)}</g>${vin}${kuber}${pynt(sp.rang, tak)}${taggSvg(sp.tagg, mitt)}${merke}`;
     }
     return `<g class="${klasse}" data-navn="${esc(navn)}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${s.toFixed(3)})" tabindex="0" role="button" aria-label="${esc(godsNavn(navn))}">
       <ellipse rx="70" ry="60" cy="-22" fill="transparent"/>${inn}
       <g transform="translate(0 22) scale(${tekstskala})"><text y="12" text-anchor="middle" class="sy-navn">${esc(visningsnavn(navn))}${mitt ? " (deg)" : ""}</text>
       ${sp && sp.rang ? `<text y="25" text-anchor="middle" class="sy-tittel">${esc(T.regler.ranger[sp.rang].tittel)}</text>` : ""}</g></g>`;
+  }
+
+  // Røyk fra pipa hos dem som har vært innom det siste døgnet
+  function royk(trinn, tak) {
+    const x = [7, 12, 0, 0][trinn], y = trinn >= 2 ? tak + 8 : tak + 6;
+    return `<g class="sy-royk" transform="translate(${x} ${y})">${[0, 1, 2].map((i) => `<circle r="${3 + i * 0.6}" fill="#d8d2c2" style="animation-delay:${(-i * 1.3).toFixed(1)}s"/>`).join("")}</g>`;
   }
 
   // Rangpynt: hver rang legger til én ting på godset, og man beholder alt fra rangene under
@@ -260,7 +289,8 @@
       return d + " Z";
     };
     const kystlinje = kyst(488, 204);
-    const bat = (x, y, s, seil = "#ece5d3", tittel = "", vent = 0) => `<g transform="translate(${x} ${y}) scale(${s})">${tittel ? `<title>${esc(tittel)}</title>` : ""}<g class="sy-bat" style="animation-delay:${vent}s"><path d="M-16 0 Q0 9 16 0 L12 5 H-12 Z" fill="#3a2a18"/><path d="M0 0 V-20" stroke="#3a2a18" stroke-width="1.6"/><path d="M1 -19 Q12 -12 1 -4 Z" fill="${seil}"/></g></g>`;
+    const f = fase(), P = PALETT[f];
+    const bat = (x, y, s, seil = "#ece5d3", tittel = "", vent = 0, merkelapp = "") => `<g transform="translate(${x} ${y}) scale(${s})">${tittel ? `<title>${esc(tittel)}</title>` : ""}${merkelapp ? `<text y="19" text-anchor="middle" class="sy-statuenavn">${esc(merkelapp)}</text>` : ""}<g class="sy-bat" style="animation-delay:${vent}s"><path d="M-16 0 Q0 9 16 0 L12 5 H-12 Z" fill="#3a2a18"/><path d="M0 0 V-20" stroke="#3a2a18" stroke-width="1.6"/><path d="M1 -19 Q12 -12 1 -4 Z" fill="${seil}"/></g></g>`;
     const pl = plasser();
     const tomter = T.spillere.map((sp) => ({ y: pl.get(sp.navn).y, svg: tomt(sp, pl.get(sp.navn), pl.k) })).sort((a, b) => a.y - b.y).map((t) => t.svg).join("");
     // Havnen ligger fast på østkysten. Skip som er på tokt, er borte fra kaia.
@@ -276,36 +306,70 @@
       ${pl.akropolis.length ? [-1, 1].map((side) => { const ytterst = Math.max(...pl.akropolis.map((x) => (x - 500) * side)); return `<path d="M${500 + side * 104} ${420 - LOFT} Q${500 + side * 190} ${330} ${500 + side * 250} 318 H${(500 + side * (ytterst + 40 * pl.k)).toFixed(0)}"/>`; }).join("") : ""}`;
     const skilt = `<text x="500" y="${296 - LOFT - 12}" text-anchor="middle" class="sy-nabolag">Akropolis</text>
       ${pl.gater.map((g) => `<text x="${(g.x1 - 62 * pl.k - 8).toFixed(0)}" y="${g.y + 3}" text-anchor="end" class="sy-nabolag">${g.navn}</text>`).join("")}`;
+    // Skip på tokt seiler ute på havet, med navnet til rederen
+    const HAVET = [[64, 262], [120, 600], [936, 262], [30, 318], [236, 626], [968, 318], [770, 624]];
+    const ute = flaate.filter((sp) => sp.skip === "ute").slice(0, HAVET.length);
+    const paTokt = ute.length
+      ? ute.map((sp, i) => { const min = T.meg && sp.navn === T.meg.navn; return `<g class="sy-seiler${min ? " sy-havn" : ""}" ${min ? "data-havnkart" : ""} style="animation-delay:${(-i * 7).toFixed(0)}s">${bat(HAVET[i][0], HAVET[i][1], 0.85, min ? "#e2c174" : "#ece5d3", `${visningsnavn(sp.navn)} er på tokt`, (i * 0.9).toFixed(1), visningsnavn(sp.navn))}</g>`; }).join("")
+      : `${bat(64, 262, 0.8)}${bat(120, 600, 1.1)}`;
+    // Sol eller måne
+    const t = osloTime();
+    const solX = f === "dag" ? 150 + Math.min(1, Math.max(0, (t - 8.5) / 9)) * 700 : f === "morgen" ? 170 : 830;
+    const solY = f === "dag" ? 150 - Math.sin(Math.PI * Math.min(1, Math.max(0, (t - 8.5) / 9))) * 86 : 204;
+    const himmellys = f === "natt"
+      ? `<circle cx="838" cy="74" r="62" fill="url(#sy-mane)"/><circle cx="838" cy="74" r="21" fill="#f2e3b4"/><circle cx="846" cy="68" r="19" fill="#151a2a" opacity=".35"/>`
+      : `<circle cx="${solX.toFixed(0)}" cy="${solY.toFixed(0)}" r="${f === "dag" ? 70 : 96}" fill="url(#sy-sol)"/><circle cx="${solX.toFixed(0)}" cy="${solY.toFixed(0)}" r="${f === "dag" ? 19 : 24}" fill="${f === "dag" ? "#fff3c4" : "#ffc978"}"/>`;
+    const sky = (x, y, s, sek) => `<g class="sy-sky" style="animation-duration:${sek}s; animation-delay:${(-((Date.now() / 1000 + x * 0.4) % sek)).toFixed(0)}s"><g transform="translate(0 ${y}) scale(${s})"><ellipse cx="0" cy="0" rx="46" ry="11"/><ellipse cx="-22" cy="-7" rx="22" ry="10"/><ellipse cx="14" cy="-10" rx="26" ry="13"/></g></g>`;
+    const skyer = `<g fill="${f === "dag" ? "#ffffff" : f === "natt" ? "#8d93a8" : "#f4d9c2"}" opacity="${P.sky}">${sky(0, 96, 1, 190)}${sky(260, 150, 0.7, 250)}${sky(520, 70, 1.25, 310)}</g>`;
+    const fugler = f === "dag" || f === "morgen"
+      ? `<g class="sy-fugler" fill="none" stroke="${f === "dag" ? "#2b3a48" : "#1d1a2a"}" stroke-width="1.6" stroke-linecap="round">${[[150, 70, 0], [118, 46, -11], [205, 96, -23]].map(([y, sek, vent]) => `<g class="sy-fugl" style="animation-duration:${sek}s; animation-delay:${vent}s"><path transform="translate(0 ${y})" d="M-7 0 Q-3.5 -5 0 0 Q3.5 -5 7 0"/></g>`).join("")}</g>` : "";
+    // Folk i gatene: de går fram og tilbake langs gatene og opp alleen til agoraen
+    const KLAER = ["#8e2f52", "#3f6f8a", "#b5651d", "#5f7339", "#6b4a8a", "#c9a24a", "#9a4a3a"];
+    const figur = (i) => `<g transform="scale(${(pl.k * 1.25).toFixed(2)})"><g class="sy-gange"><ellipse cy=".6" rx="3.6" ry="1.1" fill="#000" opacity=".25"/><path d="M-2.4 -7 h4.8 l1.2 7 h-7.2 z" fill="${KLAER[i % KLAER.length]}"/><circle cy="-9.4" r="2.4" fill="#e3c9a4"/>${f === "natt" || f === "kveld" ? `<path d="M3.4 -6 v-5" stroke="#5a4630" stroke-width=".9"/><circle cx="3.4" cy="-12" r="1.5" fill="#f2c14e" class="sy-flamme"/>` : ""}</g></g>`;
+    const turer = [];
+    pl.gater.forEach((g) => { if (g.x2 - g.x1 > 10) { turer.push([g.x1 - 40 * pl.k, g.y + 2, g.x2 + 40 * pl.k, g.y + 2]); if (g.x2 - g.x1 > 300) turer.push([g.x2 + 30 * pl.k, g.y + 3, g.x1 - 30 * pl.k, g.y + 3]); } });
+    if (sisteGate) turer.push([500, 424 - LOFT, 500, sisteGate.y - 4]);
+    const antallFolk = roligBevegelse() ? 0 : Math.min(turer.length, f === "natt" ? 2 : 7, Math.max(1, T.spillere.length - 1));
+    const folk = turer.slice(0, antallFolk).map(([x1, y1, x2, y2], i) => {
+      const sek = Math.max(24, Math.round(Math.hypot(x2 - x1, y2 - y1) / 4.5)) + i * 3;
+      return `<g>${figur(i)}<animateMotion dur="${sek}s" repeatCount="indefinite" begin="${(-((Date.now() / 1000 + i * 17) % sek)).toFixed(1)}s" path="M${x1.toFixed(0)} ${y1.toFixed(0)} L${x2.toFixed(0)} ${y2.toFixed(0)} L${x1.toFixed(0)} ${y1.toFixed(0)}"/></g>`;
+    }).join("");
+    // Dagens offer: en flamme over Akropolis som man kan trykke på
+    const offermerke = T.meg && T.meg.kanOfre ? `<g class="sy-hurtig" data-hurtig="offer" transform="translate(500 ${296 - LOFT - 50})"><title>Ofre til gudene</title><g class="sy-dupp"><circle r="20" fill="transparent"/><circle r="13" fill="#141310" stroke="#c9a24a" stroke-width="1.4"/><path d="M0 7 q-7 -6 -1.5 -15 q1 4 3.4 4.6 q-.6 -4 2 -6.6 q5.6 9 -3.9 17 z" fill="#f2c14e" class="sy-flamme"/></g></g>` : "";
     const grad = monumentGrad();
     const mon = T.regler.monumenter.map(({ id }) => ({ id, svg: monument(id, T.ferdige.includes(id) ? 1 : T.monument && T.monument.id === id ? grad : null) }));
     const rekke = { orakel: -1, tempel: 0, agora: 1, teater: 2, koloss: 3 };
     const fyret = mon.find((x) => x.id === "fyr");
     mon.splice(mon.indexOf(fyret), 1);
     mon.sort((a, b) => rekke[a.id] - rekke[b.id]);
-    return `<svg viewBox="0 ${TOPP} ${W} ${H - TOPP}" preserveAspectRatio="xMidYMid slice" class="sy-kart" role="group" aria-label="Kart over byen">
+    return `<svg viewBox="0 ${TOPP} ${W} ${H - TOPP}" preserveAspectRatio="xMidYMid slice" class="sy-kart sy-${f}" role="group" aria-label="Kart over byen">
       <defs>
-        <linearGradient id="sy-himmel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#07080d"/><stop offset=".62" stop-color="#151a2a"/><stop offset="1" stop-color="#4a3a22"/></linearGradient>
-        <linearGradient id="sy-hav" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a3138"/><stop offset=".25" stop-color="#121c22"/><stop offset="1" stop-color="#0a0f12"/></linearGradient>
-        <radialGradient id="sy-land" cx=".5" cy=".42" r=".62"><stop offset="0" stop-color="#4a4830"/><stop offset=".7" stop-color="#2f2e1e"/><stop offset="1" stop-color="#23221a"/></radialGradient>
+        <linearGradient id="sy-himmel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${P.himmel[0]}"/><stop offset=".62" stop-color="${P.himmel[1]}"/><stop offset="1" stop-color="${P.himmel[2]}"/></linearGradient>
+        <linearGradient id="sy-hav" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${P.hav[0]}"/><stop offset=".25" stop-color="${P.hav[1]}"/><stop offset="1" stop-color="${P.hav[2]}"/></linearGradient>
+        <radialGradient id="sy-land" cx=".5" cy=".42" r=".62"><stop offset="0" stop-color="${P.land[0]}"/><stop offset=".7" stop-color="${P.land[1]}"/><stop offset="1" stop-color="${P.land[2]}"/></radialGradient>
+        <radialGradient id="sy-sol" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffe9a8" stop-opacity=".75"/><stop offset="1" stop-color="#ffe9a8" stop-opacity="0"/></radialGradient>
         <radialGradient id="sy-glod" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#f2c14e" stop-opacity=".35"/><stop offset="1" stop-color="#f2c14e" stop-opacity="0"/></radialGradient>
         <radialGradient id="sy-mane" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#f2e3b4" stop-opacity=".5"/><stop offset="1" stop-color="#f2e3b4" stop-opacity="0"/></radialGradient>
       </defs>
-      <rect x="-200" y="-900" width="${W + 400}" height="902" fill="#07080d"/><rect x="-200" y="${H - 2}" width="${W + 400}" height="900" fill="#0a0f12"/>
+      <rect x="-200" y="-900" width="${W + 400}" height="902" fill="${P.himmel[0]}"/><rect x="-200" y="${H - 2}" width="${W + 400}" height="900" fill="${P.hav[2]}"/>
       <rect width="${W}" height="232" fill="url(#sy-himmel)"/>
-      <g class="sy-stjerner" fill="#f2e3b4">${stjerner}</g>
-      <circle cx="838" cy="74" r="62" fill="url(#sy-mane)"/><circle cx="838" cy="74" r="21" fill="#f2e3b4"/><circle cx="846" cy="68" r="19" fill="#151a2a" opacity=".35"/>
-      <path d="M0 232 L0 206 L70 178 L130 200 L210 162 L300 204 L360 190 L420 214 L560 216 L640 186 L720 208 L800 170 L880 202 L950 184 L1000 204 L1000 232 Z" fill="#12141a"/>
+      ${P.stjerner ? `<g class="sy-stjerner" fill="#f2e3b4" opacity="${P.stjerner}">${stjerner}</g>` : ""}
+      ${himmellys}${skyer}${fugler}
+      <path d="M0 232 L0 206 L70 178 L130 200 L210 162 L300 204 L360 190 L420 214 L560 216 L640 186 L720 208 L800 170 L880 202 L950 184 L1000 204 L1000 232 Z" fill="${P.fjell}"/>
       <rect y="224" width="${W}" height="${H - 224}" fill="url(#sy-hav)"/>
-      <path d="M770 232 L800 300 L900 300 L850 232 Z" fill="#f2e3b4" opacity=".06"/>
-      <g class="sy-glitter" stroke="#f2e3b4" stroke-width="1.2" stroke-linecap="round">${glitter}</g>
-      ${bat(64, 262, 0.8)}${bat(120, 600, 1.1)}
-      <path d="${kystlinje}" fill="#1c2a30" transform="translate(0 7)" opacity=".8"/>
-      <path d="${kystlinje}" fill="#9a8552"/>
+      ${f === "natt" ? `<path d="M770 232 L800 300 L900 300 L850 232 Z" fill="#f2e3b4" opacity=".06"/>` : f !== "dag" ? `<path d="M${solX - 46} 232 L${solX - 80} 330 L${solX + 80} 330 L${solX + 46} 232 Z" fill="#ffc978" opacity=".1"/>` : ""}
+      <g class="sy-glitter" stroke="${f === "dag" ? "#ffffff" : "#f2e3b4"}" stroke-width="1.2" stroke-linecap="round">${glitter}</g>
+      ${paTokt}
+      <path d="${kystlinje}" fill="#1c2a30" transform="translate(0 7)" opacity="${f === "dag" ? ".35" : ".8"}"/>
+      <path d="${kystlinje}" fill="${P.strand}"/>
       <path d="${kystlinje}" fill="url(#sy-land)" transform="translate(500 412) scale(.975 .955) translate(-500 -412)"/>
-      <g class="sy-veier" fill="none" stroke="#7a6d49" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 7" opacity=".7">${veier}</g>
+      <g class="sy-veier" fill="none" stroke="${P.vei}" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 7" opacity=".7">${veier}</g>
       ${skilt}
       <g transform="translate(0 ${-LOFT})">${mon.map((m) => m.svg).join("")}${statuer()}</g>
+      ${offermerke}
+      <g class="sy-folk">${folk}</g>
       ${tomter}
+      <g id="sy-luft"></g>
       ${havna}${fyret ? fyret.svg : ""}
     </svg>`;
   }
@@ -363,13 +427,124 @@
     const pl = plasser();
     if (!pl.has(navn)) return;
     const p = paKart(pl.get(navn), pl.krymp);
-    zoomTil(Math.max(vis ? vis.z : 1, smal() ? 2.6 : 1.9), p.x, p.y - 14);
+    const z = Math.max(vis ? vis.z : 1, smal() ? 2.6 : 1.9);
+    // På bred skjerm ligger kortet til høyre på kartet, så godset legges litt til venstre for midten
+    const w = W / z;
+    zoomTil(z, p.x + (kort && !smal() ? w * 0.2 : 0), p.y - 14);
   }
   const zoomknapper = () => `<div class="sy-zoom" role="group" aria-label="Kartvisning">
     <button type="button" data-zoom="inn" aria-label="Zoom inn" title="Zoom inn">+</button>
     <button type="button" data-zoom="ut" aria-label="Zoom ut" title="Zoom ut">&minus;</button>
     <button type="button" data-zoom="alt" aria-label="Vis hele øya" title="Hele øya"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6 V2 H6 M10 2 H14 V6 M14 10 V14 H10 M6 14 H2 V10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
     ${T.meg ? `<button type="button" data-zoom="meg" aria-label="Vis godset mitt" title="Godset mitt"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8 L8 2.6 L14 8 M4 7 V13.4 H12 V7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></button>` : ""}</div>`;
+
+  // ---------- Kortet på kartet ----------
+  // Trykker man på et gods, åpnes et kort oppå kartet med det man kan gjøre der. Da slipper man å bla.
+  let kort = null;         // navnet på godset kortet viser
+  let sprayApen = false;
+  function kortHtml() {
+    if (!kort || !T.meg) return "";
+    const m = T.meg, sp = T.spillere.find((x) => x.navn === kort), pl = plasser();
+    if (!sp || !pl.has(kort)) return "";
+    const plass = pl.get(kort), rangtittel = T.regler.ranger[sp.rang] ? T.regler.ranger[sp.rang].tittel : "";
+    const hode = (etikett, tittel) => `<button type="button" class="sy-kortlukk" data-lukkkort aria-label="Lukk">&times;</button>
+      <p class="sy-etikett">${esc(etikett)}</p><h3>${esc(tittel)}</h3>
+      <p class="sy-kortfakta">${IKON.aere}<strong>${tall(sp.aere)}</strong> ære · nr. ${plass.plass} i byen · villa nivå ${sp.bygg.villa}</p>`;
+    if (kort === m.navn) {
+      const g = pl.grense(kort);
+      return `<div class="sy-kort" id="sy-kort">${hode(`Godset ditt · ${plass.nabolag}`, rangtittel || "Godset ditt")}
+        ${g ? `<p class="dempet sy-kortnote">${tall(g.mangler)} ære til, så flytter du opp ${esc(g.nabolag)}.</p>` : `<p class="dempet sy-kortnote">Du bor i byens fineste strøk.</p>`}
+        ${sp.tagg ? `<p class="sy-kortnote">Tagget av ${esc(visningsnavn(sp.tagg.fra))}: <span class="sy-taggsitat" style="color:${sp.tagg.farge}">${esc(sp.tagg.tekst)}</span></p><button class="knapp sekundar" type="button" data-skrubb>${skrubb ? `Skrubb videre (${skrubb} av ${SKRUBB})` : "Skrubb det bort"}</button>` : ""}
+        <button class="knapp sy-host" type="button" data-gjor="host" data-host>Høst</button>
+        <div class="sy-kortrad"><a class="liten-knapp" href="hotell.html?rom=${encodeURIComponent(`hjem:${m.navn}`)}">Gå inn i huset</a><button class="liten-knapp" type="button" data-tilpanel>Bygg ut</button></div></div>`;
+    }
+    const naskTekst = sp.nasket ? "Nasket i dag" : m.naskIgjen <= 0 ? "Ikke flere nask i dag" : sp.vaktet ? "Nattevakten passer på" : sp.bytte < 5 ? "Ingenting å naske" : `Nask ca. ${tall(sp.bytte)} oliven`;
+    return `<div class="sy-kort" id="sy-kort">${hode(`${rangtittel || "Nybygger"} · bor ${plass.nabolag}`, godsNavn(sp.navn))}
+      <p class="dempet sy-kortnote">${sp.hjemme ? "Det ryker fra pipa. Noen er hjemme." : "Ingen har vært hjemme det siste døgnet."}${sp.skip === "ute" ? " Skipet er på tokt." : ""}</p>
+      ${sp.tagg ? `<p class="sy-kortnote">Tagget av ${esc(visningsnavn(sp.tagg.fra))}: <span class="sy-taggsitat" style="color:${sp.tagg.farge}">${esc(sp.tagg.tekst)}</span></p>` : ""}
+      <button class="knapp${sp.skjenketMeg && !sp.skjenket && m.skjenk.kan ? " sy-offer" : ""}" type="button" data-skjenk="${esc(sp.navn)}" ${sp.skjenket || !m.skjenk.kan ? "disabled" : ""}>${sp.skjenket ? "Skjenket i dag" : sp.skjenketMeg ? "Skål tilbake" : "Skjenk et glass"}<small>${sp.skjenket ? "Kom tilbake i morgen" : !m.skjenk.kan ? `For lite ${rn(m.skjenk.hoved)}. Høst først.` : `+${m.skjenk.aere + (sp.skjenketMeg ? m.skjenk.gjengjeldAere : 0)} ære${sp.skjenketMeg ? `, ${esc(visningsnavn(sp.navn))} skjenket deg i dag` : ""}`}</small></button>
+      <button class="knapp sekundar" type="button" data-nask="${esc(sp.navn)}" ${sp.nasket || m.naskIgjen <= 0 || sp.bytte < 5 ? "disabled" : ""}>${naskTekst}<small>${m.naskIgjen} av ${T.regler.naskPerDag} nask igjen</small></button>
+      <div class="sy-kortrad"><a class="liten-knapp" href="hotell.html?rom=${encodeURIComponent(`hjem:${sp.navn}`)}">Gå inn i huset</a><button class="liten-knapp" type="button" data-spray aria-expanded="${sprayApen}">Spraybøksa</button></div>
+      ${sprayApen ? taggSkjema(sp) : ""}</div>`;
+  }
+  function tegnKort() {
+    const boks = rot.querySelector(".sy-kartboks");
+    if (!boks) return;
+    boks.querySelector("#sy-kort")?.remove();
+    boks.classList.toggle("harkort", !!kort);
+    if (kort) boks.insertAdjacentHTML("beforeend", kortHtml());
+  }
+
+  // Gjøremål øverst på kartet: hvem som venter på et glass, og hva som ellers er klart
+  function neste() {
+    const m = T.meg;
+    const venter = T.spillere.filter((x) => x.navn !== m.navn && !x.skjenket).sort((a, b) => Number(b.skjenketMeg) - Number(a.skjenketMeg));
+    return venter.find((x) => x.navn !== kort) || venter[0] || null;
+  }
+  function gjoremal() {
+    const m = T.meg, igjen = T.spillere.filter((x) => x.navn !== m.navn && !x.skjenket).length;
+    const tilbake = T.spillere.filter((x) => x.navn !== m.navn && !x.skjenket && x.skjenketMeg).length;
+    const skipHjemme = m.tokt && (m.tokt.hjemme || Date.parse(m.tokt.hjem) <= Date.now());
+    return `<div class="sy-gjoremal" aria-label="Dette kan du gjøre nå">
+      ${igjen ? `<button type="button" class="sy-brikkeknapp${tilbake ? " viktig" : ""}" data-neste><svg viewBox="0 0 16 16" class="sy-ikon" aria-hidden="true"><path d="M5 2 h6 l-.8 3 q3 3.6 0 8.4 h-4.4 q-3 -4.8 0 -8.4 z" fill="#c9a24a"/></svg>${igjen} ${igjen === 1 ? "nabo" : "naboer"} venter på et glass</button>` : ""}
+      ${skipHjemme ? `<button type="button" class="sy-brikkeknapp viktig" data-havnkart>${IKON.krydder}Skipet er hjemme</button>` : ""}
+      <span class="sy-fasemerke">${FASENAVN[fase()]}</span></div>`;
+  }
+
+  // ---------- Liv på kartet: snakkebobler og ting som flyr ----------
+  const svgNS = "http://www.w3.org/2000/svg";
+  const luft = () => rot.querySelector("#sy-luft");
+  const godsPunkt = (navn) => { const pl = plasser(); return pl.has(navn) ? { ...paKart(pl.get(navn), pl.krymp), k: pl.k } : null; };
+  // Det siste som har skjedd i byen, vises som snakkebobler over huset til den det gjelder
+  let bobleNr = 0;
+  function boble() {
+    const lag = luft();
+    if (!lag || !T || !T.logg || document.hidden) return;
+    const ferske = T.logg.filter((l) => Date.parse(T.naa) - Date.parse(l.opprettet) < 36 * 3600000 && godsPunkt(l.navn));
+    if (!ferske.length) return;
+    const l = ferske[bobleNr++ % ferske.length], p = godsPunkt(l.navn);
+    let tekst = utenGjest(l.tekst).replace(/^./, (c) => c.toUpperCase());
+    if (tekst.length > 40) tekst = `${tekst.slice(0, 38).trimEnd()}…`;
+    const tid = tidSiden(l.opprettet), b = Math.max(60, tekst.length * 4.7 + 16);
+    const x = Math.min(W - b / 2 - 6, Math.max(b / 2 + 6, p.x)), y = p.y - 96 * p.k - 8;
+    const g = document.createElementNS(svgNS, "g");
+    g.setAttribute("class", "sy-boble");
+    g.setAttribute("transform", `translate(${x.toFixed(0)} ${y.toFixed(0)})`);
+    g.innerHTML = `<g class="sy-bobleinn"><path d="M${(-b / 2).toFixed(0)} -26 h${b.toFixed(0)} a4 4 0 0 1 4 4 v18 a4 4 0 0 1 -4 4 h${(-(b / 2 - 5) - (x - p.x)).toFixed(0)} l-5 7 l-5 -7 h${(-(b / 2 - 5) + (x - p.x)).toFixed(0)} a4 4 0 0 1 -4 -4 v-18 a4 4 0 0 1 4 -4 z" fill="#f4efe3" stroke="#14130d" stroke-width=".8"/>
+      <text y="-14" text-anchor="middle" class="sy-bobletekst">${esc(tekst)}</text><text y="-4.5" text-anchor="middle" class="sy-bobletid">${esc(tid === "nå" ? "akkurat nå" : `for ${tid} siden`)}</text></g>`;
+    lag.querySelectorAll(".sy-boble").forEach((x) => x.remove());
+    lag.append(g);
+    setTimeout(() => g.remove(), 5200);
+  }
+  // Noe flyr i en bue fra ett gods til et annet (et beger når man skjenker, oliven når man nasker)
+  function fly(fra, til, hva) {
+    const lag = luft(), a = godsPunkt(fra), b = godsPunkt(til);
+    if (!lag || !a || !b || roligBevegelse()) return;
+    const ting = hva === "beger" ? `<path d="M-5 -8 h10 l-1.4 5 q5 6 0 14 h-7.2 q-5 -8 0 -14 z" fill="#c9a24a" stroke="#14130d" stroke-width="1"/><path d="M-3 -6 h6" stroke="#8e2f52" stroke-width="2"/>`
+      : `<g transform="translate(-9 -9) scale(1.15)">${IKON.oliven.replace('class="sy-ikon"', 'width="16" height="16"')}</g>`;
+    const g = document.createElementNS(svgNS, "g");
+    g.innerHTML = ting;
+    lag.append(g);
+    const start = performance.now(), ms = 900, topp = 60 + Math.hypot(b.x - a.x, b.y - a.y) * 0.18;
+    const steg = (t) => {
+      const k = Math.min(1, (t - start) / ms), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+      const x = a.x + (b.x - a.x) * e, y = a.y - 40 * a.k + (b.y - 40 * b.k - (a.y - 40 * a.k)) * e - Math.sin(Math.PI * e) * topp;
+      g.setAttribute("transform", `translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${(e * 360).toFixed(0)}) scale(${(0.9 + Math.sin(Math.PI * e) * 0.5).toFixed(2)})`);
+      if (k < 1) requestAnimationFrame(steg);
+      else { g.remove(); gnist(b.x, b.y - 40 * b.k); }
+    };
+    requestAnimationFrame(steg);
+  }
+  function gnist(x, y) {
+    const lag = luft();
+    if (!lag || roligBevegelse()) return;
+    const g = document.createElementNS(svgNS, "g");
+    g.setAttribute("transform", `translate(${x.toFixed(0)} ${y.toFixed(0)})`);
+    g.setAttribute("class", "sy-gnist");
+    g.innerHTML = Array.from({ length: 8 }, (_, i) => `<circle r="2" fill="#f2c14e" style="--dx:${(Math.cos(i * 0.785) * 26).toFixed(0)}px; --dy:${(Math.sin(i * 0.785) * 18 - 8).toFixed(0)}px"/>`).join("");
+    lag.append(g);
+    setTimeout(() => g.remove(), 800);
+  }
 
   // ---------- Toppen: ressurser og dagens offer ----------
   const brikke = (r) => { const m = T.meg; return `<div class="sy-brikke" data-brikke="${r}" title="${r === "aere" ? "All ære du har fått for å gi til andre" : rn(r)}">${IKON[r]}<strong>${tall(r === "aere" ? m.aere : m.beholdning[r])}</strong><span>${r === "aere" ? "ære" : rn(r)}</span></div>`; };
@@ -398,7 +573,8 @@
     return `
       <p>Symposion er en felles by på en øy. Hver spiller har et gods som produserer råvarer, også når man er borte. Med dem bygger man ut godset, ansetter folk, sender skip på tokt, reiser byens monumenter og innreder rommet sitt i Tafse Hotell.</p>
       <h3>Kartet</h3>
-      <p>Zoom med knappene nede til høyre, med to fingre eller ved å dobbelttrykke. Dra i kartet for å flytte deg når du har zoomet inn. Trykk på et gods for å gå nærmere.</p>
+      <p>Zoom med knappene nede til høyre, med to fingre eller ved å dobbelttrykke. Dra i kartet for å flytte deg når du har zoomet inn. Trykk på et gods, så åpnes et kort med alt du kan gjøre der.</p>
+      <p>Merkene over husene er snarveier: begeret over en nabo skjenker med ett trykk, olivenboblen over ditt eget gods høster, og flammen over Akropolis er dagens offer. Knappen øverst på kartet tar deg til neste nabo som venter på et glass. Snakkeboblene viser det siste som har skjedd i byen, det ryker fra pipa hos dem som har vært innom det siste døgnet, og skip på tokt seiler ute på havet. Kartet følger klokka, med morgen, dag, kveld og natt.</p>
       <h3>Nabolagene</h3>
       <p>Byen er delt i nabolag etter ære. De fire med mest ære bor på Akropolis, ved tempelet. De neste bor i Midtbyen, rett nedenfor agoraen, og resten i gatene bak. I hver gate står de med mest ære nærmest midten. Får du mer ære enn en nabo, bytter dere plass.</p>
       <h3>Høsting</h3>
@@ -675,7 +851,7 @@
       return;
     }
     rot.innerHTML = `<div class="sy-oppsett">${beholdning()}<div class="sy-hoved">${topp()}
-      <div class="sy-kartboks"><div class="sy-kartrull">${kart()}</div>${zoomknapper()}<div class="sy-toast" id="sy-toast" role="status"></div></div>
+      <div class="sy-kartboks${kort ? " harkort" : ""}"><div class="sy-kartflate"><div class="sy-kartrull">${kart()}</div>${gjoremal()}${zoomknapper()}<div class="sy-toast" id="sy-toast" role="status"></div></div>${kortHtml()}</div>
       <p class="sy-tips" id="sy-tips"></p>
       <div id="sy-panel">${panel()}</div>
       <div class="sy-to">${monumentPanel()}${sidefelt()}</div></div></div>`;
@@ -694,13 +870,12 @@
       if (t) t.textContent = tall(l);
     }
     const sum = lagerSum();
-    const host = rot.querySelector("[data-host]");
-    if (host) {
-      const deler = RESS.filter((r) => Math.floor(lager(r)) > 0).map((r) => `${tall(lager(r))} ${rn(r)}`);
+    const deler = RESS.filter((r) => Math.floor(lager(r)) > 0).map((r) => `${tall(lager(r))} ${rn(r)}`);
+    rot.querySelectorAll("[data-host]").forEach((host) => {
       host.innerHTML = sum > 0 ? `Høst<small>${deler.join(", ")}</small>` : `Høst<small>Ingenting ennå</small>`;
       host.disabled = sum <= 0 || opptatt;
       host.classList.toggle("klar", sum >= 15);
-    }
+    });
     const klar = rot.querySelector("[data-klar]");
     if (klar) klar.toggleAttribute("hidden", sum < 15);
     const f = rot.querySelector("[data-fullt]");
@@ -749,10 +924,11 @@
     else if (s.type === "offer") { sprett(gave(s.fikk)); toast(`Gudene er fornøyde. Dag ${s.streak} av 7 på rad.`); }
     else if (s.type === "bygg") toast(`${T.regler.bygg[s.bygg].navn} er nå på nivå ${s.niva}.`);
     else if (s.type === "skjenk") {
+      fly(T.meg.navn, s.til, "beger");
       toast(`${s.gjengjeld ? "Gjengjeldt skål" : "Skål"}, ${visningsnavn(s.til)}! +${s.aere} ære.`);
       if (s.runde) setTimeout(() => { sprett(gave(s.runde.fikk)); toast(`Dagens runde er tatt! ${gave(s.runde.fikk)} og +${s.runde.aere} ære.`); }, 1800);
     }
-    else if (s.type === "nask") toast(`Du nasket ${s.fikk.oliven} oliven fra ${s.til}. Han har fått beskjed.`);
+    else if (s.type === "nask") { fly(s.til, T.meg.navn, "oliven"); toast(`Du nasket ${s.fikk.oliven} oliven fra ${s.til}. Han har fått beskjed.`); }
     else if (s.type === "gi") toast(s.ferdig ? `${s.ferdig} står ferdig! Alle produserer 10 % mer.` : `Takk! +${s.aere} ære.`);
     else if (s.type === "tagg") toast(`Huset til ${visningsnavn(s.til)} har fått ny utsmykning.`);
     else if (s.type === "vask") toast(`Rent igjen. ${s.fra} får prøve seg på nytt en annen dag.`);
@@ -798,20 +974,39 @@
     }
   }
 
-  function velg(navn) {
+  function velg(navn, utenKort) {
     valgt = navn === T.meg?.navn ? null : navn;
+    if (kort !== navn) sprayApen = false;
+    kort = utenKort ? null : navn;
     rot.querySelectorAll(".sy-tomt").forEach((g) => g.classList.toggle("valgt", g.dataset.navn === (valgt || "")));
     document.getElementById("sy-panel").innerHTML = panel();
+    tegnKort();
     zoomTilGods(navn);
     tikk();
   }
+  function lukkKort() { kort = null; sprayApen = false; tegnKort(); }
+  const tilKartet = () => { const b = rot.querySelector(".sy-kartboks"); if (b && (b.getBoundingClientRect().top < 0 || b.getBoundingClientRect().bottom > window.innerHeight)) b.scrollIntoView({ behavior: "smooth", block: "start" }); };
 
   rot.addEventListener("click", (e) => {
+    // Merkene over husene og flammen over Akropolis virker med ett trykk
+    const h = e.target.closest("[data-hurtig]");
+    if (h && T.meg) {
+      if (h.dataset.hurtig === "host") gjor("host");
+      else if (h.dataset.hurtig === "offer") gjor("offer");
+      else if (!T.meg.skjenk.kan) { toast(`Du har for lite ${rn(T.meg.skjenk.hoved)} til å skjenke. Høst først.`, true); velg(h.dataset.til); }
+      else gjor("skjenk", { til: h.dataset.til });
+      return;
+    }
     const k = e.target.closest("button, .sy-tomt, [data-monument], [data-havnkart]");
-    if (!k || k.disabled) return;
-    if (k.dataset.zoom) {
+    if (!k) { if (kort && e.target.closest(".sy-kart")) lukkKort(); return; }
+    if (k.disabled) return;
+    if (k.dataset.lukkkort !== undefined) lukkKort();
+    else if (k.dataset.spray !== undefined) { sprayApen = !sprayApen; tegnKort(); if (sprayApen) rot.querySelector("#sy-kort input")?.focus(); }
+    else if (k.dataset.tilpanel !== undefined) { lukkKort(); document.getElementById("sy-panel").scrollIntoView({ behavior: "smooth", block: "start" }); }
+    else if (k.dataset.neste !== undefined) { const n = neste(); if (n) { velg(n.navn); tilKartet(); } }
+    else if (k.dataset.zoom) {
       if (k.dataset.zoom === "alt") zoomTil(1, W / 2, TOPP + HH / 2);
-      else if (k.dataset.zoom === "meg") zoomTilGods(T.meg.navn);
+      else if (k.dataset.zoom === "meg") velg(T.meg.navn);
       else zoomTil(vis.z * (k.dataset.zoom === "inn" ? 1.6 : 1 / 1.6), vis.cx, vis.cy);
     }
     else if (k.dataset.info !== undefined) visInfo("Slik spiller du Symposion", info());
@@ -825,12 +1020,11 @@
     else if (k.dataset.nask) gjor("nask", { til: k.dataset.nask });
     else if (k.dataset.kjop) gjor("kjop", { vare: k.dataset.kjop });
     else if (k.dataset.gi) gjor("gi", { ressurs: k.dataset.gi, antall: Number(k.dataset.antall) });
-    else if (k.dataset.hjem !== undefined) velg(T.meg.navn);
+    else if (k.dataset.hjem !== undefined) velg(T.meg.navn, true);
     else if (k.dataset.farge) {
       taggFarge = k.dataset.farge;
       rot.querySelectorAll(".sy-farge").forEach((x) => { x.classList.toggle("valgt", x === k); x.setAttribute("aria-checked", x === k); });
-      const inp = rot.querySelector("[data-taggskjema] input");
-      if (inp) inp.style.color = taggFarge;
+      rot.querySelectorAll("[data-taggskjema] input").forEach((inp) => (inp.style.color = taggFarge));
     }
     else if (k.dataset.skrubb !== undefined) {
       skrubb += 1;
@@ -840,9 +1034,9 @@
       if (skrubb >= SKRUBB) { skrubb = 0; gjor("vask"); }
       else k.textContent = `Skrubb videre (${skrubb} av ${SKRUBB})`;
     }
-    else if (k.dataset.velg) { velg(k.dataset.velg); document.getElementById("sy-panel").scrollIntoView({ behavior: "smooth", block: "nearest" }); }
+    else if (k.dataset.velg) { velg(k.dataset.velg); tilKartet(); }
     else if (k.dataset.monument !== undefined) document.getElementById("sy-monument")?.scrollIntoView({ behavior: "smooth", block: "center" });
-    else if (k.dataset.navn && T.meg) { velg(k.dataset.navn); document.getElementById("sy-panel").scrollIntoView({ behavior: "smooth", block: "nearest" }); }
+    else if (k.dataset.navn && T.meg) velg(k.dataset.navn);
   });
   // Dra for å flytte kartet, to fingre for å zoome. Et drag skal ikke telle som et trykk på et gods.
   const pekere = new Map();
@@ -903,6 +1097,7 @@
     const tekst = f.tekst.value.trim();
     if (tekst) gjor("tagg", { til: f.dataset.taggskjema, tekst, farge: taggFarge });
   });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && kort) lukkKort(); });
   rot.addEventListener("keydown", (e) => {
     if ((e.key === "Enter" || e.key === " ") && e.target.classList?.contains("sy-tomt") && T.meg) { e.preventDefault(); velg(e.target.dataset.navn); }
   });
@@ -927,6 +1122,8 @@
     await hent();
     setInterval(tikk, 1000);
     setInterval(hent, 60000);
+    setTimeout(boble, 2500);
+    setInterval(boble, 8000);
     document.addEventListener("visibilitychange", () => { if (!document.hidden) hent(); });
   })();
 })();
