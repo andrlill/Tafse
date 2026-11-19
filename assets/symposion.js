@@ -385,7 +385,7 @@
       <p>Alle reiser sammen ${R.monumenter.map((m) => m.navn).join(", ").replace(/, ([^,]*)$/, " og $1")}, ett om gangen. Gi det byggverket trenger under «Felles byggverk». De to siste krever sølv, krydder og purpur. Hvert ferdige byggverk gir alle 10 % mer produksjon, og hver gave gir deg ære.</p>
       <h3>Naboene</h3>
       <ul>
-        <li><strong>Skjenk:</strong> én gang om dagen per nabo. Naboen får vin, du får oliven og ære. Gavene følger godset ditt: begge deler tilsvarer 20 minutter av din egen produksjon, så et større gods skjenker rausere. Har naboen allerede skjenket deg i dag (vinrød krukke på kartet), får du dobbelt med oliven for å skjenke tilbake.</li>
+        <li><strong>Skjenk:</strong> én gang om dagen per nabo. Du gir bort 10 % av det godset ditt produserer i timen, av hver råvare, og får ${R.skjenkAere} ære. Jo større godset er, desto rausere er gaven. Har naboen allerede skjenket deg i dag (vinrød krukke på kartet), gir det ${R.skjenkAere + R.gjengjeldAere} ære å skjenke tilbake.</li>
         <li><strong>Dagens runde:</strong> skjenk ${R.rundeMal} naboer på én dag, så får du én times avling av alt godset ditt lager, og ${R.rundeAere} ære.</li>
         <li><strong>Nask:</strong> ta litt av en nabos uhøstede oliven, ${R.naskPerDag} ganger om dagen. Han får beskjed.</li>
         <li><strong>Tagg:</strong> spray en tekst på en nabos hus, ${R.taggPerDag} ganger om dagen. Huset produserer ${Math.round(R.taggStraff * 100)} % mindre til eieren har skrubbet det bort.</li>
@@ -405,13 +405,13 @@
     if (T.spillere.find((s) => s.navn === m.navn)?.tagg) return "Noen har tagget huset ditt! Skrubb det bort, ellers går det ut over avlingen.";
     if (m.tokt && (m.tokt.hjemme || Date.parse(m.tokt.hjem) <= Date.now())) return `Skipet er hjemme fra ${m.tokt.navn}. Loss det i havnen.`;
     const venter = andre.filter((s) => s.skjenketMeg && !s.skjenket);
-    if (venter.length && !m.kanOfre) return `${venter.map((s) => visningsnavn(s.navn)).slice(0, 3).join(", ").replace(/, ([^,]*)$/, " og $1")}${venter.length > 3 ? " og flere" : ""} har skjenket deg i dag. Skjenk tilbake og få dobbelt.`;
+    if (venter.length && !m.kanOfre) return `${venter.map((s) => visningsnavn(s.navn)).slice(0, 3).join(", ").replace(/, ([^,]*)$/, " og $1")}${venter.length > 3 ? " og flere" : ""} har skjenket deg i dag. Skjenk tilbake for ekstra ære.`;
     if (m.kanOfre) return "Gudene venter på dagens offer. Kom innom hver dag, så vokser gaven.";
     if (lagerSum() >= 15) return "Avlingen er klar. Trykk på «Høst».";
     const rad = Object.keys(T.regler.bygg).find((id) => m.apen[id] && harRad(m.kost[id]));
     if (rad) return `Du har råd til å ${m.bygg[rad] ? "utvide" : "anlegge"} ${T.regler.bygg[rad].navn.toLowerCase()}.`;
     if (m.bygg.havn && !m.tokt) return "Skipet ligger til kai. Send det på tokt.";
-    if (andre.some((s) => !s.skjenket)) return m.skjenk.runde.gjort < m.skjenk.runde.mal ? `Skjenk ${m.skjenk.runde.mal - m.skjenk.runde.gjort} naboer til, så tar du dagens runde og får én times avling.` : "Trykk på godset til en av de andre og skjenk et glass. Dere tjener begge på det.";
+    if (andre.some((s) => !s.skjenket)) return m.skjenk.runde.gjort < m.skjenk.runde.mal ? `Skjenk ${m.skjenk.runde.mal - m.skjenk.runde.gjort} naboer til, så tar du dagens runde og får én times avling.` : "Trykk på godset til en av de andre og skjenk et glass. Det gir mye ære.";
     if (!andre.length) return "Du er den første i byen. Få med deg de andre!";
     return "Godset jobber for deg mens du er borte. Kom tilbake før lageret er fullt.";
   }
@@ -534,6 +534,8 @@
       <p class="dempet sy-taggfot">Huset produserer ${Math.round(T.regler.taggStraff * 100)} % mindre til eieren vasker. Du får +3 ære, og eieren får beskjed.</p></form>`;
   }
 
+  const skjenkTekst = () => { const g = T.meg.skjenk.gave; return Object.keys(g).length ? Object.entries(g).map(([r, n]) => `${tall(n)} ${rn(r)}`).join(", ").replace(/, ([^,]*)$/, " og $1") : "et tomt glass"; };
+
   // Dagens runde: framdrift mot bonusen for å skjenke mange nok på én dag
   function runde() {
     const r = T.meg.skjenk.runde;
@@ -568,8 +570,8 @@
         <button class="liten-knapp" type="button" data-hjem>Til godset mitt</button></div></div>
       <div class="sy-besok">
         <button class="knapp${sp.skjenketMeg && !sp.skjenket ? " sy-offer" : ""}" type="button" data-skjenk="${esc(sp.navn)}" ${sp.skjenket ? "disabled" : ""}>${sp.skjenket ? "Skjenket i dag" : sp.skjenketMeg ? "Skjenk tilbake" : "Skjenk et glass vin"}<small>${sp.skjenket ? "Kom igjen i morgen" : sp.skjenketMeg
-          ? `${esc(visningsnavn(sp.navn))} skjenket deg i dag. Du får dobbelt: +${tall(m.skjenk.oliven * 2)} oliven og +${m.skjenk.aere + m.skjenk.gjengjeldAere} ære`
-          : `Godset får ${tall(m.skjenk.vin)} vin, du får +${tall(m.skjenk.oliven)} oliven og +${m.skjenk.aere} ære`}</small></button>
+          ? `${esc(visningsnavn(sp.navn))} skjenket deg i dag. Du gir ${skjenkTekst()} og får +${m.skjenk.aere + m.skjenk.gjengjeldAere} ære`
+          : `Du gir ${skjenkTekst()} og får +${m.skjenk.aere} ære`}</small></button>
         <button class="knapp sekundar" type="button" data-nask="${esc(sp.navn)}" ${sp.nasket || m.naskIgjen <= 0 || sp.bytte < 5 ? "disabled" : ""}>${nask}<small>${m.naskIgjen} av ${T.regler.naskPerDag} nask igjen i dag. Eieren får beskjed.</small></button>
       </div>
       ${runde()}
@@ -691,7 +693,7 @@
     else if (s.type === "offer") { sprett(gave(s.fikk)); toast(`Gudene er fornøyde. Dag ${s.streak} av 7 på rad.`); }
     else if (s.type === "bygg") toast(`${T.regler.bygg[s.bygg].navn} er nå på nivå ${s.niva}. +${10 * s.niva} ære.`);
     else if (s.type === "skjenk") {
-      toast(`${s.gjengjeld ? "Gjengjeldt skål" : "Skål"}, ${visningsnavn(s.til)}! +${tall(s.fikk.oliven)} oliven og +${s.aere} ære.`);
+      toast(`${s.gjengjeld ? "Gjengjeldt skål" : "Skål"}, ${visningsnavn(s.til)}! +${s.aere} ære.`);
       if (s.runde) setTimeout(() => { sprett(gave(s.runde.fikk)); toast(`Dagens runde er tatt! ${gave(s.runde.fikk)} og +${s.runde.aere} ære.`); }, 1800);
     }
     else if (s.type === "nask") toast(`Du nasket ${s.fikk.oliven} oliven fra ${s.til}. Han har fått beskjed.`);
