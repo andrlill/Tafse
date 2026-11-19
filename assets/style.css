@@ -1262,3 +1262,23 @@ p.h-merket { margin: 10px 0; }
 .sy-fest .knapp:disabled { opacity: .55; cursor: default; }
 .sy-fest.paa { border-color: var(--gull); background: #1f1a0e; }
 @media (max-width: 760px) { .sy-fest .knapp { width: 100%; } }
+/* Symposion: råvarene i en stolpe til venstre som følger med når man blar */
+.sy-oppsett { display: grid; grid-template-columns: 148px minmax(0, 1fr); gap: 18px; align-items: start; }
+.sy-hoved { min-width: 0; }
+.sy-side { position: sticky; top: 14px; display: flex; flex-direction: column; gap: 8px; }
+.sy-side .sy-etikett { margin: 0 0 2px; }
+.sy-side .sy-brikke { min-width: 0; display: grid; grid-template-columns: auto 1fr; gap: 0 10px; padding: 8px 12px; }
+.sy-side .sy-brikke .sy-ikon { grid-row: 1 / span 2; align-self: center; }
+.sy-side .sy-brikke strong { font-size: 18px; line-height: 1.15; }
+.sy-side .sy-brikke span { font-size: 11px; }
+.sy-neste { font-size: 14px !important; color: var(--gull); }
+@media (max-width: 900px) {
+  .sy-oppsett { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .sy-side { top: 0; z-index: 5; flex-direction: row; gap: 4px; margin: 0 -12px; padding: 6px 12px; background: var(--bunn); border-bottom: 1px solid var(--linje); overflow-x: auto; }
+  .sy-side .sy-etikett { display: none; }
+  .sy-side .sy-brikke { flex: 1 0 auto; display: flex; flex-direction: row; gap: 5px; padding: 5px 8px; text-align: left; }
+  .sy-side .sy-brikke .sy-ikon { font-size: 15px; }
+  .sy-side .sy-brikke strong { font-size: 14px; }
+  .sy-side .sy-brikke span { display: none; }
+  .sy-topp .sy-brikker { display: flex; width: auto; }
+}

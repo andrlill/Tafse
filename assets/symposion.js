@@ -372,17 +372,22 @@
     ${T.meg ? `<button type="button" data-zoom="meg" aria-label="Vis godset mitt" title="Godset mitt"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8 L8 2.6 L14 8 M4 7 V13.4 H12 V7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></button>` : ""}</div>`;
 
   // ---------- Toppen: ressurser og dagens offer ----------
+  const brikke = (r) => { const m = T.meg; return `<div class="sy-brikke" data-brikke="${r}" title="${r === "aere" ? "All ære du har fått for å gi til andre" : rn(r)}">${IKON[r]}<strong>${tall(r === "aere" ? m.aere : m.beholdning[r])}</strong><span>${r === "aere" ? "ære" : rn(r)}</span></div>`; };
   function topp() {
     const m = T.meg;
-    // Råvarer man ikke har kommet til ennå, vises ikke, så toppen holder seg ryddig i starten
-    const kilde = { honning: "bigard", solv: "gruve", purpur: "havn", krydder: "havn" };
-    const kjent = ALLE.filter((r) => !kilde[r] || m.bygg[kilde[r]] > 0 || m.beholdning[r] >= 1);
-    const brikker = [...kjent, "aere"].map((r) => `<div class="sy-brikke" data-brikke="${r}" title="${r === "aere" ? "All ære du har fått for å gi til andre" : rn(r)}">${IKON[r]}<strong>${tall(r === "aere" ? m.aere : m.beholdning[r])}</strong><span>${r === "aere" ? "ære" : rn(r)}</span></div>`).join("");
     const prikker = Array.from({ length: 7 }, (_, i) => `<i class="${i < (m.kanOfre ? m.streak % 7 === 0 && m.streak ? 0 : Math.min(m.streak, 6) : m.streak) ? "full" : ""}"></i>`).join("");
     const offer = m.kanOfre
       ? `<button class="knapp sy-offer" type="button" data-gjor="offer">Ofre til gudene<small>${gave(m.nesteOffer)}</small></button>`
       : `<div class="sy-ofret"><span class="sy-etikett">Ofret i dag · dag ${m.streak} av 7</span><span class="sy-prikker">${prikker}</span><small>I morgen: ${gave(m.nesteOffer)}</small></div>`;
-    return `<div class="sy-topp"><div class="sy-brikker">${brikker}</div><div class="sy-toppvenstre"><button class="liten-knapp sy-infoknapp" type="button" data-info>Slik spiller du</button>${offer}</div></div>`;
+    return `<div class="sy-topp"><div class="sy-brikker">${brikke("aere")}</div><div class="sy-toppvenstre"><button class="liten-knapp sy-infoknapp" type="button" data-info>Slik spiller du</button>${offer}</div></div>`;
+  }
+  // Råvarene står i en stolpe til venstre som følger med når man blar (på mobil: en stripe øverst).
+  // Råvarer man ikke har kommet til ennå, vises ikke.
+  function beholdning() {
+    const m = T.meg;
+    const kilde = { honning: "bigard", solv: "gruve", purpur: "havn", krydder: "havn" };
+    const kjent = ALLE.filter((r) => !kilde[r] || m.bygg[kilde[r]] > 0 || m.beholdning[r] >= 1);
+    return `<aside class="sy-side" aria-label="Råvarene dine"><p class="sy-etikett">Du har</p>${kjent.map(brikke).join("")}</aside>`;
   }
 
   // ---------- «Slik spiller du» ----------
@@ -479,8 +484,13 @@
         ? niva ? `<p class="sy-rate">Lasten er ${Math.round(T.regler.toktLast * 100 * (niva - 1))} % større</p><p class="dempet">Hvert nivå gir ${Math.round(T.regler.toktLast * 100)} % mer last.${niva < 2 ? " Nivå 2 åpner Egypt." : ""}</p>`
                : `<p class="dempet">Gir deg et skip. Toktene henter hjem krydder og purpur.</p>`
         : `<p class="sy-rate">Lageret rommer ${m.takTimer} timer</p><p class="dempet">Hvert nivå gir én time til, og et staseligere hus.</p>`;
+    const nesteRate = r && k && m.nesteRater[r] !== undefined ? m.nesteRater[r] : null;
+    const neste = !k ? "" : nesteRate !== null
+      ? `<p class="sy-neste">${niva ? "Neste nivå" : "Nivå 1"}: ${IKON[r]} ${tall(nesteRate)} i timen${niva ? ` (+${tall(nesteRate - m.rater[r]) === "0" ? "1" : tall(Math.round(nesteRate - m.rater[r]))})` : ""}</p>`
+      : id === "villa" ? `<p class="sy-neste">Neste nivå: lageret rommer ${m.takTimer + 1} timer</p>`
+      : id === "havn" && niva ? `<p class="sy-neste">Neste nivå: ${Math.round(T.regler.toktLast * 100 * niva)} % større last</p>` : "";
     const knapp = k
-      ? `<button class="liten-knapp sy-utvid${harRad(k) ? " sy-rad" : ""}" type="button" data-bygg="${id}" ${harRad(k) ? "" : "disabled"}>${niva ? "Utvid" : "Anlegg"} · ${pris(k)}</button>`
+      ? `${neste}<button class="liten-knapp sy-utvid${harRad(k) ? " sy-rad" : ""}" type="button" data-bygg="${id}" ${harRad(k) ? "" : "disabled"}>${niva ? "Utvid" : "Anlegg"} · ${pris(k)}</button>`
       : `<p class="sy-etikett">Høyeste nivå</p>`;
     return `<article class="sy-bygg"><h4>${regel.navn} <span>${niva ? `nivå ${niva}` : ""}</span></h4>${info}${knapp}</article>`;
   }
@@ -542,9 +552,8 @@
     let inn;
     if (m.tokt) {
       const hjemme = m.tokt.hjemme || Date.parse(m.tokt.hjem) <= Date.now();
-      const hele = Date.parse(m.tokt.hjem) - Date.parse(m.tokt.ut);
       inn = `<div class="sy-tokt-ute"><div><h4>${hjemme ? `Skipet er hjemme fra ${esc(m.tokt.navn)}` : `Skipet er på tokt til ${esc(m.tokt.navn)}`}</h4>
-        <p class="dempet" data-tokttid>${hjemme ? "Lasten venter på kaia." : ""}</p><div class="sy-lager"><span data-toktstrek data-hele="${hele}" style="width:${hjemme ? 100 : 0}%"></span></div></div>
+        <p class="dempet" data-tokttid>${hjemme ? "Lasten venter på kaia." : ""}</p></div>
         <button class="knapp${hjemme ? " sy-offer" : ""}" type="button" data-gjor="loss" data-loss ${hjemme ? "" : "disabled"}>Loss skipet</button></div>`;
     } else {
       inn = `<div class="sy-butikk">${Object.entries(m.reisemal).map(([id, x]) => {
@@ -660,11 +669,11 @@
       vis = null; settVisning();
       return;
     }
-    rot.innerHTML = `${topp()}
+    rot.innerHTML = `<div class="sy-oppsett">${beholdning()}<div class="sy-hoved">${topp()}
       <div class="sy-kartboks"><div class="sy-kartrull">${kart()}</div>${zoomknapper()}<div class="sy-toast" id="sy-toast" role="status"></div></div>
       <p class="sy-tips" id="sy-tips"></p>
       <div id="sy-panel">${panel()}</div>
-      <div class="sy-to">${monumentPanel()}${sidefelt()}</div>`;
+      <div class="sy-to">${monumentPanel()}${sidefelt()}</div></div></div>`;
     settVisning();
     tikk();
   }
@@ -694,9 +703,8 @@
     const tk = T.meg.tokt;
     if (tk && !tk.hjemme) {
       const igjen = Date.parse(tk.hjem) - (Date.parse(T.naa) + (Date.now() - hentet));
-      const tt = rot.querySelector("[data-tokttid]"), st = rot.querySelector("[data-toktstrek]");
+      const tt = rot.querySelector("[data-tokttid]");
       if (tt) tt.textContent = igjen > 0 ? `Hjemme om ${klokke(igjen)}` : "Legger til kai …";
-      if (st) st.style.width = `${Math.min(100, Math.max(0, 100 - (igjen / Number(st.dataset.hele)) * 100))}%`;
       if (igjen <= 0 && !opptatt && !toktSjekk) { toktSjekk = true; hent(true).finally(() => (toktSjekk = false)); }
     }
     const tp = document.getElementById("sy-tips");
