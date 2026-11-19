@@ -658,7 +658,7 @@ function visPlakat(vedLukk) {
         <section><p class="overline">Tafse Hotell</p>
           <p>Her møtes alle. Gå rundt, prat, skål og besøk rommene til de andre. Du har fått ditt eget rom, og under det ligger butikken med møbler, klær og kjæledyr.</p></section>
         <section><p class="overline">Symposion</p>
-          <p>Du har fått et hus i byen. Høst oliven, vin og marmor, bygg ut godset og ofre til gudene hver dag. Jo større villa, jo større blir rommet ditt på hotellet.</p></section>
+          <p>Du har fått et hus i byen. Høst råvarer, bygg ut godset, ansett folk og send skip på tokt. Skjenk naboene og gi til byens byggverk, så får du ære og stiger i rang. Jo større villa, jo større blir rommet ditt på hotellet.</p></section>
       </div>
       <p class="overline">Slik tjener du til butikken</p>
       <table class="tavle plakat-tabell"><thead><tr><th>Spill</th><th>Du får</th><th>Slik</th></tr></thead><tbody>

@@ -42,62 +42,61 @@
 
   // ---------- Bykartet ----------
   const W = 1000, H = 640, TOPP = 44, HH = H - TOPP;
-  // Godsene ligger i ringer rundt agoraen, i den rekkefølgen folk flyttet inn. Ingen har fast tomt.
-  // Opptil åtte gods får plass i én ring. Blir det flere, fordeles de på to eller tre ringer, og
-  // byen krympes så alt får plass på øya. Da zoomer man inn for å se detaljene.
-  const RING = (r) => ({ rx: 388 + 200 * r, ry: 160 + 100 * r });
-  // Hvor mange gods hver ring får, og hvor mye hver ring er vridd. Ringene ligger tett øverst og
-  // nederst på øya, så vi prøver de fordelingene som finnes og velger den der de to godsene som
-  // står nærmest hverandre, står lengst fra hverandre. Regnes ut én gang per antall spillere.
-  const OPPSETT = new Map();
-  const punkt = (r, j, ant, vri) => {
-    const ring = RING(r), v = ((-90 + ((j + vri) * 360) / ant) * Math.PI) / 180;
-    const x = 500 + Math.cos(v) * ring.rx, y = 404 + Math.sin(v) * ring.ry;
-    return { x, y, s: 1.0 + (0.3 * (y - 250)) / 304 };
-  };
-  function oppsett(n) {
-    if (OPPSETT.has(n)) return OPPSETT.get(n);
-    const ringer = n <= 8 ? 1 : n <= 20 ? 2 : 3;
-    let best = { antall: [n], vri: [0.5] };
-    if (ringer > 1) {
-      const vekt = [1, 1.6, 2.2].slice(0, ringer), sum = vekt.reduce((a, x) => a + x, 0);
-      const ideal = vekt.map((v) => (n * v) / sum), VRI = [0, 0.25, 0.5, 0.75];
-      const fordelinger = [];
-      for (let a = Math.max(3, Math.round(ideal[0]) - 2); a <= Math.round(ideal[0]) + 2; a++) {
-        if (ringer === 2) { if (n - a >= 4) fordelinger.push([a, n - a]); continue; }
-        for (let b = Math.max(4, Math.round(ideal[1]) - 2); b <= Math.round(ideal[1]) + 2; b++) if (n - a - b >= 5) fordelinger.push([a, b, n - a - b]);
+  // BYEN ER DELT I NABOLAG ETTER ÆRE. De fire med mest ære bor på Akropolis, på hver side av
+  // tempelet. De neste bor i Midtbyen, gata rett nedenfor agoraen, og resten i gatene bak. I hver
+  // gate står de med mest ære nærmest midten. Får man mer ære enn en nabo, bytter man plass.
+  // Alle hus har samme størrelse (k), og k velges så alle får plass på øya.
+  const LOFT = 52;            // så mye høyere agoraen og byggverkene står enn før, for å gi plass til gatene
+  const AKROPOLIS = 4;
+  const GATENAVN = ["Midtbyen", "Utkanten", "Strandkanten", "Fjæra"];
+  const BYPLAN = new Map();
+  function byplan(n) {
+    if (BYPLAN.has(n)) return BYPLAN.get(n);
+    let plan = null;
+    for (const k of [0.7, 0.62, 0.54, 0.47, 0.41, 0.36, 0.31, 0.27, 0.23]) {
+      const bredde = 170 * k, radhoyde = 148 * k, gater = [];
+      // Første gate ligger så tett under agoraen som husene tillater
+      for (let y = 392 + 95 * k; y + 30 * k < 606 && gater.length < GATENAVN.length; y += radhoyde) {
+        // Så langt ut fra midten et hus kan stå i denne høyden uten å havne i fjæra eller på kaia
+        const u = (y + 28 * k - 412) / 204;
+        const halv = Math.min(330, 488 * Math.sqrt(Math.max(0, 1 - u * u)) - 62 * k - 22);
+        if (halv < bredde / 2) break;
+        gater.push({ y, plass: Math.floor((2 * halv) / bredde) + 1 });
       }
-      let bestPoeng = -1;
-      const vrier = ringer === 2 ? VRI.flatMap((a) => VRI.map((b) => [a, b])) : VRI.flatMap((a) => VRI.flatMap((b) => VRI.map((c) => [a, b, c])));
-      for (const antall of fordelinger) for (const vri of vrier) {
-        const pk = antall.flatMap((ant, r) => Array.from({ length: ant }, (_, j) => punkt(r, j, ant, vri[r])));
-        // Et gods med palass, flagg og navn er rundt 150 bredt og 135 høyt. Tempelet midt i byen
-        // regnes som en nabo, så ingen havner rett foran eller bak det.
-        let minst = Infinity;
-        for (let i = 0; i < pk.length && minst > bestPoeng; i++) {
-          minst = Math.min(minst, Math.max(Math.abs(pk[i].x - 500) / 130, Math.abs(pk[i].y - 318) / 120));
-          for (let j = i + 1; j < pk.length; j++) {
-            const sm = (pk[i].s + pk[j].s) / 2;
-            minst = Math.min(minst, Math.max(Math.abs(pk[i].x - pk[j].x) / (150 * sm), Math.abs(pk[i].y - pk[j].y) / (135 * sm)));
-          }
-        }
-        // Like gode løsninger: foretrekk den som ligger nærmest den naturlige fordelingen
-        const poeng = minst - 0.01 * antall.reduce((a, x, r) => a + Math.abs(x - ideal[r]), 0);
-        if (poeng > bestPoeng) { bestPoeng = poeng; best = { antall, vri }; }
-      }
+      plan = { k, bredde, gater };
+      if (AKROPOLIS + gater.reduce((a, g) => a + g.plass, 0) >= n) break;
     }
-    OPPSETT.set(n, best);
-    return best;
+    BYPLAN.set(n, plan);
+    return plan;
   }
   function plasser() {
-    const navn = T.spillere.map((s) => s.navn), ut = new Map();
-    const { antall, vri } = oppsett(navn.length);
-    let i = 0;
-    antall.forEach((ant, r) => {
-      for (let j = 0; j < ant; j++) ut.set(navn[i + j], punkt(r, j, ant, vri[r]));
-      i += ant;
+    const ut = new Map();
+    // Mest ære først. Står to likt, går den som flyttet inn først, foran.
+    const rekke = T.spillere.map((s, i) => ({ navn: s.navn, aere: s.aere, i })).sort((a, b) => b.aere - a.aere || a.i - b.i);
+    const { k, bredde, gater } = byplan(rekke.length);
+    ut.k = k; ut.krymp = 1; ut.gater = [];
+    rekke.slice(0, AKROPOLIS).forEach((r, i) => {
+      const side = i % 2 ? 1 : -1, ytre = i >= 2 ? bredde : 0;
+      ut.set(r.navn, { x: 500 + side * (292 + ytre), y: 318, s: k, nabolag: "på Akropolis", plass: i + 1 });
     });
-    ut.krymp = 388 / RING(antall.length - 1).rx;
+    let fra = AKROPOLIS;
+    gater.forEach((g, j) => {
+      const folk = rekke.slice(fra, fra + g.plass);
+      if (!folk.length) return;
+      // Plassene i gata, sortert fra midten og utover, så de med mest ære står nærmest midten
+      const xs = folk.map((_, i) => 500 + (i - (folk.length - 1) / 2) * bredde).sort((a, b) => Math.abs(a - 500) - Math.abs(b - 500) || a - b);
+      folk.forEach((r, i) => ut.set(r.navn, { x: xs[i], y: g.y, s: k, nabolag: `i ${GATENAVN[j]}`, plass: fra + i + 1 }));
+      ut.gater.push({ navn: GATENAVN[j], y: g.y, x1: Math.min(...xs), x2: Math.max(...xs) });
+      fra += g.plass;
+    });
+    ut.akropolis = rekke.slice(0, AKROPOLIS).map((r) => ut.get(r.navn).x);
+    // Så mye ære som skal til for å flytte opp til nabolaget over
+    ut.grense = (navn) => {
+      const p = ut.get(navn);
+      if (!p || p.plass <= AKROPOLIS) return null;
+      const over = rekke.filter((r) => ut.get(r.navn).y < p.y).pop();
+      return over ? { nabolag: ut.get(over.navn).nabolag, mangler: Math.max(1, over.aere - T.spillere.find((s) => s.navn === navn).aere + 1) } : null;
+    };
     return ut;
   }
   // Fra byens koordinater til kartets, etter krympingen
@@ -263,22 +262,26 @@
     const kystlinje = kyst(488, 204);
     const bat = (x, y, s, seil = "#ece5d3", tittel = "", vent = 0) => `<g transform="translate(${x} ${y}) scale(${s})">${tittel ? `<title>${esc(tittel)}</title>` : ""}<g class="sy-bat" style="animation-delay:${vent}s"><path d="M-16 0 Q0 9 16 0 L12 5 H-12 Z" fill="#3a2a18"/><path d="M0 0 V-20" stroke="#3a2a18" stroke-width="1.6"/><path d="M1 -19 Q12 -12 1 -4 Z" fill="${seil}"/></g></g>`;
     const pl = plasser();
-    const tomter = T.spillere.map((sp) => ({ y: pl.get(sp.navn).y, svg: tomt(sp, pl.get(sp.navn), pl.krymp) }));
+    const tomter = T.spillere.map((sp) => ({ y: pl.get(sp.navn).y, svg: tomt(sp, pl.get(sp.navn), pl.k) })).sort((a, b) => a.y - b.y).map((t) => t.svg).join("");
     // Havnen ligger fast på østkysten. Skip som er på tokt, er borte fra kaia.
     const flaate = T.spillere.filter((sp) => sp.skip);
     const KAI = [[956, 500], [934, 524], [975, 517], [955, 545], [990, 540], [925, 548], [978, 566], [948, 572]];
     const vedKai = flaate.filter((sp) => sp.skip === "kai").slice(0, KAI.length);
     const havna = flaate.length ? `<g class="sy-havn" data-havnkart><title>Havnen</title><path d="M908 498 L966 536" stroke="#3a2a18" stroke-width="9" stroke-linecap="round"/><path d="M908 498 L966 536" stroke="#8a6a45" stroke-width="6" stroke-linecap="round"/><path d="M921 507 v9 M936 517 v9 M951 527 v9" stroke="#3a2a18" stroke-width="2.4"/><ellipse cx="950" cy="535" rx="60" ry="52" fill="transparent"/>
       ${vedKai.map((sp, i) => bat(KAI[i][0], KAI[i][1], 0.62, T.meg && sp.navn === T.meg.navn ? "#e2c174" : "#ece5d3", visningsnavn(sp.navn), (i * 0.7).toFixed(1))).join("")}</g>` : "";
-    const veier = T.spillere.map((sp) => { const p = pl.get(sp.navn); return `<path d="M500 418 Q${((500 + p.x) / 2).toFixed(0)} ${((418 + p.y) / 2 + 14).toFixed(0)} ${p.x.toFixed(0)} ${p.y.toFixed(0)}"/>`; }).join("");
+    // Gatene: en allé fra agoraen og ned gjennom byen, en gate per nabolag og to veier opp til Akropolis
+    const sisteGate = pl.gater[pl.gater.length - 1];
+    const veier = `${sisteGate ? `<path d="M500 ${418 - LOFT} V${sisteGate.y}"/>` : ""}
+      ${pl.gater.map((g) => `<path d="M${(g.x1 - 62 * pl.k).toFixed(0)} ${g.y} H${(g.x2 + 62 * pl.k).toFixed(0)}"/>`).join("")}
+      ${pl.akropolis.length ? [-1, 1].map((side) => { const ytterst = Math.max(...pl.akropolis.map((x) => (x - 500) * side)); return `<path d="M${500 + side * 104} ${420 - LOFT} Q${500 + side * 190} ${330} ${500 + side * 250} 318 H${(500 + side * (ytterst + 40 * pl.k)).toFixed(0)}"/>`; }).join("") : ""}`;
+    const skilt = `<text x="500" y="${296 - LOFT - 12}" text-anchor="middle" class="sy-nabolag">Akropolis</text>
+      ${pl.gater.map((g) => `<text x="${(g.x1 - 62 * pl.k - 8).toFixed(0)}" y="${g.y + 3}" text-anchor="end" class="sy-nabolag">${g.navn}</text>`).join("")}`;
     const grad = monumentGrad();
     const mon = T.regler.monumenter.map(({ id }) => ({ id, svg: monument(id, T.ferdige.includes(id) ? 1 : T.monument && T.monument.id === id ? grad : null) }));
     const rekke = { orakel: -1, tempel: 0, agora: 1, teater: 2, koloss: 3 };
     const fyret = mon.find((x) => x.id === "fyr");
     mon.splice(mon.indexOf(fyret), 1);
     mon.sort((a, b) => rekke[a.id] - rekke[b.id]);
-    const bak = tomter.filter((t) => t.y < 400).sort((a, b) => a.y - b.y).map((t) => t.svg).join("");
-    const foran = tomter.filter((t) => t.y >= 400).sort((a, b) => a.y - b.y).map((t) => t.svg).join("");
     return `<svg viewBox="0 ${TOPP} ${W} ${H - TOPP}" preserveAspectRatio="xMidYMid slice" class="sy-kart" role="group" aria-label="Kart over byen">
       <defs>
         <linearGradient id="sy-himmel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#07080d"/><stop offset=".62" stop-color="#151a2a"/><stop offset="1" stop-color="#4a3a22"/></linearGradient>
@@ -299,13 +302,10 @@
       <path d="${kystlinje}" fill="#1c2a30" transform="translate(0 7)" opacity=".8"/>
       <path d="${kystlinje}" fill="#9a8552"/>
       <path d="${kystlinje}" fill="url(#sy-land)" transform="translate(500 412) scale(.975 .955) translate(-500 -412)"/>
-      <g transform="translate(500 404) scale(${pl.krymp.toFixed(3)}) translate(-500 -404)">
       <g class="sy-veier" fill="none" stroke="#7a6d49" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 7" opacity=".7">${veier}</g>
-      ${bak}
-      ${mon.map((m) => m.svg).join("")}
-      ${statuer()}
-      ${foran}
-      </g>
+      ${skilt}
+      <g transform="translate(0 ${-LOFT})">${mon.map((m) => m.svg).join("")}${statuer()}</g>
+      ${tomter}
       ${havna}${fyret ? fyret.svg : ""}
     </svg>`;
   }
@@ -399,6 +399,8 @@
       <p>Symposion er en felles by på en øy. Hver spiller har et gods som produserer råvarer, også når man er borte. Med dem bygger man ut godset, ansetter folk, sender skip på tokt, reiser byens monumenter og innreder rommet sitt i Tafse Hotell.</p>
       <h3>Kartet</h3>
       <p>Zoom med knappene nede til høyre, med to fingre eller ved å dobbelttrykke. Dra i kartet for å flytte deg når du har zoomet inn. Trykk på et gods for å gå nærmere.</p>
+      <h3>Nabolagene</h3>
+      <p>Byen er delt i nabolag etter ære. De fire med mest ære bor på Akropolis, ved tempelet. De neste bor i Midtbyen, rett nedenfor agoraen, og resten i gatene bak. I hver gate står de med mest ære nærmest midten. Får du mer ære enn en nabo, bytter dere plass.</p>
       <h3>Høsting</h3>
       <p>Godset produserer hele tiden, men lageret rommer bare noen timer (3 timer pluss villanivået). Trykk «Høst» før det blir fullt, ellers går resten tapt. Gullringen på kartet viser hvor godset ditt ligger, og en olivenboble dukker opp over det når det er noe å høste.</p>
       <h3>Bygging</h3>
@@ -414,7 +416,7 @@
       <p>Hvert nivå koster 65 % mer enn det forrige. Høyeste nivå er ${R.maksNiva}, og ${b.havn.maks} for havnen.</p>
       <h3>Folkene på godset</h3>
       <p>Ansett folk under «Folkene på godset». Hver arbeider gir ${Math.round(R.ansattProd * 100)} % mer i bygget sitt for hvert nivå, forvalteren gir én time større lager per nivå, og nattevakten gjør at naskere får med seg ${Math.round(R.vaktAndel * 100)} % mindre per nivå. Alle kan forfremmes til nivå ${R.ansattMaks}. De dyreste vil ha lønn i honning og sølv.</p>
-      <p>Én gang om dagen kan du holde fest for folkene dine. Den koster en times produksjon av oliven og vin, og honning hvis du har bigård. Festen gir ære, mer jo flere og bedre folk du har, og etterpå jobber hele godset ${Math.round(R.fest.bonus * 100)} % bedre i ${R.fest.varer} timer.</p>
+      <p>Én gang om dagen kan du holde fest for folkene dine. Den koster en times produksjon av oliven og vin, og honning hvis du har bigård. Festen gir ære, mer jo flere og bedre folk du har, og etterpå jobber hele godset ${Math.round(R.fest.bonus * 100)} % bedre i ${R.fest.varer} timer. Har du havn, kan du holde praktfest i stedet: den koster ${Object.entries(R.fest.prakt.pris).map(([r, n]) => `${n} ${rn(r)}`).join(" og ")} i tillegg, gir dobbel ære og varer dobbelt så lenge.</p>
       <h3>Havnen og toktene</h3>
       <p>Skipet seiler til ${Object.values(T.meg ? T.meg.reisemal : {}).map((x) => `${x.navn} (${x.timer >= 1 ? `${Math.round(x.timer * 10) / 10} t` : `${Math.round(x.timer * 60)} min`})`).join(", ").replace(/, ([^,]*)$/, " eller $1") || "Kreta, Tyros eller Egypt"} og kommer hjem med krydder og purpur, som du ikke kan lage selv. Du betaler lasten når skipet legger fra, og losser det selv når det er hjemme. Velg tokt etter når du kommer innom neste gang. Lasten blir ${Math.round(R.toktLast * 100)} % større for hvert havnenivå. Av og til møter skipet storm eller medvind.</p>
       <h3>Villaen og rommet ditt</h3>
@@ -425,10 +427,10 @@
       <h3>Daglig offer</h3>
       <p>Trykk «Ofre til gudene» én gang om dagen. Det koster ingenting, og gaven blir større for hver dag på rad, opp til sju dager. Fra dag tre får du vin, fra dag fem marmor, og dag sju gir dobbelt. Hopper du over en dag, starter rekken på nytt. Dagen skifter ved midnatt.</p>
       <h3>Felles byggverk</h3>
-      <p>Alle reiser sammen ${R.monumenter.map((m) => m.navn).join(", ").replace(/, ([^,]*)$/, " og $1")}, ett om gangen. Gi det byggverket trenger under «Felles byggverk». De to siste krever sølv, krydder og purpur. Hvert ferdige byggverk gir alle 10 % mer produksjon, og hver gave gir deg ære.</p>
+      <p>Alle reiser sammen ${R.monumenter.map((m) => m.navn).join(", ").replace(/, ([^,]*)$/, " og $1")}, ett om gangen. Gi det byggverket trenger under «Felles byggverk». Fyrtårnet og Orakelet krever sølv, krydder og purpur. Hvert ferdige byggverk gir alle 10 % mer produksjon, og hver gave gir deg ære.</p>
       <h3>Naboene</h3>
       <ul>
-        <li><strong>Skjenk:</strong> én gang om dagen per nabo. Du gir bort 10 % av det godset ditt produserer i timen, av hver råvare, og får ${R.skjenkAere} ære. Jo større godset er, desto rausere er gaven. Har naboen allerede skjenket deg i dag (vinrød krukke på kartet), gir det ${R.skjenkAere + R.gjengjeldAere} ære å skjenke tilbake.</li>
+        <li><strong>Skjenk:</strong> én gang om dagen per nabo. Du gir bort 10 % av det godset ditt produserer i timen, av hver råvare du har nok av, og minst ${R.skjenkMinst} av det godset lager mest av. Du får ${R.skjenkAere} ære. Har naboen allerede skjenket deg i dag (vinrød krukke på kartet), gir det ${R.skjenkAere + R.gjengjeldAere} ære å skjenke tilbake.</li>
         <li><strong>Dagens runde:</strong> skjenk ${R.rundeMal} naboer på én dag, så får du én times avling av alt godset ditt lager, og ${R.rundeAere} ære.</li>
         <li><strong>Nask:</strong> ta litt av en nabos uhøstede oliven, ${R.naskPerDag} ganger om dagen. Han får beskjed.</li>
         <li><strong>Tagg:</strong> spray en tekst på en nabos hus, ${R.taggPerDag} ganger om dagen. Huset produserer ${Math.round(R.taggStraff * 100)} % mindre til eieren har skrubbet det bort.</li>
@@ -512,7 +514,8 @@
     return `<div class="sy-rangboks">
       <div class="sy-rangtopp"><div><p class="sy-etikett">Din rang</p><h3>${esc(R[m.rang].tittel)}</h3>
         <p class="dempet">${tall(m.aere)} ære${neste ? ` · ${tall(neste.fra - m.aere)} til ${neste.tittel.toLowerCase()}, som gir ${PYNT[neste.pynt]}` : " · Høyeste rang i byen"}</p>
-        <p class="dempet sy-butikkfot">Ære får du for å gi: skjenke naboene, gi til byggverkene og holde fest for folkene dine.</p></div></div>
+        <p class="dempet sy-butikkfot">Ære får du for å gi: skjenke naboene, gi til byggverkene og holde fest for folkene dine.</p>
+        <p class="dempet sy-butikkfot">${(() => { const pl = plasser(), p = pl.get(m.navn), g = pl.grense(m.navn); return `Du bor ${p.nabolag}${g ? `, og mangler ${tall(g.mangler)} ære på å flytte opp ${g.nabolag === "på Akropolis" ? "til Akropolis" : g.nabolag.replace(/^i /, "til ")}` : ""}. Nabolagene følger æren: de fire med mest ære bor på Akropolis.`; })()}</p></div></div>
       <div class="sy-lager sy-rangstrek"><span style="width:${andel}%"></span></div>
       <p class="sy-etikett" style="margin-top:18px">Torget</p>
       <div class="sy-butikk">${Object.keys(T.regler.butikk).map(vare).join("")}</div></div>`;
@@ -533,10 +536,11 @@
         <p class="sy-varestatus">${x.niva ? `Nå: ${virk(x.niva)}` : "Ikke ansatt"}${x.kost ? ` · neste nivå: ${virk(x.niva + 1)}` : ""}</p>${knapp}</article>`;
     }).join("");
     const F = m.fest;
+    const festknapp = (f, prakt) => `<button class="knapp${!F.holdt && harRad(f.pris) ? "" : " sekundar"}" type="button" data-fest="${prakt ? "prakt" : "vanlig"}" ${F.holdt || !harRad(f.pris) ? "disabled" : ""}>${prakt ? "Hold praktfest" : "Hold fest"}<small>+${f.aere} ære · ${f.timer} t · ${pris(f.pris)}</small></button>`;
     const festen = !F.ansatte ? "" : F.til
-      ? `<div class="sy-fest paa"><div><h4>Det er fest på godset</h4><p class="dempet">Alle jobber ${Math.round(F.bonus * 100)} % bedre til kl. ${new Date(F.til).toLocaleTimeString("nb-NO", { hour: "2-digit", minute: "2-digit" })}.</p></div></div>`
-      : `<div class="sy-fest"><div><h4>Hold fest for folkene</h4><p class="dempet">${F.holdt ? "Folkene har festet nok for i dag. Ny fest i morgen." : `Gir +${F.aere} ære, og hele godset jobber ${Math.round(F.bonus * 100)} % bedre i ${F.varer} timer.`}</p></div>
-        <button class="knapp${!F.holdt && harRad(F.pris) ? "" : " sekundar"}" type="button" data-gjor="fest" ${F.holdt || !harRad(F.pris) ? "disabled" : ""}>${F.holdt ? "Festet i dag" : "Hold fest"}<small>${pris(F.pris)}</small></button></div>`;
+      ? `<div class="sy-fest paa"><div><h4>Det er fest på godset</h4><p class="dempet">Alle jobber ${Math.round(F.bonus * 100)} % bedre til ${new Date(F.til).toLocaleString("nb-NO", { weekday: "long", hour: "2-digit", minute: "2-digit" })}.</p></div></div>`
+      : `<div class="sy-fest"><div><h4>Hold fest for folkene</h4><p class="dempet">${F.holdt ? "Folkene har festet nok for i dag. Ny fest i morgen." : `Festen gir ære, og hele godset jobber ${Math.round(F.bonus * 100)} % bedre etterpå.${F.prakt ? " Praktfesten byr på krydder og purpur, og gir dobbelt." : ""}`}</p></div>
+        ${F.holdt ? "" : `<div class="sy-festknapper">${festknapp(F, false)}${F.prakt ? festknapp(F.prakt, true) : ""}</div>`}</div>`;
     return `<div class="sy-rangboks" id="sy-folk"><p class="sy-etikett">Folkene på godset</p>
       <p class="dempet sy-butikkfot">Ansatte gjør godset mer effektivt. De kan forfremmes fem ganger.</p>${festen}<div class="sy-butikk">${kort}</div></div>`;
   }
@@ -586,7 +590,7 @@
       <p class="dempet sy-taggfot">Huset produserer ${Math.round(T.regler.taggStraff * 100)} % mindre til eieren vasker. Eieren får beskjed.</p></form>`;
   }
 
-  const skjenkTekst = () => { const g = T.meg.skjenk.gave; return Object.keys(g).length ? Object.entries(g).map(([r, n]) => `${tall(n)} ${rn(r)}`).join(", ").replace(/, ([^,]*)$/, " og $1") : "et tomt glass"; };
+  const skjenkTekst = () => Object.entries(T.meg.skjenk.gave).map(([r, n]) => `${tall(n)} ${rn(r)}`).join(", ").replace(/, ([^,]*)$/, " og $1");
 
   // Dagens runde: framdrift mot bonusen for å skjenke mange nok på én dag
   function runde() {
@@ -614,15 +618,16 @@
     const sp = T.spillere.find((s) => s.navn === valgt);
     if (!sp) return `<section class="sy-panel"><p class="sy-etikett">Ledig tomt</p><p>${esc(valgt)} har ikke sjekket inn ennå.</p><button class="liten-knapp" type="button" data-hjem>Til godset mitt</button></section>`;
     const b = sp.bygg;
-    const nask = sp.nasket ? "Nasket i dag" : m.naskIgjen <= 0 ? "Ikke flere nask i dag" : sp.bytte < 5 ? "Nyhøstet, ingenting å naske" : `Nask ca. ${tall(sp.bytte)} oliven`;
+    const nask = sp.nasket ? "Nasket i dag" : m.naskIgjen <= 0 ? "Ikke flere nask i dag" : sp.vaktet ? "Nattevakten passer på" : sp.bytte < 5 ? "Nyhøstet, ingenting å naske" : `Nask ca. ${tall(sp.bytte)} oliven`;
     return `<section class="sy-panel">
       <div class="sy-panelhode"><div><p class="sy-etikett">På besøk</p><h3>${esc(godsNavn(sp.navn))}</h3>
-        <p class="dempet">Villa nivå ${b.villa} · olivenlund ${b.lund}${b.vingard ? ` · vingård ${b.vingard}` : ""}${b.brudd ? ` · marmorbrudd ${b.brudd}` : ""}${b.bigard ? ` · bigård ${b.bigard}` : ""}${b.gruve ? ` · sølvgruve ${b.gruve}` : ""}${b.havn ? ` · havn ${b.havn}${sp.skip === "ute" ? " (skipet er ute)" : ""}` : ""}${sp.ansatte ? ` · ${sp.ansatte} ansatte` : ""} · ${tall(sp.aere)} ære${sp.hjemme ? "" : " · ikke hjemme på en stund"}</p></div>
+        <p class="dempet">Bor ${plasser().get(sp.navn).nabolag} · villa nivå ${b.villa} · olivenlund ${b.lund}${b.vingard ? ` · vingård ${b.vingard}` : ""}${b.brudd ? ` · marmorbrudd ${b.brudd}` : ""}${b.bigard ? ` · bigård ${b.bigard}` : ""}${b.gruve ? ` · sølvgruve ${b.gruve}` : ""}${b.havn ? ` · havn ${b.havn}${sp.skip === "ute" ? " (skipet er ute)" : ""}` : ""}${sp.ansatte ? ` · ${sp.ansatte} ansatte` : ""} · ${tall(sp.aere)} ære${sp.hjemme ? "" : " · ikke hjemme på en stund"}</p></div>
         <div class="sy-hodeknapper"><a class="liten-knapp" href="hotell.html?rom=${encodeURIComponent(`hjem:${sp.navn}`)}">Gå inn i huset</a>
         <button class="liten-knapp" type="button" data-hjem>Til godset mitt</button></div></div>
       <div class="sy-besok">
-        <button class="knapp${sp.skjenketMeg && !sp.skjenket ? " sy-offer" : ""}" type="button" data-skjenk="${esc(sp.navn)}" ${sp.skjenket ? "disabled" : ""}>${sp.skjenket ? "Skjenket i dag" : sp.skjenketMeg ? "Skjenk tilbake" : "Skjenk et glass vin"}<small>${sp.skjenket ? "Kom igjen i morgen" : sp.skjenketMeg
-          ? `${esc(visningsnavn(sp.navn))} skjenket deg i dag. Du gir ${skjenkTekst()} og får +${m.skjenk.aere + m.skjenk.gjengjeldAere} ære`
+        <button class="knapp${sp.skjenketMeg && !sp.skjenket && m.skjenk.kan ? " sy-offer" : ""}" type="button" data-skjenk="${esc(sp.navn)}" ${sp.skjenket || !m.skjenk.kan ? "disabled" : ""}>${sp.skjenket ? "Skjenket i dag" : sp.skjenketMeg ? "Skjenk tilbake" : "Skjenk et glass vin"}<small>${sp.skjenket ? "Kom igjen i morgen"
+          : !m.skjenk.kan ? `Du har for lite ${rn(m.skjenk.hoved)} til å skjenke. Høst først.`
+          : sp.skjenketMeg ? `${esc(visningsnavn(sp.navn))} skjenket deg i dag. Du gir ${skjenkTekst()} og får +${m.skjenk.aere + m.skjenk.gjengjeldAere} ære`
           : `Du gir ${skjenkTekst()} og får +${m.skjenk.aere} ære`}</small></button>
         <button class="knapp sekundar" type="button" data-nask="${esc(sp.navn)}" ${sp.nasket || m.naskIgjen <= 0 || sp.bytte < 5 ? "disabled" : ""}>${nask}<small>${m.naskIgjen} av ${T.regler.naskPerDag} nask igjen i dag. Eieren får beskjed.</small></button>
       </div>
@@ -732,7 +737,7 @@
     d.textContent = tekst;
     const u = utsnitt();
     d.style.left = `${Math.min(92, Math.max(8, ((p.x - u.x) / u.w) * 100))}%`;
-    d.style.top = `${Math.min(85, Math.max(4, ((p.y - 70 * pl.krymp - u.y) / u.h) * 100))}%`;
+    d.style.top = `${Math.min(85, Math.max(4, ((p.y - 70 * pl.k - u.y) / u.h) * 100))}%`;
     boks.append(d);
     setTimeout(() => d.remove(), 1600);
   }
@@ -753,7 +758,7 @@
     else if (s.type === "vask") toast(`Rent igjen. ${s.fra} får prøve seg på nytt en annen dag.`);
     else if (s.type === "kjop") toast(s.vare === "statue" ? "Statuen din står nå på agoraen." : s.vare === "slave" ? "Vaskeslaven er ansatt. Han tar tagger etter en time." : `${s.navn} kjøpt.`);
     else if (s.type === "ansett") toast(s.niva === 1 ? `${s.navn} er ansatt.` : `${s.navn} er forfremmet til nivå ${s.niva}.`);
-    else if (s.type === "fest") toast(`Skål for folkene! +${s.aere} ære, og godset jobber bedre en stund.`);
+    else if (s.type === "fest") toast(`${s.prakt ? "For en praktfest!" : "Skål for folkene!"} +${s.aere} ære, og godset jobber bedre i ${s.timer} timer.`);
     else if (s.type === "tokt") toast(`Skipet har lagt fra mot ${s.mal}. God vind!`);
     else if (s.type === "loss") { sprett(gave(s.fikk)); toast(`${s.hendelse === "storm" ? "Skipet kom gjennom en storm og mistet halve lasten." : s.hendelse === "medvind" ? "Medvind hele veien! Skipet kom hjem med ekstra last." : `Skipet er losset etter toktet til ${s.mal}.`}`); }
     else if (s.type === "flytt-inn") { toast("Velkommen til byen. Godset ditt er merket med gull."); zoomTilGods(T.meg.navn); }
@@ -811,6 +816,7 @@
     }
     else if (k.dataset.info !== undefined) visInfo("Slik spiller du Symposion", info());
     else if (k.dataset.ansett) gjor("ansett", { hvem: k.dataset.ansett });
+    else if (k.dataset.fest) gjor("fest", { prakt: k.dataset.fest === "prakt" });
     else if (k.dataset.tokt) gjor("tokt", { mal: k.dataset.tokt });
     else if (k.dataset.havnkart !== undefined) (document.getElementById("sy-havn") || document.getElementById("sy-panel")).scrollIntoView({ behavior: "smooth", block: "center" });
     else if (k.dataset.gjor) gjor(k.dataset.gjor);

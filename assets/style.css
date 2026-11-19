@@ -1282,3 +1282,6 @@ p.h-merket { margin: 10px 0; }
   .sy-side .sy-brikke span { display: none; }
   .sy-topp .sy-brikker { display: flex; width: auto; }
 }
+.sy-festknapper { display: flex; gap: 10px; flex-wrap: wrap; }
+.sy-festknapper .knapp { flex: 1 1 200px; }
+.sy-nabolag { font-family: var(--display); font-size: 8.5px; letter-spacing: .3em; text-transform: uppercase; fill: #a89a6c; opacity: .8; paint-order: stroke; stroke: #23221a; stroke-width: 2.5px; pointer-events: none; }
