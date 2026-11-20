@@ -1316,7 +1316,8 @@ p.h-merket { margin: 10px 0; }
 @keyframes sy-gange { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.4px); } }
 .sy-seiler { animation: sy-seiler 46s ease-in-out infinite; }
 @keyframes sy-seiler { 0%, 100% { transform: translateX(-12px); } 50% { transform: translateX(16px); } }
-.sy-folk, #sy-luft, .sy-sky, .sy-fugler { pointer-events: none; }
+/* Bare folkene som går rundt på kartet, ikke kortene for de ansatte, som også heter sy-folk */
+.sy-kart .sy-folk, #sy-luft, .sy-sky, .sy-fugler { pointer-events: none; }
 .sy-bobleinn { animation: sy-boble 5.2s ease both; transform-box: fill-box; transform-origin: 50% 100%; }
 @keyframes sy-boble { 0% { opacity: 0; transform: scale(.6); } 7% { opacity: 1; transform: scale(1.04); } 10% { transform: scale(1); } 88% { opacity: 1; } 100% { opacity: 0; } }
 .sy-bobletekst { font-family: var(--brod, "EB Garamond", serif); font-style: italic; font-size: 9.5px; fill: #14130d; }
