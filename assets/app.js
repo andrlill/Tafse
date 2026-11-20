@@ -64,7 +64,7 @@ function menyHtml() {
   const sider = !visBrorside() ? [["gjest.html", "Spillhallen"], ...GJESTESPILL.map(([s, n]) => [`${s}.html`, n])] : SIDER;
   return sider.map(([fil, navn]) => {
     const stamme = fil.replace(/\.html$/, "");
-    const aktiv = stamme === her || (visBrorside() && ((her === "mote" && stamme === "moter") || (["spill", "honningfella", "2048", "murbrekker", "tetris", "snake", "hotell", "tartaros", "gjest"].includes(her) && stamme === "symposion") || (her === "bror" && stamme === "medlemmer")));
+    const aktiv = stamme === her || (visBrorside() && ((her === "mote" && stamme === "moter") || (["spill", "honningfella", "2048", "murbrekker", "tetris", "snake", "hotell", "tartaros", "kaos", "gjest"].includes(her) && stamme === "symposion") || (her === "bror" && stamme === "medlemmer")));
     return `<a href="${fil}"${aktiv ? ' class="aktiv" aria-current="page"' : ""}>${navn}</a>`;
   }).join("");
 }
@@ -170,7 +170,7 @@ function mesterTekst(m) {
 let MEG = null; // navnet til den som er logget inn
 let ADMIN = false;
 let GJEST = false; // gjester er bare innlogget på spillsidene, som «Navn (gjest)»
-const GJESTESPILL = [["tartaros", "Tartaros"], ["symposion", "Symposion"], ["spill", "Idus Martiae"], ["2048", "2048"], ["murbrekker", "Murbrekker"], ["tetris", "Tetris"], ["snake", "Snake"], ["hotell", "Tafse Hotell"]];
+const GJESTESPILL = [["tartaros", "Tartaros"], ["kaos", "Kaos"], ["symposion", "Symposion"], ["spill", "Idus Martiae"], ["2048", "2048"], ["murbrekker", "Murbrekker"], ["tetris", "Tetris"], ["snake", "Snake"], ["hotell", "Tafse Hotell"]];
 const SPILLSIDER_STAMMER = ["gjest", "honningfella", ...GJESTESPILL.map(([s]) => s)];
 const paaGjesteside = () => GJESTESPILL.some(([s]) => s === (location.pathname.split("/").pop() || "").replace(/\.html$/, ""));
 
@@ -644,6 +644,7 @@ function premieTekst(svar) {
 const PREMIER = [
   ["Symposion", "symposion", "oliven, vin og marmor", "#9db36a", "Høstes på godset ditt, også mens du er borte"],
   ["Tartaros", "tartaros", "drakmer", "#e2c174", "Mynter, bosser og tid i hvert tokt"],
+  ["Kaos", "kaos", "gnister", "#6ea8ff", "Oppdagelser, dagens oppdrag og stjerner i galleriet"],
   ["2048", "2048", "mosaikkbiter", "#6fc3c9", "1 for hver 100 poeng"],
   ["Murbrekker", "murbrekker", "teglstein", "#c8683f", "1 for hver 50 poeng"],
   ["Tetris", "tetris", "steinblokker", "#9a8fd0", "1 for hver 300 poeng"],

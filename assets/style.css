@@ -1364,3 +1364,94 @@ p.h-merket { margin: 10px 0; }
 @media (prefers-reduced-motion: reduce) { .sy-royk circle, .sy-sky, .sy-fugl, .sy-fugl path, .sy-gange, .sy-seiler, .sy-kort, .sy-brikkeknapp.viktig { animation: none; } .sy-royk circle { opacity: .35; } }
 .sy-kort .sy-taggrad input { flex: 0 0 auto; }
 .sy-kartflate { position: relative; }
+
+/* Kaos */
+.k-topp { display: flex; justify-content: space-between; align-items: flex-end; gap: 8px 24px; flex-wrap: wrap; border-bottom: 1px solid var(--linje); margin-bottom: 16px; }
+.k-faner { border-bottom: 0; margin-bottom: 0; flex-wrap: wrap; row-gap: 0; }
+.k-merke { font-family: var(--brod); font-size: 14px; letter-spacing: .04em; text-transform: none; color: var(--gull-lys); margin-left: 4px; }
+.k-merke.ny { background: var(--gull); color: var(--bunn); padding: 0 6px; font-family: var(--display); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; vertical-align: 2px; }
+.k-saldo { margin: 0 0 6px; font-size: 17px; color: var(--dempet); }
+.k-saldo i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #6ea8ff; margin-right: 7px; box-shadow: 0 0 8px #6ea8ff; }
+.k-saldo strong { color: var(--tekst); font-family: var(--display); font-variant-numeric: tabular-nums; }
+.k-saldo .lenkeknapp { margin-left: 14px; }
+.k-side { padding-top: 30px; }
+.k-side .side-tittel { font-size: clamp(26px, 4vw, 36px); margin-bottom: 14px; }
+.k-oppsett { display: grid; grid-template-columns: minmax(0, 1fr) 310px; grid-template-areas: "brett oppdrag" "brett hoyre"; grid-template-rows: auto 1fr; column-gap: 28px; align-items: start; }
+.k-venstre { grid-area: brett; }
+.k-hoyre { grid-area: hoyre; }
+.k-oppsett[hidden] { display: none; }
+.k-venstre { min-width: 0; --k-maks: calc(max(66vh, 420px) * 4 / 3); }
+.k-brett { position: relative; background: #0d0c0a; border: 1px solid var(--gull); width: 100%; max-width: var(--k-maks); }
+.k-brett canvas { display: block; width: 100%; aspect-ratio: 4 / 3; image-rendering: pixelated; touch-action: none; cursor: crosshair; outline: none; user-select: none; -webkit-user-select: none; }
+.k-brett canvas:focus-visible { outline: 2px solid var(--gull); outline-offset: 3px; }
+.k-brett .t-melding { background: rgba(11, 11, 10, .72); }
+.k-toast { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; pointer-events: none; z-index: 4; }
+.k-toastlinje { background: rgba(11, 11, 10, .9); border: 1px solid var(--linje); padding: 7px 12px; font-size: 16px; line-height: 1.3; max-width: min(440px, 100%); animation: k-inn .25s ease-out; transition: opacity .5s; }
+.k-toastlinje.gull { border-color: var(--gull); }
+.k-toastlinje.ut { opacity: 0; }
+.k-toastlinje strong { display: block; font-family: var(--display); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--gull-lys); }
+@keyframes k-inn { from { opacity: 0; transform: translateY(-6px); } }
+.k-verktoy { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; max-width: var(--k-maks); }
+.k-knapper { display: contents; }
+.k-verktoy .knapp { padding: 8px 18px; }
+.k-verktoy .liten-knapp:disabled { opacity: .4; cursor: default; }
+.k-verktoy .t-lyd { margin-left: auto; }
+.k-pensler { display: inline-flex; gap: 2px; border: 1px solid var(--linje); padding: 2px; }
+.k-pensel { width: 30px; height: 30px; display: grid; place-items: center; background: none; border: 0; padding: 0; cursor: pointer; }
+.k-pensel i { display: block; border-radius: 50%; background: var(--dempet); }
+.k-pensel.aktiv { background: var(--flate2); }
+.k-pensel.aktiv i { background: var(--gull-lys); }
+.k-gruppe { font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--gull); margin: 14px 0 6px; }
+.k-gruppe:first-child { margin-top: 0; }
+.k-stoffer { display: flex; flex-wrap: wrap; gap: 6px; }
+.k-stoff { display: inline-flex; align-items: center; gap: 7px; background: var(--flate); border: 1px solid var(--linje); color: var(--tekst); font: inherit; font-size: 15.5px; line-height: 1.3; padding: 4px 9px 4px 6px; cursor: pointer; }
+.k-stoff i { width: 14px; height: 14px; border: 1px solid rgba(255, 255, 255, .18); flex: none; }
+.k-stoff:hover { border-color: var(--gull); }
+.k-stoff.aktiv { border-color: var(--gull-lys); background: var(--flate2); color: var(--gull-lys); }
+.k-stoff.laast { color: var(--dempet); border-style: dashed; cursor: default; letter-spacing: .15em; padding-left: 9px; }
+.k-stoff b { font-family: var(--display); font-weight: 600; color: var(--gull-lys); font-variant-numeric: tabular-nums; }
+.k-oppdrag { grid-area: oppdrag; border: 1px solid var(--linje); background: var(--flate); padding: 12px 14px; margin-bottom: 14px; }
+.k-oppdrag[hidden] { display: none; }
+.k-oppdrag-hode h2 { margin: 0; font-size: 20px; color: var(--gull-lys); }
+.k-oppdrag-hode p { margin: 2px 0 0; }
+.k-oppdrag-hjelp { margin: 4px 0 10px; color: var(--dempet); font-size: 16px; }
+.k-maalere { display: flex; gap: 10px 22px; flex-wrap: wrap; align-items: flex-end; }
+.k-maaler span { display: block; font-family: var(--display); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--gull); }
+.k-maaler strong { font-family: var(--display); font-size: 24px; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.k-maaler em { display: block; font-style: normal; font-size: 14px; color: var(--dempet); }
+.k-maaler.bred { flex: 1 1 100%; min-width: 200px; }
+.k-strek { height: 6px; background: var(--flate2); margin-top: 6px; }
+.k-strek i { display: block; height: 100%; background: var(--gull); }
+.k-strek.tid { height: 3px; }
+.k-strek.tid i { background: var(--dempet); }
+.k-tavle td { font-size: 16px; padding: 6px 8px; }
+.k-stjerner { color: var(--gull-lys); letter-spacing: 1px; }
+.k-galleri-hode { margin-bottom: 14px; }
+.k-verk { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; }
+.k-verkkort { border: 1px solid var(--linje); background: var(--flate); padding: 10px; }
+.k-verkbilde { display: block; width: 100%; aspect-ratio: 4 / 3; background: #0d0c0a; border: 1px solid var(--linje); padding: 0; cursor: pointer; overflow: hidden; }
+.k-verkbilde:hover { border-color: var(--gull); }
+.k-verkbilde img { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
+.k-verkkort h3 { margin: 8px 0 0; font-size: 16px; letter-spacing: .06em; overflow-wrap: anywhere; }
+.k-verkkort p { margin: 0 0 8px; font-size: 15px; }
+.k-verkknapper { display: flex; gap: 6px; flex-wrap: wrap; }
+.k-stjerneknapp:disabled { cursor: default; opacity: .75; }
+.k-bok-hode { display: grid; grid-template-columns: minmax(0, 320px) minmax(0, 1fr); gap: 18px; align-items: center; margin-bottom: 6px; }
+.k-laaser { list-style: none; margin: 0; padding: 0; color: var(--dempet); font-size: 16px; }
+.k-laaser li.apen { color: var(--tekst); }
+.k-funnliste { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 8px; }
+.k-funn { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--linje); background: var(--flate); padding: 8px 10px; }
+.k-funn.ukjent { border-style: dashed; background: none; }
+.k-funn i { width: 26px; height: 26px; flex: none; border: 1px solid rgba(255, 255, 255, .2); display: grid; place-items: center; font-style: normal; font-family: var(--display); color: var(--dempet); }
+.k-funn.fenomen i { border-radius: 50%; }
+.k-funn strong { display: block; font-family: var(--display); font-size: 14px; letter-spacing: .08em; }
+.k-funn span { display: block; font-size: 15.5px; line-height: 1.3; color: var(--dempet); }
+.k-funn.ukjent span { font-style: italic; }
+.k-funn em { display: block; font-style: normal; font-size: 13px; color: var(--gull); }
+@media (max-width: 900px) {
+  .k-oppsett { grid-template-columns: minmax(0, 1fr); grid-template-areas: "oppdrag" "brett" "hoyre"; grid-template-rows: auto; }
+  .k-venstre { --k-maks: none; margin-bottom: 16px; }
+  .k-side { padding-top: 18px; }
+  .k-bok-hode { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) { .k-toastlinje { animation: none; } }
