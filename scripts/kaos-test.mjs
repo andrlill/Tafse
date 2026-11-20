@@ -60,6 +60,23 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   // Mennesker
   { const v = ny(); v.fyll(60, 130, 100, 139, E.GJORME); v.lyn(80, 50); kjor(v, 5); const levende = v.folk.length; v.fyll(110, 138, 150, 139, E.VIN); kjor(v, 1500); if (v.folk[0]) v.mal(v.folk[0].x, v.folk[0].y - 10, 2, E.MIDAS); kjor(v, 80);
     sjekk("lyn i gjørme gir et menneske, som blir fullt og til slutt en gullstatue", levende === 1 && ["menneske", "rus", "gull", "gullstatue"].every((n) => v.funn.has(n)), [...v.funn].join(",")); }
+  // Naturen: fukt i jorda, gress, trær som slår rot, oliven og olivenpresse
+  { const v = ny(); v.fyll(40, 128, 150, 139, E.JORD); v.fyll(0, 134, 39, 139, E.VANN); v.fyll(151, 134, B - 1, 139, E.VANN); v.fyll(95, 70, 97, 132, E.TRE); kjor(v, 2500);
+    const tre = v.tell(E.TRE), lov = v.tell(E.PLANTE); kjor(v, 6000);
+    sjekk("fuktig jord får gress, og en stokk i jorda slår rot og får krone", v.funn.has("gress") && v.funn.has("lovverk") && v.tell(E.GRESS) > 60 && lov > 30, `gress ${v.tell(E.GRESS)}, løv ${lov}`);
+    sjekk("treet vokser ikke uten ende", v.tell(E.TRE) <= tre + 5 && v.tell(E.PLANTE) < lov * 1.6 + 40, `tre ${tre} -> ${v.tell(E.TRE)}, løv ${lov} -> ${v.tell(E.PLANTE)}`);
+    sjekk("trær bærer oliven", v.funn.has("oliven"));
+    for (let k = 0; k < 4; k++) v.menneske(60 + k * 20, 100); v.fyll(50, 126, 140, 127, E.OLIVEN); kjor(v, 600);
+    sjekk("mennesker tråkker oliven til olje", v.funn.has("pressing") && v.tell(E.OLJE) > 0); }
+  { const v = ny(); v.fyll(40, 128, 150, 139, E.JORD); v.fyll(95, 70, 97, 132, E.TRE); kjor(v, 3000);
+    sjekk("i tørr jord gror ingenting", v.tell(E.GRESS) === 0 && v.tell(E.PLANTE) === 0); }
+  { const v = ny(); v.fyll(40, 128, 150, 139, E.JORD); v.fyll(0, 134, 39, 139, E.VANN); kjor(v, 300); let traer = 0;
+    for (let runde = 0; runde < 6 && !traer; runde++) { for (let x = 50; x < 145; x += 6) v.mal(x, 110, 0, E.FRO); kjor(v, 2500); traer = v.tell(E.TRE); }
+    sjekk("frø i fuktig jord blir til blomster og trær", traer > 20 && v.funn.has("plante"), `tre ${traer}`); }
+  // Mose og fisk
+  { const v = ny(); v.fyll(20, 100, 22, 139, E.STEIN); v.fyll(120, 100, 122, 139, E.STEIN); v.fyll(23, 115, 119, 139, E.SALTVANN); v.lyn(70, 50); kjor(v, 300); const fisk = v.tell(E.FISK);
+    v.fyll(23, 100, 119, 139, E.VANN); kjor(v, 3000);
+    sjekk("lyn i saltvann gir fisk, og stein i vann får mose", fisk >= 1 && v.funn.has("fisk") && v.funn.has("mose"), `fisk ${fisk}, mose ${v.tell(E.MOSE)}`); }
   // Lagring
   { const v = ny(3); v.fyll(10, 10, 60, 60, E.SAND); v.settKilde(100, 50, E.VANN); v.menneske(150, 100); const kode = v.kod(); const u = K.lagVerden(4);
     sjekk("et brett kan lagres og leses inn igjen", u.les(kode) && u.tell(E.SAND) === v.tell(E.SAND) && u.X[50 * B + 100] === E.VANN && u.folk.length === 1 && !u.les("tull") && !u.les('{"v":1,"t":"AAAA"}')); }

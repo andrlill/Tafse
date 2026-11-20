@@ -104,6 +104,11 @@ Kaos er en sandkasse på 200 × 150 celler. Hver celle har ett stoff, og stoffen
   ens eget brett (sand truffet av lynet blir glass, og så videre). Oppdagelsesboka viser et hint for hvert stoff
   man mangler, og hvem som fant det først. Sluk, Kilde og Midasstøv låses opp ved 5, 10 og 18 oppdagelser (`LAASER`).
   Brettet lagres i nettleseren, oppdagelsene på serveren.
+- **Naturen:** jord holder på fukt fra vann i nærheten (`FUKT` celler inn) og tegnes da mørkere. Fuktig jord får gress,
+  frø spirer til blomster eller trær, og tre som står i fuktig jord, lever: saften stiger opp i veden (`SAFT` celler),
+  bare topper skyter nye skudd og får løv, og kronene bærer oliven. Blomster sår seg selv, stein i vann får mose,
+  og lyn i saltvann gir fisk. I tørr jord gror ingenting.
+- **Zoom:** musehjulet eller knappene zoomer, høyre museknapp flytter utsnittet. På mobil brukes to fingre.
 - **Dagens oppdrag:** alle får det samme brettet, laget av datoen. Fem maler går på rundgang: Brenn flåten, Akvedukten,
   Zevs' vrede, Vesuv våkner og Trojas murer. Færrest brukte korn vinner. Grensene for to og tre stjerner (`par`) settes
   i hver mal. Et nytt oppdrag lages som en funksjon i `assets/kaos-motor.js` og legges til i `MALER`.
@@ -112,7 +117,7 @@ Kaos er en sandkasse på 200 × 150 celler. Hver celle har ett stoff, og stoffen
 - **Gnister:** 10 per oppdagelse (15 ekstra til den første), 15, 25 eller 40 for dagens oppdrag etter stjernene,
   3 ekstra per dag på rad (opptil 21), og 5 for hver stjerne man får i galleriet.
 
-Nye stoffer legges til med `stoff(...)` øverst i `assets/kaos-motor.js`, reaksjoner med `regel(a, b, a blir, b blir, sjanse)`.
+Nye stoffer legges til med `stoff(...)` i `assets/kaos-motor.js`, alltid sist i lista (lagrede brett bruker numrene), reaksjoner med `regel(a, b, a blir, b blir, sjanse)`.
 Skal stoffet kunne oppdages, må nøkkelen også inn i `FUNN` begge steder (`assets/kaos-motor.js` og `lib/kaos.js`).
 
 ## Saker til behandling

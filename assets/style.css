@@ -1401,6 +1401,9 @@ p.h-merket { margin: 10px 0; }
 .k-pensel i { display: block; border-radius: 50%; background: var(--dempet); }
 .k-pensel.aktiv { background: var(--flate2); }
 .k-pensel.aktiv i { background: var(--gull-lys); }
+.k-zoom { align-items: center; }
+.k-zoom .k-pensel { color: var(--tekst); font-size: 18px; line-height: 1; }
+.k-zoom span { font-family: var(--display); font-size: 11px; letter-spacing: .08em; color: var(--dempet); min-width: 46px; text-align: center; font-variant-numeric: tabular-nums; }
 .k-gruppe { font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--gull); margin: 14px 0 6px; }
 .k-gruppe:first-child { margin-top: 0; }
 .k-stoffer { display: flex; flex-wrap: wrap; gap: 6px; }
