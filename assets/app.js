@@ -650,13 +650,9 @@ const ENDRINGER = [
     "Baren kjøper råvarer fra godset ditt, også honning, sølv, krydder og purpur. Hver dag ønsker den seg én vare og betaler dobbelt.",
     "I resepsjonen kjøper du avtaler som varer en uke: 10 % mer av alt på godset, større lager eller raskere tokt.",
   ] },
-  { id: 7, dato: "20. november", tittel: "Bedre handel i Symposion", punkter: [
+  { id: 7, dato: "20. november", tittel: "Festen og lange fingre", punkter: [
     "Festen går i pluss: hele godset jobber 15 % bedre i 8 timer, og det koster bare en times produksjon. Knappen viser hva festen gir.",
-    "Lange fingre koster nå 50 vin, og gir et blindt grep: du tar mellom 0 og 50 % av en tilfeldig råvare fra naboens lager, og ser først etterpå hva det ble. Store grep er sjeldne.",
-    "Gaver til byggverkene gir dobbelt så mye ære som før.",
-    "Krydder og purpur er verdt mer når du gir dem til byggverkene.",
-    "Ansatte er dyrere å ansette og forfremme. De du allerede har, beholder nivået.",
-    "Festen gir litt mindre ære: 10 pluss 1 for hvert nivå de ansatte har.",
+    "Lange fingre gir et blindt grep: du tar mellom 0 og 50 % av en tilfeldig råvare fra naboens lager, og ser først etterpå hva det ble. Store grep er sjeldne.",
     "Ny knapp: «Hva er nytt», den du leser nå.",
   ] },
   { id: 6, dato: "20. november", tittel: "Rettelser", punkter: [
