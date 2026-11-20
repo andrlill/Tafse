@@ -472,13 +472,15 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
       ${sprayApen ? taggSkjema(sp) : ""}</div>`;
   }
   // Nask-knappen: de gratis naskene viser hva man får, de kjøpte er et blindt grep
-  const blindt = () => T.meg.naskGratis <= 0 && T.meg.naskIgjen > 0;
-  const naskStengt = (sp) => sp.nasket || T.meg.naskIgjen <= 0 || (!blindt() && sp.bytte < 5);
+  // Gratis nask er ett per nabo. Er de brukt opp, eller er naboen allerede nasket, blir det et blindt
+  // grep, og det kan tas hos hvem som helst så lenge man har kjøpte nask igjen.
+  const blindt = (sp) => T.meg.naskGratis <= 0 || !!(sp && sp.nasket);
+  const naskStengt = (sp) => (blindt(sp) ? T.meg.naskKjopt <= 0 : sp.bytte < 5);
   function naskKnapp(sp, kort) {
     const m = T.meg;
-    const tekst = sp.nasket ? "Nasket i dag" : m.naskIgjen <= 0 ? "Ikke flere nask i dag" : blindt() ? "Blindt grep"
+    const tekst = blindt(sp) && m.naskKjopt <= 0 ? (sp.nasket ? "Nasket i dag" : "Ikke flere nask i dag") : blindt(sp) ? "Blindt grep"
       : sp.vaktet ? "Nattevakten passer på" : sp.bytte < 5 ? (kort ? "Ingenting å naske" : "Nyhøstet, ingenting å naske") : `Nask ca. ${tall(sp.bytte)} oliven`;
-    const under = blindt() && !sp.nasket ? `Du ser først etterpå hva du fikk. ${m.naskIgjen} igjen i dag.`
+    const under = blindt(sp) && m.naskKjopt > 0 ? `Du ser først etterpå hva du fikk. ${m.naskKjopt} ${m.naskKjopt === 1 ? "kjøpt grep" : "kjøpte grep"} igjen.`
       : `${m.naskIgjen} av ${T.regler.naskPerDag} nask igjen${kort ? "" : " i dag. Eieren får beskjed."}`;
     return `<button class="knapp sekundar" type="button" data-nask="${esc(sp.navn)}" ${naskStengt(sp) ? "disabled" : ""}>${tekst}<small>${under}</small></button>`;
   }
@@ -624,7 +626,7 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
       <ul>
         <li><strong>Skjenk:</strong> én gang om dagen per nabo. Du gir bort 10 % av det godset ditt produserer i timen, av hver råvare du har nok av, og minst ${R.skjenkMinst} av det godset lager mest av. Du får ${R.skjenkAere} ære. Har naboen allerede skjenket deg i dag (vinrød krukke på kartet), gir det ${R.skjenkAere + R.gjengjeldAere} ære å skjenke tilbake.</li>
         <li><strong>Dagens runde:</strong> skjenk ${R.rundeMal} naboer på én dag, så får du én times avling av alt godset ditt lager, og ${R.rundeAere} ære.</li>
-        <li><strong>Nask:</strong> ta litt av en nabos uhøstede oliven, ${R.naskPerDag} ganger om dagen. Eieren får beskjed. Kjøper du «lange fingre» på torget, blir neste nask et blindt grep: du tar noe tilfeldig fra lageret, og ser først etterpå hva det ble. Du tar mellom 0 og 50 % av én råvare, men det meste er små grep, og bare et fåtall blir et kupp.</li>
+        <li><strong>Nask:</strong> ta litt av en nabos uhøstede oliven, ${R.naskPerDag} ganger om dagen. Eieren får beskjed. Kjøper du «lange fingre» på torget, får du et blindt grep i tillegg: det kan tas hos hvem du vil, også naboer du allerede har nasket fra i dag. Du tar mellom 0 og 50 % av én tilfeldig råvare, og ser først etterpå hva det ble. Det meste er små grep, og bare et fåtall blir et kupp.</li>
         <li><strong>Tagg:</strong> spray en tekst på en nabos hus, ${R.taggPerDag} ganger om dagen. Huset produserer ${Math.round(R.taggStraff * 100)} % mindre til eieren har skrubbet det bort.</li>
       </ul>
       <p>Trykk på et gods på kartet eller et navn på ærestavlen for å besøke.</p>

@@ -644,6 +644,9 @@ function premieTekst(svar) {
 // ENDRINGSLOGGEN («Hva er nytt»). Nyeste først. Legg til en ny oppføring øverst når noe er endret.
 // id må være unik og øke, så knappen kan vise at det er noe nytt siden sist.
 const ENDRINGER = [
+  { id: 9, dato: "20. november", tittel: "Lange fingre", punkter: [
+    "Et kjøpt grep kan tas hos hvem du vil, også naboer du allerede har nasket fra i dag.",
+  ] },
   { id: 7, dato: "20. november", tittel: "Festen og lange fingre", punkter: [
     "Festen går i pluss: hele godset jobber 15 % bedre i 8 timer, og det koster bare en times produksjon. Knappen viser hva festen gir.",
     "Lange fingre gir et blindt grep: du tar mellom 0 og 50 % av en tilfeldig råvare fra naboens lager, og ser først etterpå hva det ble. Store grep er sjeldne.",
