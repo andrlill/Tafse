@@ -648,6 +648,7 @@ const ENDRINGER = [
     "Etter Pretor åpner hver ny tittel retten til å bygge et nytt hus: Domus (Arkont), Palass (Strateg), Kongsgård (Konsul), Symposiarkens hall (Symposiark) og Olympos (Heros).",
     "Husene koster alle sju råvarene og gir nye fordeler: større lager, ansatte på nivå 6, ekstra nask og tagg, lengre fest, et andre skip, dobbelt offer og mer produksjon.",
     "Pynten over Pretor (statue, fontene, ørn, fakler og stjerne) følger nå husene, ikke titlene.",
+    "Villaen kan bygges ut til nivå 6. Etter det er det husene som gjelder. De som alt har en større villa, beholder den.",
   ] },
   { id: 9, dato: "20. november", tittel: "Lange fingre", punkter: [
     "Et kjøpt grep kan tas hos hvem du vil, også naboer du allerede har nasket fra i dag.",

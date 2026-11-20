@@ -175,7 +175,8 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
       const kuber = Array.from({ length: b.bigard ? Math.min(3, Math.ceil(b.bigard / 3)) : 0 }, (_, k) =>
         `<g transform="translate(${-24 + k * 10} ${13 + (k % 2) * 2})"><path d="M-4 0 Q-4.6 -8 0 -8.6 Q4.6 -8 4 0 Z" fill="#d99a2b"/><path d="M-3.6 -3 H3.6 M-3 -5.6 H3" stroke="#a36f17" stroke-width=".8"/><rect x="-1" y="-2.2" width="2" height="2.2" fill="#3a2a18"/></g>`).join("");
       const gruve = b.gruve ? `<g transform="translate(63 3)"><path d="M-11 0 Q-10 -15 0 -16 Q10 -15 11 0 Z" fill="#5d5a4c"/><path d="M-6 0 V-6 Q0 -12 6 -6 V0 Z" fill="#14130d"/><path d="M-6 -6 Q0 -12 6 -6" fill="none" stroke="#8a6a45" stroke-width="1.4"/>${b.gruve >= 4 ? `<circle cx="-7" cy="-11" r="1.2" fill="#e6e8ee"/>` : ""}<circle cx="5" cy="-13" r="1.2" fill="#e6e8ee" class="sy-flamme"/></g>` : "";
-      const trinn = b.villa <= 2 ? 0 : b.villa <= 4 ? 1 : b.villa <= 7 ? 2 : 3;
+      // Etter villa 6 er det husene som gjør godset staseligere
+      const trinn = sp.hus ? 3 : b.villa <= 2 ? 0 : b.villa <= 4 ? 1 : b.villa <= 7 ? 2 : 3;
       const tak = [-28, -35, -43, -62][trinn];
       const hp = harPynt(sp.rang, sp.hus);
       const hoyde = [-44, -52, -60, -80][trinn] - (hp.has("flagg") ? 16 : 0) - (hp.has("stjerne") ? 14 : 0);
@@ -607,7 +608,7 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
         <li><strong>${b.villa.navn}</strong> gjør lageret større og huset staseligere. Fra nivå 2 koster den vin, fra nivå 3 også marmor.</li>
         <li><strong>${b.havn.navn}</strong> gir deg et skip. Krever ${kreves("havn")}.</li>
       </ul>
-      <p>Hvert nivå koster 65 % mer enn det forrige. Høyeste nivå er ${R.maksNiva}, og ${b.havn.maks} for havnen.</p>
+      <p>Hvert nivå koster 65 % mer enn det forrige. Høyeste nivå er ${R.maksNiva}, men ${b.villa.maks} for villaen og ${b.havn.maks} for havnen. Etter villa ${b.villa.maks} tar husene over.</p>
       <h3>Folkene på godset</h3>
       <p>Ansett folk under «Folkene på godset». Hver arbeider gir ${Math.round(R.ansattProd * 100)} % mer i bygget sitt for hvert nivå, forvalteren gir én time større lager per nivå, og nattevakten gjør at naskere får med seg ${Math.round(R.vaktAndel * 100)} % mindre per nivå. Alle kan forfremmes til nivå ${R.ansattMaks}. De dyreste vil ha lønn i honning og sølv.</p>
       <p>Én gang om dagen kan du holde fest for folkene dine. Den koster en times produksjon av oliven og vin, og honning hvis du har bigård. Festen gir ære, mer jo flere og bedre folk du har, og etterpå jobber hele godset ${Math.round(R.fest.bonus * 100)} % bedre i ${R.fest.varer} timer. Har du havn, kan du holde praktfest i stedet: den koster ${Object.entries(R.fest.prakt.pris).map(([r, n]) => `${n} ${rn(r)}`).join(" og ")} i tillegg, gir dobbel ære og varer dobbelt så lenge.</p>
@@ -686,7 +687,7 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
       : id === "havn"
         ? niva ? `<p class="sy-rate">Lasten er ${Math.round(T.regler.toktLast * 100 * (niva - 1))} % større</p><p class="dempet">Hvert nivå gir ${Math.round(T.regler.toktLast * 100)} % mer last.${niva < 2 ? " Nivå 2 åpner Egypt." : ""}</p>`
                : `<p class="dempet">Gir deg et skip. Toktene henter hjem krydder og purpur.</p>`
-        : `<p class="sy-rate">Lageret rommer ${m.takTimer} timer</p><p class="dempet">Hvert nivå gir én time til, og et staseligere hus.</p>`;
+        : `<p class="sy-rate">Lageret rommer ${m.takTimer} timer</p><p class="dempet">${niva >= regel.maks ? "Villaen er så stor den kan bli." : "Hvert nivå gir én time til, og et staseligere hus."}</p>`;
     const nesteRate = r && k && m.nesteRater[r] !== undefined ? m.nesteRater[r] : null;
     const neste = !k ? "" : nesteRate !== null
       ? `<p class="sy-neste">${niva ? "Neste nivå" : "Nivå 1"}: ${IKON[r]} ${tall(nesteRate)} i timen${niva ? ` (+${tall(nesteRate - m.rater[r]) === "0" ? "1" : tall(Math.round(nesteRate - m.rater[r]))})` : ""}</p>`
@@ -694,6 +695,7 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
       : id === "havn" && niva ? `<p class="sy-neste">Neste nivå: ${Math.round(T.regler.toktLast * 100 * niva)} % større last</p>` : "";
     const knapp = k
       ? `${neste}<button class="liten-knapp sy-utvid${harRad(k) ? " sy-rad" : ""}" type="button" data-bygg="${id}" ${harRad(k) ? "" : "disabled"}>${niva ? "Utvid" : "Anlegg"} · ${pris(k)}</button>`
+      : id === "villa" ? `<p class="sy-etikett">Ferdig utbygd</p><p class="sy-neste">Neste steg er husene. Se «Neste hus» under.</p>`
       : `<p class="sy-etikett">Høyeste nivå</p>`;
     return `<article class="sy-bygg"><h4>${regel.navn} <span>${niva ? `nivå ${niva}` : ""}</span></h4>${info}${knapp}</article>`;
   }
