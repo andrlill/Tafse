@@ -1502,3 +1502,7 @@ p.h-merket { margin: 10px 0; }
 .sy-toktvalg { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
 .sy-toktvalg .liten-knapp { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 10px; }
 .sy-toktlinje { display: block; letter-spacing: .04em; }
+/* Huskortet i bygglista: punktlista i samme størrelse som resten av kortet */
+.sy-huskort .sy-husfordeler { margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.45; color: var(--dempet); }
+.sy-huskort .sy-husfordeler li { margin: 1px 0; }
+.sy-huskort .dempet { font-size: 14px; }

@@ -673,9 +673,25 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
   }
 
   // ---------- Panelet under kartet ----------
+  // Når villaen er ferdig utbygd, blir kortet til huset: det viser huset man har og neste hus
+  function husKort() {
+    const m = T.meg, H = m.hus, n = H.neste;
+    const tittel = H.niva ? H.navn : "Villa";
+    const merke = H.niva ? `hus ${H.niva} av ${T.regler.hus.length}` : `nivå ${m.bygg.villa}`;
+    const nå = `<p class="sy-rate">Lageret rommer ${m.takTimer} timer</p>`;
+    if (!n) return `<article class="sy-bygg sy-huskort"><h4>${esc(tittel)} <span>${merke}</span></h4>${nå}<p class="sy-etikett">Byens fineste hus</p></article>`;
+    const kan = n.apen && harRad(n.pris);
+    return `<article class="sy-bygg sy-huskort"><h4>${esc(tittel)} <span>${merke}</span></h4>${nå}
+      <p class="sy-neste">Neste: <strong>${esc(n.navn)}</strong></p>
+      <ul class="sy-husfordeler">${n.fordeler.map((f) => `<li>${esc(f)}</li>`).join("")}<li>${esc(PYNT[n.pynt].replace(/^./, (c) => c.toUpperCase()))}</li></ul>
+      ${n.apen ? "" : `<p class="dempet">Krever tittelen ${esc(n.tittel.toLowerCase())}. Du mangler ${tall(T.regler.ranger[n.rang].fra - m.aere)} ære.</p>`}
+      <button class="liten-knapp sy-utvid${kan ? " sy-rad" : ""}" type="button" data-hus ${kan ? "" : "disabled"}>${n.apen ? `Bygg ${esc(n.navn)}` : `Krever ${esc(n.tittel.toLowerCase())}`} · ${pris(n.pris)}</button></article>`;
+  }
+
   function byggKort(id) {
     const m = T.meg, regel = T.regler.bygg[id], niva = m.bygg[id];
     const k = m.kost[id];
+    if (id === "villa" && !k && niva >= 1) return husKort();
     if (!m.apen[id]) {
       const [kr, nv] = regel.krever;
       return `<article class="sy-bygg last"><h4>${regel.navn}</h4><p class="dempet">Låses opp når ${T.regler.bygg[kr].navn.toLowerCase()} er på nivå ${nv}.</p></article>`;
@@ -695,7 +711,6 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
       : id === "havn" && niva ? `<p class="sy-neste">Neste nivå: ${Math.round(T.regler.toktLast * 100 * niva)} % større last</p>` : "";
     const knapp = k
       ? `${neste}<button class="liten-knapp sy-utvid${harRad(k) ? " sy-rad" : ""}" type="button" data-bygg="${id}" ${harRad(k) ? "" : "disabled"}>${niva ? "Utvid" : "Anlegg"} · ${pris(k)}</button>`
-      : id === "villa" ? `<p class="sy-etikett">Ferdig utbygd</p><p class="sy-neste">Neste steg er husene. Se «Neste hus» under.</p>`
       : `<p class="sy-etikett">Høyeste nivå</p>`;
     return `<article class="sy-bygg"><h4>${regel.navn} <span>${niva ? `nivå ${niva}` : ""}</span></h4>${info}${knapp}</article>`;
   }
@@ -732,20 +747,6 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
       ${aktive.length ? `<ul class="sy-avtaler">${aktive.map((x) => `<li><strong>${esc(x.navn)}</strong> til ${dag(x.til)}. ${esc(x.tekst)}</li>`).join("")}</ul>`
         : `<p class="dempet">Ingen avtaler nå. I hotellet tjener du denarer på leie fra rommet og salg til baren, og bruker dem på avtaler som gir godset 10 % mer av alt, større lager eller raskere tokt.</p>`}</div>
       <a class="knapp sekundar" href="hotell.html">Gå til hotellet</a></div></div>`;
-  }
-
-  // Husene etter Pretor: neste hus kan bygges når tittelen er nådd, og koster alle sju råvarene
-  function husene() {
-    const m = T.meg, H = m.hus, n = H.neste;
-    if (!n && !H.niva) return "";
-    const fordeler = (h) => `<ul class="sy-husfordeler">${h.fordeler.map((f) => `<li>${esc(f)}</li>`).join("")}<li>${esc(PYNT[h.pynt].replace(/^./, (c) => c.toUpperCase()))}</li></ul>`;
-    if (!n) return `<div class="sy-rangboks sy-husboks" id="sy-hus"><p class="sy-etikett">Huset ditt</p><h3>${esc(H.navn)}</h3><p class="dempet">Du har bygget alle husene i byen.</p></div>`;
-    const kan = n.apen && harRad(n.pris);
-    return `<div class="sy-rangboks sy-husboks" id="sy-hus"><p class="sy-etikett">${H.niva ? `Huset ditt: ${esc(H.navn)} · neste hus` : "Neste hus"}</p>
-      <div class="sy-husrad"><div><h3>${esc(n.navn)}</h3>
-        <p class="dempet">${n.apen ? `Du er ${esc(n.tittel.toLowerCase())} og kan bygge ${esc(n.navn)}.` : `Krever tittelen ${esc(n.tittel.toLowerCase())}. Du mangler ${tall(T.regler.ranger[n.rang].fra - m.aere)} ære.`}</p>
-        ${fordeler(n)}</div>
-      <button class="knapp${kan ? " sy-offer" : " sekundar"}" type="button" data-hus ${kan ? "" : "disabled"}>${n.apen ? `Bygg ${esc(n.navn)}` : `Krever ${esc(n.tittel.toLowerCase())}`}<small>${pris(n.pris)}</small></button></div></div>`;
   }
 
   function folkene() {
@@ -849,7 +850,7 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
           <button class="knapp sy-host" type="button" data-gjor="host" data-host>Høst</button></div></div>
         ${minTagg()}
         <div class="sy-byggliste">${synlige.map(byggKort).join("")}</div>
-        ${KONTOR_PA ? hotellet() : ""}${husene()}${havnen()}${folkene()}${rangOgButikk()}</section>`;
+        ${KONTOR_PA ? hotellet() : ""}${havnen()}${folkene()}${rangOgButikk()}</section>`;
     }
     const sp = T.spillere.find((s) => s.navn === valgt);
     if (!sp) return `<section class="sy-panel"><p class="sy-etikett">Ledig tomt</p><p>${esc(valgt)} har ikke sjekket inn ennå.</p><button class="liten-knapp" type="button" data-hjem>Til godset mitt</button></section>`;
