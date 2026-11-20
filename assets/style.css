@@ -1456,3 +1456,13 @@ p.h-merket { margin: 10px 0; }
   .k-bok-hode { grid-template-columns: minmax(0, 1fr); }
 }
 @media (prefers-reduced-motion: reduce) { .k-toastlinje { animation: none; } }
+/* «Hva er nytt»: en gullprikk på knappen når det er noe man ikke har sett */
+.sy-nyttknapp { position: relative; }
+.sy-nyttknapp.ny::after { content: ""; position: absolute; top: -4px; right: -4px; width: 10px; height: 10px; border-radius: 50%; background: var(--gull-lys); box-shadow: 0 0 0 2px var(--bunn); }
+.gjest-knapper { display: flex; gap: 10px; flex-wrap: wrap; }
+.endringer section { padding: 14px 0; border-top: 1px solid var(--linje); }
+.endringer section:first-child { border-top: 0; padding-top: 0; }
+.endringer h3 { margin: 2px 0 8px; font-family: var(--display); font-size: 19px; letter-spacing: .04em; }
+.endringer ul { margin: 0; padding-left: 20px; }
+.endringer li { margin: 4px 0; }
+.sy-festgevinst { color: inherit; opacity: .85; }

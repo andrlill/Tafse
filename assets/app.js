@@ -641,6 +641,65 @@ function premieTekst(svar) {
 
 // Velkomstplakaten på spillsiden: hvordan hotellet, Symposion og spillene henger sammen.
 // Vises etter innsjekken og fra spillhallen. vedLukk kjøres når plakaten lukkes.
+// ENDRINGSLOGGEN («Hva er nytt»). Nyeste først. Legg til en ny oppføring øverst når noe er endret.
+// id må være unik og øke, så knappen kan vise at det er noe nytt siden sist.
+const ENDRINGER = [
+  { id: 7, dato: "20. november", tittel: "Bedre handel i Symposion", punkter: [
+    "Festen går i pluss: hele godset jobber 15 % bedre i 8 timer, og det koster bare en times produksjon. Knappen viser hva festen gir.",
+    "Lange fingre koster nå 50 vin, og gir et blindt grep: du tar mellom 0 og 50 % av en tilfeldig råvare fra naboens lager, og ser først etterpå hva det ble. Store grep er sjeldne.",
+    "Gaver til byggverkene gir dobbelt så mye ære som før.",
+    "Krydder og purpur er verdt mer når du gir dem til byggverkene.",
+    "Ansatte er dyrere å ansette og forfremme. De du allerede har, beholder nivået.",
+    "Festen gir litt mindre ære: 10 pluss 1 for hvert nivå de ansatte har.",
+    "Ny knapp: «Hva er nytt», den du leser nå.",
+  ] },
+  { id: 6, dato: "20. november", tittel: "Rettelser", punkter: [
+    "Alle titler følger nå dagens rangstige.",
+    "Knappene for å ansette og forfremme folk på godset virket ikke. Nå gjør de det.",
+  ] },
+  { id: 5, dato: "20. november", tittel: "Nytt spill og levende kart", punkter: [
+    "Kaos: et nytt sandkassespill med stoffer, oppdagelser, dagens oppdrag og galleri.",
+    "Symposion: kartet lever, og mye kan gjøres rett på kartet.",
+  ] },
+  { id: 4, dato: "19. november", tittel: "Nabolag og rettelser i Symposion", punkter: [
+    "Byen er delt i nabolag etter ære: de fire med mest ære bor på Akropolis, så Midtbyen og Utkanten.",
+    "Praktfest med krydder og purpur, og Fyrtårnet er flyttet fram, rett etter tempelet.",
+    "Varsel i bjella når skipet ditt er hjemme.",
+    "Skjenking krever at du har råd til gaven, og vanlige skjenker fyller ikke lenger opp Byens røst.",
+    "Spillhallen viser de siste ti spillene.",
+  ] },
+  { id: 3, dato: "19. november", tittel: "Ære og rang", punkter: [
+    "Ære får du bare for å gi: skjenke naboene, ta dagens runde, gi til byggverkene og holde fest. Den kan ikke brukes på noe.",
+    "Ti ranger fra Borger til Heros, med ny pynt på godset for hver.",
+    "Æresbutikken er blitt Torget, der varene koster råvarer.",
+    "Skjenking er en ekte gave på 10 % av det godset ditt lager i timen, og dagens runde gir en bonus for fem skjenk på én dag.",
+  ] },
+  { id: 2, dato: "19. november", tittel: "Havn, ansatte og nye råvarer", punkter: [
+    "Nye bygg: bigård (honning), sølvgruve (sølv) og havn. Skipet henter krydder og purpur fra Kreta, Tyros og Egypt.",
+    "Ansatte som gjør godset mer effektivt, og fest for folkene.",
+    "Kartet kan zoomes og dras, og byggkortene viser hva neste nivå gir.",
+    "Råvarene står i en stolpe til venstre som følger med når du blar.",
+  ] },
+  { id: 1, dato: "18. november", tittel: "Hotellet og spillhallen", punkter: [
+    "Tafse Hotell: garderobe med faner, nye figurer og møbler som kan snus.",
+    "Spillhallen: ukens topp tre i hvert spill, innboks og lager.",
+    "Tartaros: ny bane, Flegeton.",
+  ] },
+];
+const SETT_ENDRINGER = "tafse-endringer-sett";
+function nyeEndringer() {
+  try { return ENDRINGER[0].id > Number(localStorage.getItem(SETT_ENDRINGER) || 0); } catch (_) { return false; }
+}
+function endringsknapp() {
+  return `<button class="liten-knapp sy-nyttknapp${nyeEndringer() ? " ny" : ""}" type="button" onclick="visEndringer()">Hva er nytt</button>`;
+}
+function visEndringer() {
+  visInfo("Hva er nytt", `<div class="endringer">${ENDRINGER.map((e) => `<section><p class="overline">${esc(e.dato)}</p><h3>${esc(e.tittel)}</h3>
+    <ul>${e.punkter.map((p) => `<li>${esc(p)}</li>`).join("")}</ul></section>`).join("")}</div>`);
+  try { localStorage.setItem(SETT_ENDRINGER, String(ENDRINGER[0].id)); } catch (_) {}
+  document.querySelectorAll(".sy-nyttknapp.ny").forEach((k) => k.classList.remove("ny"));
+}
+
 const PREMIER = [
   ["Symposion", "symposion", "oliven, vin og marmor", "#9db36a", "Høstes på godset ditt, også mens du er borte"],
   ["Tartaros", "tartaros", "drakmer", "#e2c174", "Mynter, bosser og tid i hvert tokt"],

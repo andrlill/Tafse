@@ -458,14 +458,24 @@
         <button class="knapp sy-host" type="button" data-gjor="host" data-host>Høst</button>
         <div class="sy-kortrad"><a class="liten-knapp" href="hotell.html?rom=${encodeURIComponent(`hjem:${m.navn}`)}">Gå inn i huset</a><button class="liten-knapp" type="button" data-tilpanel>Bygg ut</button></div></div>`;
     }
-    const naskTekst = sp.nasket ? "Nasket i dag" : m.naskIgjen <= 0 ? "Ikke flere nask i dag" : sp.vaktet ? "Nattevakten passer på" : sp.bytte < 5 ? "Ingenting å naske" : `Nask ca. ${tall(sp.bytte)} oliven`;
     return `<div class="sy-kort" id="sy-kort">${hode(`${rangtittel || "Nybygger"} · bor ${plass.nabolag}`, godsNavn(sp.navn))}
       <p class="dempet sy-kortnote">${sp.hjemme ? "Det ryker fra pipa. Noen er hjemme." : "Ingen har vært hjemme det siste døgnet."}${sp.skip === "ute" ? " Skipet er på tokt." : ""}</p>
       ${sp.tagg ? `<p class="sy-kortnote">Tagget av ${esc(visningsnavn(sp.tagg.fra))}: <span class="sy-taggsitat" style="color:${sp.tagg.farge}">${esc(sp.tagg.tekst)}</span></p>` : ""}
       <button class="knapp${sp.skjenketMeg && !sp.skjenket && m.skjenk.kan ? " sy-offer" : ""}" type="button" data-skjenk="${esc(sp.navn)}" ${sp.skjenket || !m.skjenk.kan ? "disabled" : ""}>${sp.skjenket ? "Skjenket i dag" : sp.skjenketMeg ? "Skål tilbake" : "Skjenk et glass"}<small>${sp.skjenket ? "Kom tilbake i morgen" : !m.skjenk.kan ? `For lite ${rn(m.skjenk.hoved)}. Høst først.` : `+${m.skjenk.aere + (sp.skjenketMeg ? m.skjenk.gjengjeldAere : 0)} ære${sp.skjenketMeg ? `, ${esc(visningsnavn(sp.navn))} skjenket deg i dag` : ""}`}</small></button>
-      <button class="knapp sekundar" type="button" data-nask="${esc(sp.navn)}" ${sp.nasket || m.naskIgjen <= 0 || sp.bytte < 5 ? "disabled" : ""}>${naskTekst}<small>${m.naskIgjen} av ${T.regler.naskPerDag} nask igjen</small></button>
+      ${naskKnapp(sp, true)}
       <div class="sy-kortrad"><a class="liten-knapp" href="hotell.html?rom=${encodeURIComponent(`hjem:${sp.navn}`)}">Gå inn i huset</a><button class="liten-knapp" type="button" data-spray aria-expanded="${sprayApen}">Spraybøksa</button></div>
       ${sprayApen ? taggSkjema(sp) : ""}</div>`;
+  }
+  // Nask-knappen: de gratis naskene viser hva man får, de kjøpte er et blindt grep
+  const blindt = () => T.meg.naskGratis <= 0 && T.meg.naskIgjen > 0;
+  const naskStengt = (sp) => sp.nasket || T.meg.naskIgjen <= 0 || (!blindt() && sp.bytte < 5);
+  function naskKnapp(sp, kort) {
+    const m = T.meg;
+    const tekst = sp.nasket ? "Nasket i dag" : m.naskIgjen <= 0 ? "Ikke flere nask i dag" : blindt() ? "Blindt grep"
+      : sp.vaktet ? "Nattevakten passer på" : sp.bytte < 5 ? (kort ? "Ingenting å naske" : "Nyhøstet, ingenting å naske") : `Nask ca. ${tall(sp.bytte)} oliven`;
+    const under = blindt() && !sp.nasket ? `Du ser først etterpå hva du fikk. ${m.naskIgjen} igjen i dag.`
+      : `${m.naskIgjen} av ${T.regler.naskPerDag} nask igjen${kort ? "" : " i dag. Eieren får beskjed."}`;
+    return `<button class="knapp sekundar" type="button" data-nask="${esc(sp.navn)}" ${naskStengt(sp) ? "disabled" : ""}>${tekst}<small>${under}</small></button>`;
   }
   function tegnKort() {
     const boks = rot.querySelector(".sy-kartboks");
@@ -554,7 +564,7 @@
     const offer = m.kanOfre
       ? `<button class="knapp sy-offer" type="button" data-gjor="offer">Ofre til gudene<small>${gave(m.nesteOffer)}</small></button>`
       : `<div class="sy-ofret"><span class="sy-etikett">Ofret i dag · dag ${m.streak} av 7</span><span class="sy-prikker">${prikker}</span><small>I morgen: ${gave(m.nesteOffer)}</small></div>`;
-    return `<div class="sy-topp"><div class="sy-brikker">${brikke("aere")}</div><div class="sy-toppvenstre"><button class="liten-knapp sy-infoknapp" type="button" data-info>Slik spiller du</button>${offer}</div></div>`;
+    return `<div class="sy-topp"><div class="sy-brikker">${brikke("aere")}</div><div class="sy-toppvenstre"><button class="liten-knapp sy-infoknapp" type="button" data-info>Slik spiller du</button>${endringsknapp()}${offer}</div></div>`;
   }
   // Råvarene står i en stolpe til venstre som følger med når man blar (på mobil: en stripe øverst).
   // Råvarer man ikke har kommet til ennå, vises ikke.
@@ -608,7 +618,7 @@
       <ul>
         <li><strong>Skjenk:</strong> én gang om dagen per nabo. Du gir bort 10 % av det godset ditt produserer i timen, av hver råvare du har nok av, og minst ${R.skjenkMinst} av det godset lager mest av. Du får ${R.skjenkAere} ære. Har naboen allerede skjenket deg i dag (vinrød krukke på kartet), gir det ${R.skjenkAere + R.gjengjeldAere} ære å skjenke tilbake.</li>
         <li><strong>Dagens runde:</strong> skjenk ${R.rundeMal} naboer på én dag, så får du én times avling av alt godset ditt lager, og ${R.rundeAere} ære.</li>
-        <li><strong>Nask:</strong> ta litt av en nabos uhøstede oliven, ${R.naskPerDag} ganger om dagen. Han får beskjed.</li>
+        <li><strong>Nask:</strong> ta litt av en nabos uhøstede oliven, ${R.naskPerDag} ganger om dagen. Eieren får beskjed. Kjøper du «lange fingre» på torget, blir neste nask et blindt grep: du tar noe tilfeldig fra lageret, og ser først etterpå hva det ble. Du tar mellom 0 og 50 % av én råvare, men det meste er små grep, og bare et fåtall blir et kupp.</li>
         <li><strong>Tagg:</strong> spray en tekst på en nabos hus, ${R.taggPerDag} ganger om dagen. Huset produserer ${Math.round(R.taggStraff * 100)} % mindre til eieren har skrubbet det bort.</li>
       </ul>
       <p>Trykk på et gods på kartet eller et navn på ærestavlen for å besøke.</p>
@@ -712,10 +722,10 @@
         <p class="sy-varestatus">${x.niva ? `Nå: ${virk(x.niva)}` : "Ikke ansatt"}${x.kost ? ` · neste nivå: ${virk(x.niva + 1)}` : ""}</p>${knapp}</article>`;
     }).join("");
     const F = m.fest;
-    const festknapp = (f, prakt) => `<button class="knapp${!F.holdt && harRad(f.pris) ? "" : " sekundar"}" type="button" data-fest="${prakt ? "prakt" : "vanlig"}" ${F.holdt || !harRad(f.pris) ? "disabled" : ""}>${prakt ? "Hold praktfest" : "Hold fest"}<small>+${f.aere} ære · ${f.timer} t · ${pris(f.pris)}</small></button>`;
+    const festknapp = (f, prakt) => `<button class="knapp${!F.holdt && harRad(f.pris) ? "" : " sekundar"}" type="button" data-fest="${prakt ? "prakt" : "vanlig"}" ${F.holdt || !harRad(f.pris) ? "disabled" : ""}>${prakt ? "Hold praktfest" : "Hold fest"}<small>+${f.aere} ære · koster ${pris(f.pris)}</small><small class="sy-festgevinst">Gir ca. ${gave(f.gevinst)} over ${f.timer} t</small></button>`;
     const festen = !F.ansatte ? "" : F.til
       ? `<div class="sy-fest paa"><div><h4>Det er fest på godset</h4><p class="dempet">Alle jobber ${Math.round(F.bonus * 100)} % bedre til ${new Date(F.til).toLocaleString("nb-NO", { weekday: "long", hour: "2-digit", minute: "2-digit" })}.</p></div></div>`
-      : `<div class="sy-fest"><div><h4>Hold fest for folkene</h4><p class="dempet">${F.holdt ? "Folkene har festet nok for i dag. Ny fest i morgen." : `Festen gir ære, og hele godset jobber ${Math.round(F.bonus * 100)} % bedre etterpå.${F.prakt ? " Praktfesten byr på krydder og purpur, og gir dobbelt." : ""}`}</p></div>
+      : `<div class="sy-fest"><div><h4>Hold fest for folkene</h4><p class="dempet">${F.holdt ? "Folkene har festet nok for i dag. Ny fest i morgen." : `Festen gir ære, og hele godset jobber ${Math.round(F.bonus * 100)} % bedre etterpå. Den betaler seg hvis du høster før lageret blir fullt.${F.prakt ? " Praktfesten byr på krydder og purpur, og gir dobbelt." : ""}`}</p></div>
         ${F.holdt ? "" : `<div class="sy-festknapper">${festknapp(F, false)}${F.prakt ? festknapp(F.prakt, true) : ""}</div>`}</div>`;
     return `<div class="sy-rangboks" id="sy-folk"><p class="sy-etikett">Folkene på godset</p>
       <p class="dempet sy-butikkfot">Ansatte gjør godset mer effektivt. De kan forfremmes fem ganger.</p>${festen}<div class="sy-butikk">${kort}</div></div>`;
@@ -794,7 +804,6 @@
     const sp = T.spillere.find((s) => s.navn === valgt);
     if (!sp) return `<section class="sy-panel"><p class="sy-etikett">Ledig tomt</p><p>${esc(valgt)} har ikke sjekket inn ennå.</p><button class="liten-knapp" type="button" data-hjem>Til godset mitt</button></section>`;
     const b = sp.bygg;
-    const nask = sp.nasket ? "Nasket i dag" : m.naskIgjen <= 0 ? "Ikke flere nask i dag" : sp.vaktet ? "Nattevakten passer på" : sp.bytte < 5 ? "Nyhøstet, ingenting å naske" : `Nask ca. ${tall(sp.bytte)} oliven`;
     return `<section class="sy-panel">
       <div class="sy-panelhode"><div><p class="sy-etikett">På besøk</p><h3>${esc(godsNavn(sp.navn))}</h3>
         <p class="dempet">Bor ${plasser().get(sp.navn).nabolag} · villa nivå ${b.villa} · olivenlund ${b.lund}${b.vingard ? ` · vingård ${b.vingard}` : ""}${b.brudd ? ` · marmorbrudd ${b.brudd}` : ""}${b.bigard ? ` · bigård ${b.bigard}` : ""}${b.gruve ? ` · sølvgruve ${b.gruve}` : ""}${b.havn ? ` · havn ${b.havn}${sp.skip === "ute" ? " (skipet er ute)" : ""}` : ""}${sp.ansatte ? ` · ${sp.ansatte} ansatte` : ""} · ${tall(sp.aere)} ære${sp.hjemme ? "" : " · ikke hjemme på en stund"}</p></div>
@@ -805,7 +814,7 @@
           : !m.skjenk.kan ? `Du har for lite ${rn(m.skjenk.hoved)} til å skjenke. Høst først.`
           : sp.skjenketMeg ? `${esc(visningsnavn(sp.navn))} skjenket deg i dag. Du gir ${skjenkTekst()} og får +${m.skjenk.aere + m.skjenk.gjengjeldAere} ære`
           : `Du gir ${skjenkTekst()} og får +${m.skjenk.aere} ære`}</small></button>
-        <button class="knapp sekundar" type="button" data-nask="${esc(sp.navn)}" ${sp.nasket || m.naskIgjen <= 0 || sp.bytte < 5 ? "disabled" : ""}>${nask}<small>${m.naskIgjen} av ${T.regler.naskPerDag} nask igjen i dag. Eieren får beskjed.</small></button>
+        ${naskKnapp(sp, false)}
       </div>
       ${runde()}
       ${taggSkjema(sp)}</section>`;
@@ -927,6 +936,11 @@
       fly(T.meg.navn, s.til, "beger");
       toast(`${s.gjengjeld ? "Gjengjeldt skål" : "Skål"}, ${visningsnavn(s.til)}! +${s.aere} ære.`);
       if (s.runde) setTimeout(() => { sprett(gave(s.runde.fikk)); toast(`Dagens runde er tatt! ${gave(s.runde.fikk)} og +${s.runde.aere} ære.`); }, 1800);
+    }
+    else if (s.type === "grep") {
+      const ting = gave(s.fikk);
+      if (s.utfall === "tomt") toast(`Du rotet i lageret til ${visningsnavn(s.til)}, men fikk ikke med deg noe.`, true);
+      else { fly(s.til, T.meg.navn, Object.keys(s.fikk)[0]); sprett(ting); toast(s.utfall === "kupp" ? `Kupp! ${s.prosent} % av lageret: ${ting} fra ${visningsnavn(s.til)}.` : `Blindt grep hos ${visningsnavn(s.til)}: ${ting} (${s.prosent} % av lageret).`); }
     }
     else if (s.type === "nask") { fly(s.til, T.meg.navn, "oliven"); toast(`Du nasket ${s.fikk.oliven} oliven fra ${s.til}. Han har fått beskjed.`); }
     else if (s.type === "gi") toast(s.ferdig ? `${s.ferdig} står ferdig! Alle produserer 10 % mer.` : `Takk! +${s.aere} ære.`);
