@@ -613,7 +613,7 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
       <p>Ansett folk under «Folkene på godset». Hver arbeider gir ${Math.round(R.ansattProd * 100)} % mer i bygget sitt for hvert nivå, forvalteren gir én time større lager per nivå, og nattevakten gjør at naskere får med seg ${Math.round(R.vaktAndel * 100)} % mindre per nivå. Alle kan forfremmes til nivå ${R.ansattMaks}. De dyreste vil ha lønn i honning og sølv.</p>
       <p>Én gang om dagen kan du holde fest for folkene dine. Den koster en times produksjon av oliven og vin, og honning hvis du har bigård. Festen gir ære, mer jo flere og bedre folk du har, og etterpå jobber hele godset ${Math.round(R.fest.bonus * 100)} % bedre i ${R.fest.varer} timer. Har du havn, kan du holde praktfest i stedet: den koster ${Object.entries(R.fest.prakt.pris).map(([r, n]) => `${n} ${rn(r)}`).join(" og ")} i tillegg, gir dobbel ære og varer dobbelt så lenge.</p>
       <h3>Havnen og toktene</h3>
-      <p>Skipet seiler til ${Object.values(T.meg ? T.meg.reisemal : {}).map((x) => `${x.navn} (${x.timer >= 1 ? `${Math.round(x.timer * 10) / 10} t` : `${Math.round(x.timer * 60)} min`})`).join(", ").replace(/, ([^,]*)$/, " eller $1") || "Kreta, Tyros eller Egypt"} og kommer hjem med krydder og purpur, som du ikke kan lage selv. Du betaler lasten når skipet legger fra, og losser det selv når det er hjemme. Velg tokt etter når du kommer innom neste gang. Lasten blir ${Math.round(R.toktLast * 100)} % større for hvert havnenivå. Av og til møter skipet storm eller medvind.</p>
+      <p>Du velger hva skipet skal seile etter: krydder fra Kreta, purpur fra Tyros eller sølv fra Egypt, og hvor lenge det skal være ute: en kort tur (1 time), en langtur (8 timer) eller en ekspedisjon (24 timer, krever havn 2). Prisen følger lengden. Havet er lunefullt: rundt 15 % av skipene kommer tomme hjem, og like mange med noe helt annet. Resten har med seg det de seilte etter, i en mengde du først ser når du losser. Lasten blir ${Math.round(R.toktLast * 100)} % større for hvert havnenivå.</p>
       <h3>Villaen og rommet ditt</h3>
       <table class="tavle"><thead><tr><th>Villanivå</th><th>På kartet</th><th>Rommet i Tafse Hotell</th></tr></thead><tbody>
         ${rader([["1–2", "Hytte", "5 × 5, tregulv"], ["3–4", "Hus med tegltak", "6 × 6, terrakotta"], ["5–7", "Villa med søyler", "7 × 7, marmor"], ["8–10", "Palass", "8 × 8, marmor med gull"]])}
@@ -786,20 +786,25 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
     const noenHjemme = ute.some((t) => t.hjemme || Date.parse(t.hjem) <= Date.now());
     const rad = ute.map((t, i) => {
       const hjemme = t.hjemme || Date.parse(t.hjem) <= Date.now();
-      return `<div><h4>${hjemme ? `${skip.length > 1 ? `Skip ${i + 1}` : "Skipet"} er hjemme fra ${esc(t.navn)}` : `${skip.length > 1 ? `Skip ${i + 1}` : "Skipet"} er på tokt til ${esc(t.navn)}`}</h4>
-        <p class="dempet" data-tokttid="${esc(t.hjem)}">${hjemme ? "Lasten venter på kaia." : ""}</p></div>`;
+      const hvem = skip.length > 1 ? `Skip ${i + 1}` : "Skipet";
+      return `<div><h4>${hjemme ? `${hvem} er hjemme fra ${esc(t.navn)}` : `${hvem} er på tokt til ${esc(t.navn)}${t.vare ? ` etter ${esc(t.vare.toLowerCase())}` : ""}`}</h4>
+        <p class="dempet" data-tokttid="${esc(t.hjem)}">${hjemme ? "Hva fikk det med seg? Loss og se." : ""}</p></div>`;
     }).join("");
     const lossing = ute.length ? `<div class="sy-tokt-ute"><div class="sy-skipliste">${rad}</div>
         <button class="knapp${noenHjemme ? " sy-offer" : ""}" type="button" data-gjor="loss" data-loss ${noenHjemme ? "" : "disabled"}>${ute.length > 1 ? "Loss skipene" : "Loss skipet"}</button></div>` : "";
-    const mal = ledige ? `${ute.length ? `<p class="sy-etikett" style="margin-top:14px">Send ${skip.length > 1 ? "det andre skipet" : "skipet"}</p>` : ""}<div class="sy-butikk">${Object.entries(m.reisemal).map(([id, x]) => {
-        if (!x.apen) return `<article class="sy-vare last"><h4>${esc(x.navn)}</h4><p>Krever havn på nivå ${x.havn}.</p></article>`;
-        const far = Object.entries(x.gir).map(([r, [a, b]]) => `<span class="sy-pris">${a}–${b}${IKON[r]}</span>`).join(" ");
-        return `<article class="sy-vare"><h4>${esc(x.navn)}<span class="sy-toktvarighet">${varighet(x.timer)}</span></h4><p>Hjem med ${far}</p>
-          <button class="liten-knapp sy-utvid${harRad(x.pris) ? " sy-rad" : ""}" type="button" data-tokt="${id}" ${harRad(x.pris) ? "" : "disabled"}>Send skipet · ${pris(x.pris)}</button></article>`;
-      }).join("")}</div>` : "";
+    // Ett kort per vare, med en knapp for hver lengde på toktet
+    const R = m.reisemal;
+    const mal = ledige ? `${ute.length ? `<p class="sy-etikett" style="margin-top:14px">Send ${skip.length > 1 ? "det andre skipet" : "skipet"}</p>` : ""}<div class="sy-butikk sy-toktvarer">${R.varer.map((v) => `<article class="sy-vare">
+        <h4>${IKON[v.id]} ${esc(v.navn)}<span class="sy-toktvarighet">fra ${esc(v.hvor)}</span></h4>
+        <div class="sy-toktvalg">${v.lengder.map((L) => !L.apen
+          ? `<button class="liten-knapp" type="button" disabled>${varighet(L.timer)} · krever havn ${L.havn}</button>`
+          : `<button class="liten-knapp sy-utvid${harRad(L.pris) ? " sy-rad" : ""}" type="button" data-tokt="${v.id}" data-lengde="${L.id}" ${harRad(L.pris) ? "" : "disabled"}>
+              <span class="sy-toktlinje"><strong>${varighet(L.timer)}</strong> · ${tall(L.fra)}–${tall(L.til)} ${esc(v.navn.toLowerCase())}</span><span class="sy-toktlinje">${pris(L.pris)}</span></button>`).join("")}</div>
+      </article>`).join("")}</div>
+      <p class="dempet sy-butikkfot">Havet er lunefullt: rundt 15 % av skipene kommer tomme hjem, og like mange med noe helt annet enn det de seilte etter. De fleste kommer hjem med rundt ${tall(R.varer[0].lengder[0].vanlig)} krydder på en kort tur, men noen ganger blir det et rikt lass.</p>` : "";
     const inn = lossing + mal;
     return `<div class="sy-rangboks" id="sy-havn"><p class="sy-etikett">Havnen</p>
-      <p class="dempet sy-butikkfot">${skip.length > 1 ? "Du har to skip." : "Skipet"} henter krydder og purpur. Velg tokt etter når du kommer innom neste gang.</p>${inn}</div>`;
+      <p class="dempet sy-butikkfot">Velg hva ${skip.length > 1 ? "skipene" : "skipet"} skal seile etter, og hvor lenge. Velg lengde etter når du kommer innom neste gang.</p>${inn}</div>`;
   }
 
   function minTagg() {
@@ -996,8 +1001,15 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
     else if (s.type === "ansett") toast(s.niva === 1 ? `${s.navn} er ansatt.` : `${s.navn} er forfremmet til nivå ${s.niva}.`);
     else if (s.type === "hus") toast(`${s.navn} står ferdig! Godset har fått nye fordeler.`);
     else if (s.type === "fest") toast(`${s.prakt ? "For en praktfest!" : "Skål for folkene!"} +${s.aere} ære, og godset jobber bedre i ${s.timer} timer.`);
-    else if (s.type === "tokt") toast(`Skipet har lagt fra mot ${s.mal}. God vind!`);
-    else if (s.type === "loss") { sprett(gave(s.fikk)); toast(`${s.hendelse === "storm" ? "Skipet kom gjennom en storm og mistet halve lasten." : s.hendelse === "medvind" ? "Medvind hele veien! Skipet kom hjem med ekstra last." : `Skipet er losset etter toktet til ${s.mal}.`}`); }
+    else if (s.type === "tokt") toast(`Skipet har lagt fra mot ${s.mal} etter ${s.vare.toLowerCase()}. God vind!`);
+    else if (s.type === "loss") {
+      const om = (t) => t.utfall === "tomhendt" ? `Skipet kom tomt hjem fra ${t.hvor}. Havet ga ingenting denne gangen.`
+        : t.utfall === "annet" ? `Skipet fant ikke ${t.vare || "det det lette etter"} i ${t.hvor}, men kom hjem med ${gave(t.last)}.`
+        : t.utfall === "rikt" ? `Et rikt lass fra ${t.hvor}: ${gave(t.last)}!`
+        : t.utfall === "smått" ? `Magert fra ${t.hvor}: ${gave(t.last)}.` : `Skipet er hjemme fra ${t.hvor} med ${gave(t.last)}.`;
+      if (Object.keys(s.fikk).length) sprett(gave(s.fikk));
+      toast(s.turer.map(om).join(" "), s.turer.every((t) => t.utfall === "tomhendt"));
+    }
     else if (s.type === "flytt-inn") { toast("Velkommen til byen. Godset ditt er merket med gull."); zoomTilGods(T.meg.navn); }
     if (s.nyRang) setTimeout(() => toast(`Du er utnevnt til ${s.nyRang.toLowerCase()}! Se på huset ditt.`), 1800);
     for (const r of Object.keys(s.fikk || {})) {
@@ -1074,7 +1086,7 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
     else if (k.dataset.ansett) gjor("ansett", { hvem: k.dataset.ansett });
     else if (k.dataset.fest) gjor("fest", { prakt: k.dataset.fest === "prakt" });
     else if (k.dataset.hus !== undefined) gjor("hus");
-    else if (k.dataset.tokt) gjor("tokt", { mal: k.dataset.tokt });
+    else if (k.dataset.tokt) gjor("tokt", { vare: k.dataset.tokt, lengde: k.dataset.lengde });
     else if (k.dataset.havnkart !== undefined) (document.getElementById("sy-havn") || document.getElementById("sy-panel")).scrollIntoView({ behavior: "smooth", block: "center" });
     else if (k.dataset.gjor) gjor(k.dataset.gjor);
     else if (k.dataset.bygg) gjor("bygg", { bygg: k.dataset.bygg });
