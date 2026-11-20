@@ -177,14 +177,14 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
       const gruve = b.gruve ? `<g transform="translate(63 3)"><path d="M-11 0 Q-10 -15 0 -16 Q10 -15 11 0 Z" fill="#5d5a4c"/><path d="M-6 0 V-6 Q0 -12 6 -6 V0 Z" fill="#14130d"/><path d="M-6 -6 Q0 -12 6 -6" fill="none" stroke="#8a6a45" stroke-width="1.4"/>${b.gruve >= 4 ? `<circle cx="-7" cy="-11" r="1.2" fill="#e6e8ee"/>` : ""}<circle cx="5" cy="-13" r="1.2" fill="#e6e8ee" class="sy-flamme"/></g>` : "";
       const trinn = b.villa <= 2 ? 0 : b.villa <= 4 ? 1 : b.villa <= 7 ? 2 : 3;
       const tak = [-28, -35, -43, -62][trinn];
-      const hp = harPynt(sp.rang);
+      const hp = harPynt(sp.rang, sp.hus);
       const hoyde = [-44, -52, -60, -80][trinn] - (hp.has("flagg") ? 16 : 0) - (hp.has("stjerne") ? 14 : 0);
       const mosaikk = hp.has("mosaikk") ? `<ellipse rx="57" ry="14.4" fill="none" stroke="#6fc3c9" stroke-width="2.4" stroke-dasharray="3 3" opacity=".85"/><ellipse rx="51" ry="12.4" fill="none" stroke="#c9a24a" stroke-width="1.1" stroke-dasharray="1.5 4"/>` : "";
       // Merkene over husene er knapper: boblen over ditt eget høster, og begeret over en nabo skjenker.
       const merke = mitt
         ? `<g class="sy-dupp sy-klar sy-hurtig" data-klar data-hurtig="host" hidden><title>Høst avlingen</title><circle cy="${hoyde - 6}" r="17" fill="transparent"/><circle cy="${hoyde - 6}" r="11" fill="#141310" stroke="#c9a24a"/><g transform="translate(-8 ${hoyde - 14})">${IKON.oliven.replace('class="sy-ikon"', 'width="16" height="16"')}</g></g>`
         : !sp.skjenket && T.meg ? `<g class="sy-dupp sy-hurtig${sp.skjenketMeg ? " sy-gjengjeld" : ""}" data-hurtig="skjenk" data-til="${esc(navn)}"><title>Skjenk ${esc(visningsnavn(navn))} et glass</title><circle cy="${hoyde - 2}" r="16" fill="transparent"/><path d="M-4 ${hoyde - 12} h8 l-1 4 q4 5 0 11 h-6 q-4 -6 0 -11 z" fill="${sp.skjenketMeg ? "#c2557f" : "#c9a24a"}" stroke="${sp.skjenketMeg ? "#f2e3b4" : "#14130d"}" stroke-width="1"/>${sp.skjenketMeg ? `<circle cx="7" cy="${hoyde - 13}" r="3.2" fill="#f2c14e" stroke="#14130d" stroke-width=".8"/>` : ""}</g>` : "";
-      inn = `${hp.has("fakler") ? `<ellipse rx="78" ry="24" fill="url(#sy-glod)"/>` : ""}<ellipse rx="64" ry="17" fill="${PALETT[fase()].bakke}"/>${mosaikk}<ellipse rx="64" ry="17" class="sy-ring" fill="none"/>${stein}${gruve}${tre}${sp.hjemme ? royk(trinn, tak) : ""}<g>${villa(b.villa, sp.hjemme)}</g>${vin}${kuber}${pynt(sp.rang, tak)}${taggSvg(sp.tagg, mitt)}${merke}`;
+      inn = `${hp.has("fakler") ? `<ellipse rx="78" ry="24" fill="url(#sy-glod)"/>` : ""}<ellipse rx="64" ry="17" fill="${PALETT[fase()].bakke}"/>${mosaikk}<ellipse rx="64" ry="17" class="sy-ring" fill="none"/>${stein}${gruve}${tre}${sp.hjemme ? royk(trinn, tak) : ""}<g>${villa(b.villa, sp.hjemme)}</g>${vin}${kuber}${pynt(sp.rang, tak, sp.hus)}${taggSvg(sp.tagg, mitt)}${merke}`;
     }
     return `<g class="${klasse}" data-navn="${esc(navn)}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${s.toFixed(3)})" tabindex="0" role="button" aria-label="${esc(godsNavn(navn))}">
       <ellipse rx="70" ry="60" cy="-22" fill="transparent"/>${inn}
@@ -201,10 +201,11 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
   // Rangpynt: hver rang legger til én ting på godset, og man beholder alt fra rangene under
   const PYNT = { flagg: "et flagg på taket", amforaer: "amforaer ved døra", krans: "en laurbærkrans rundt godset", mosaikk: "mosaikk rundt huset", statue: "en statue i hagen",
     fontene: "en fontene foran huset", orn: "en gullørn på flaggstanga", fakler: "fakler og gullglød", stjerne: "en stjerne over huset" };
-  const harPynt = (r) => new Set(T.regler.ranger.slice(0, r + 1).map((x) => x.pynt).filter(Boolean));
-  function pynt(r, tak) {
-    if (!r) return "";
-    const har = harPynt(r);
+  // Pynten kommer fra tittelen (til og med Pretor) og fra husene man har bygget etter det
+  const harPynt = (r, hus = 0) => new Set([...T.regler.ranger.slice(0, r + 1).map((x) => x.pynt), ...T.regler.hus.slice(0, hus).map((x) => x.pynt)].filter(Boolean));
+  function pynt(r, tak, hus = 0) {
+    if (!r && !hus) return "";
+    const har = harPynt(r, hus);
     let s = "";
     if (har.has("amforaer")) s += [-10, 10].map((x) => `<path transform="translate(${x} 5)" d="M-2 -8 h4 l-.6 2 q2.6 2.6 0 6 h-2.8 q-2.6 -3.4 0 -6 z" fill="#b5651d" stroke="#14130d" stroke-width=".5"/>`).join("");
     if (har.has("fontene")) s += `<g transform="translate(19 14)"><ellipse rx="7.4" ry="2.8" fill="#bdb49d"/><ellipse rx="5.6" ry="1.9" fill="#5fa8f0"/><path d="M0 0 v-6" stroke="#ece5d3" stroke-width="1.8"/><ellipse cy="-6" rx="3.2" ry="1.1" fill="#ece5d3"/><path d="M0 -7 q-3 -4.4 -4.4 1 M0 -7 q3 -4.4 4.4 1" fill="none" stroke="#9fd0ff" stroke-width="1" class="sy-flamme"/></g>`;
@@ -454,7 +455,7 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
     const plass = pl.get(kort), rangtittel = T.regler.ranger[sp.rang] ? T.regler.ranger[sp.rang].tittel : "";
     const hode = (etikett, tittel) => `<button type="button" class="sy-kortlukk" data-lukkkort aria-label="Lukk">&times;</button>
       <p class="sy-etikett">${esc(etikett)}</p><h3>${esc(tittel)}</h3>
-      <p class="sy-kortfakta">${IKON.aere}<strong>${tall(sp.aere)}</strong> ære · nr. ${plass.plass} i byen · villa nivå ${sp.bygg.villa}</p>`;
+      <p class="sy-kortfakta">${IKON.aere}<strong>${tall(sp.aere)}</strong> ære · nr. ${plass.plass} i byen · ${sp.hus ? esc(T.regler.hus[sp.hus - 1].navn) : `villa nivå ${sp.bygg.villa}`}</p>`;
     if (kort === m.navn) {
       const g = pl.grense(kort);
       return `<div class="sy-kort" id="sy-kort">${hode(`Godset ditt · ${plass.nabolag}`, rangtittel || "Godset ditt")}
@@ -481,7 +482,7 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
     const tekst = blindt(sp) && m.naskKjopt <= 0 ? (sp.nasket ? "Nasket i dag" : "Ikke flere nask i dag") : blindt(sp) ? "Blindt grep"
       : sp.vaktet ? "Nattevakten passer på" : sp.bytte < 5 ? (kort ? "Ingenting å naske" : "Nyhøstet, ingenting å naske") : `Nask ca. ${tall(sp.bytte)} oliven`;
     const under = blindt(sp) && m.naskKjopt > 0 ? `Du ser først etterpå hva du fikk. ${m.naskKjopt} ${m.naskKjopt === 1 ? "kjøpt grep" : "kjøpte grep"} igjen.`
-      : `${m.naskIgjen} av ${T.regler.naskPerDag} nask igjen${kort ? "" : " i dag. Eieren får beskjed."}`;
+      : `${m.naskIgjen} av ${m.naskPerDag} nask igjen${kort ? "" : " i dag. Eieren får beskjed."}`;
     return `<button class="knapp sekundar" type="button" data-nask="${esc(sp.navn)}" ${naskStengt(sp) ? "disabled" : ""}>${tekst}<small>${under}</small></button>`;
   }
   function tegnKort() {
@@ -633,7 +634,12 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
       <h3>Ære og rang</h3>
       <p>Ære får du bare for å gi: skjenke naboene, ta dagens runde, gi til byggverkene og holde fest for folkene dine. Ære kan ikke brukes på noe, men all ære du har fått, gir rang og pynt på godset. Hver rang legger til noe nytt, og du beholder alt du har fått før:</p>
       <table class="tavle"><thead><tr><th>Rang</th><th>Ære</th><th>Pynt</th></tr></thead><tbody>
-        ${rader(R.ranger.map((r) => [r.tittel, r.fra.toLocaleString("nb-NO"), (PYNT[r.pynt] ? PYNT[r.pynt].replace(/^(en|et) /, "").replace(/^./, (c) => c.toUpperCase()) : "") || "·"]))}
+        ${rader(R.ranger.map((r, i) => { const hus = R.hus.find((x) => x.rang === i); return [r.tittel, r.fra.toLocaleString("nb-NO"), hus ? `Åpner ${hus.navn}` : (PYNT[r.pynt] ? PYNT[r.pynt].replace(/^(en|et) /, "").replace(/^./, (c) => c.toUpperCase()) : "") || "·"]; }))}
+      </tbody></table>
+      <h3>Husene</h3>
+      <p>Etter Pretor gir ikke titlene pynt av seg selv. Hver ny tittel åpner i stedet retten til å bygge et nytt hus, som koster alle sju råvarene. Fordelene og pynten legger seg oppå hverandre:</p>
+      <table class="tavle"><thead><tr><th>Hus</th><th>Krever</th><th>Gir</th></tr></thead><tbody>
+        ${rader(R.hus.map((h) => [h.navn, R.ranger[h.rang].tittel, [...h.fordeler, PYNT[h.pynt].replace(/^./, (c) => c.toUpperCase())].map(esc).join(". ")]))}
       </tbody></table>
       <h3>Torget</h3>
       <p>Under godset ditt kan du kjøpe ${Object.values(R.butikk).map((v) => `${v.navn.toLowerCase()} (${Object.entries(v.pris).map(([r, n]) => `${tall(n)} ${rn(r)}`).join(" og ")})`).join(", ").replace(/, ([^,]*)$/, " og $1")}.</p>`;
@@ -650,7 +656,8 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
     if (lagerSum() >= 15) return "Avlingen er klar. Trykk på «Høst».";
     const rad = Object.keys(T.regler.bygg).find((id) => m.apen[id] && harRad(m.kost[id]));
     if (rad) return `Du har råd til å ${m.bygg[rad] ? "utvide" : "anlegge"} ${T.regler.bygg[rad].navn.toLowerCase()}.`;
-    if (m.bygg.havn && !m.tokt) return "Skipet ligger til kai. Send det på tokt.";
+    if (m.bygg.havn && (m.skip || []).some((x) => !x)) return "Et skip ligger til kai. Send det på tokt.";
+    if (m.hus.neste && m.hus.neste.apen && harRad(m.hus.neste.pris)) return `Du har råd til å bygge ${m.hus.neste.navn}.`;
     if (andre.some((s) => !s.skjenket)) return m.skjenk.runde.gjort < m.skjenk.runde.mal ? `Skjenk ${m.skjenk.runde.mal - m.skjenk.runde.gjort} naboer til, så tar du dagens runde og får én times avling.` : "Trykk på godset til en av de andre og skjenk et glass. Det gir mye ære.";
     if (!andre.length) return "Du er den første i byen. Få med deg de andre!";
     return "Godset jobber for deg mens du er borte. Kom tilbake før lageret er fullt.";
@@ -707,7 +714,7 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
     };
     return `<div class="sy-rangboks">
       <div class="sy-rangtopp"><div><p class="sy-etikett">Din rang</p><h3>${esc(R[m.rang].tittel)}</h3>
-        <p class="dempet">${tall(m.aere)} ære${neste ? ` · ${tall(neste.fra - m.aere)} til ${neste.tittel.toLowerCase()}, som gir ${PYNT[neste.pynt]}` : " · Høyeste rang i byen"}</p>
+        <p class="dempet">${tall(m.aere)} ære${neste ? ` · ${tall(neste.fra - m.aere)} til ${neste.tittel.toLowerCase()}, som ${neste.pynt ? `gir ${PYNT[neste.pynt]}` : `åpner ${(T.regler.hus.find((x) => x.rang === m.rang + 1) || {}).navn || "et nytt hus"}`}` : " · Høyeste rang i byen"}</p>
         <p class="dempet sy-butikkfot">Ære får du for å gi: skjenke naboene, gi til byggverkene og holde fest for folkene dine.</p>
         <p class="dempet sy-butikkfot">${(() => { const pl = plasser(), p = pl.get(m.navn), g = pl.grense(m.navn); return `Du bor ${p.nabolag}${g ? `, og mangler ${tall(g.mangler)} ære på å flytte opp ${g.nabolag === "på Akropolis" ? "til Akropolis" : g.nabolag.replace(/^i /, "til ")}` : ""}. Nabolagene følger æren: de fire med mest ære bor på Akropolis.`; })()}</p></div></div>
       <div class="sy-lager sy-rangstrek"><span style="width:${andel}%"></span></div>
@@ -725,6 +732,20 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
       <a class="knapp sekundar" href="hotell.html">Gå til hotellet</a></div></div>`;
   }
 
+  // Husene etter Pretor: neste hus kan bygges når tittelen er nådd, og koster alle sju råvarene
+  function husene() {
+    const m = T.meg, H = m.hus, n = H.neste;
+    if (!n && !H.niva) return "";
+    const fordeler = (h) => `<ul class="sy-husfordeler">${h.fordeler.map((f) => `<li>${esc(f)}</li>`).join("")}<li>${esc(PYNT[h.pynt].replace(/^./, (c) => c.toUpperCase()))}</li></ul>`;
+    if (!n) return `<div class="sy-rangboks sy-husboks" id="sy-hus"><p class="sy-etikett">Huset ditt</p><h3>${esc(H.navn)}</h3><p class="dempet">Du har bygget alle husene i byen.</p></div>`;
+    const kan = n.apen && harRad(n.pris);
+    return `<div class="sy-rangboks sy-husboks" id="sy-hus"><p class="sy-etikett">${H.niva ? `Huset ditt: ${esc(H.navn)} · neste hus` : "Neste hus"}</p>
+      <div class="sy-husrad"><div><h3>${esc(n.navn)}</h3>
+        <p class="dempet">${n.apen ? `Du er ${esc(n.tittel.toLowerCase())} og kan bygge ${esc(n.navn)}.` : `Krever tittelen ${esc(n.tittel.toLowerCase())}. Du mangler ${tall(T.regler.ranger[n.rang].fra - m.aere)} ære.`}</p>
+        ${fordeler(n)}</div>
+      <button class="knapp${kan ? " sy-offer" : " sekundar"}" type="button" data-hus ${kan ? "" : "disabled"}>${n.apen ? `Bygg ${esc(n.navn)}` : `Krever ${esc(n.tittel.toLowerCase())}`}<small>${pris(n.pris)}</small></button></div></div>`;
+  }
+
   function folkene() {
     const m = T.meg, R = T.regler;
     const kort = Object.entries(R.ansatte).map(([id, a]) => {
@@ -732,7 +753,7 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
       if (!x.apen) return a.bygg ? "" : `<article class="sy-vare sy-folk last"><h4>${esc(a.navn)}</h4><p>Vil ha ${R.bygg[x.krever[0]].navn.toLowerCase()} på nivå ${x.krever[1]} før han tar jobben.</p></article>`;
       const ress = a.bygg ? R.bygg[a.bygg].gir : null;
       const virk = (n) => ress ? `+${Math.round(R.ansattProd * 100 * n)} % ${rn(ress)}` : id === "forvalter" ? `+${n} t lager` : `Naskere får ${Math.round(R.vaktAndel * 100 * n)} % mindre`;
-      const prikker = Array.from({ length: R.ansattMaks }, (_, i) => `<i class="${i < x.niva ? "full" : ""}"></i>`).join("");
+      const prikker = Array.from({ length: m.ansattMaks }, (_, i) => `<i class="${i < x.niva ? "full" : ""}"></i>`).join("");
       const knapp = x.kost
         ? `<button class="liten-knapp sy-utvid${harRad(x.kost) ? " sy-rad" : ""}" type="button" data-ansett="${id}" ${harRad(x.kost) ? "" : "disabled"}>${x.niva ? "Forfrem" : "Ansett"} · ${pris(x.kost)}</button>`
         : `<p class="sy-etikett">Kan ikke forfremmes mer</p>`;
@@ -757,22 +778,26 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
   function havnen() {
     const m = T.meg;
     if (!m.bygg.havn) return "";
-    let inn;
-    if (m.tokt) {
-      const hjemme = m.tokt.hjemme || Date.parse(m.tokt.hjem) <= Date.now();
-      inn = `<div class="sy-tokt-ute"><div><h4>${hjemme ? `Skipet er hjemme fra ${esc(m.tokt.navn)}` : `Skipet er på tokt til ${esc(m.tokt.navn)}`}</h4>
-        <p class="dempet" data-tokttid>${hjemme ? "Lasten venter på kaia." : ""}</p></div>
-        <button class="knapp${hjemme ? " sy-offer" : ""}" type="button" data-gjor="loss" data-loss ${hjemme ? "" : "disabled"}>Loss skipet</button></div>`;
-    } else {
-      inn = `<div class="sy-butikk">${Object.entries(m.reisemal).map(([id, x]) => {
+    // Hvert skip vises for seg. Er minst ett ledig, kan man sende det på tokt.
+    const skip = m.skip || [];
+    const ute = skip.filter(Boolean), ledige = skip.length - ute.length;
+    const noenHjemme = ute.some((t) => t.hjemme || Date.parse(t.hjem) <= Date.now());
+    const rad = ute.map((t, i) => {
+      const hjemme = t.hjemme || Date.parse(t.hjem) <= Date.now();
+      return `<div><h4>${hjemme ? `${skip.length > 1 ? `Skip ${i + 1}` : "Skipet"} er hjemme fra ${esc(t.navn)}` : `${skip.length > 1 ? `Skip ${i + 1}` : "Skipet"} er på tokt til ${esc(t.navn)}`}</h4>
+        <p class="dempet" data-tokttid="${esc(t.hjem)}">${hjemme ? "Lasten venter på kaia." : ""}</p></div>`;
+    }).join("");
+    const lossing = ute.length ? `<div class="sy-tokt-ute"><div class="sy-skipliste">${rad}</div>
+        <button class="knapp${noenHjemme ? " sy-offer" : ""}" type="button" data-gjor="loss" data-loss ${noenHjemme ? "" : "disabled"}>${ute.length > 1 ? "Loss skipene" : "Loss skipet"}</button></div>` : "";
+    const mal = ledige ? `${ute.length ? `<p class="sy-etikett" style="margin-top:14px">Send ${skip.length > 1 ? "det andre skipet" : "skipet"}</p>` : ""}<div class="sy-butikk">${Object.entries(m.reisemal).map(([id, x]) => {
         if (!x.apen) return `<article class="sy-vare last"><h4>${esc(x.navn)}</h4><p>Krever havn på nivå ${x.havn}.</p></article>`;
         const far = Object.entries(x.gir).map(([r, [a, b]]) => `<span class="sy-pris">${a}–${b}${IKON[r]}</span>`).join(" ");
         return `<article class="sy-vare"><h4>${esc(x.navn)}<span class="sy-toktvarighet">${varighet(x.timer)}</span></h4><p>Hjem med ${far}</p>
           <button class="liten-knapp sy-utvid${harRad(x.pris) ? " sy-rad" : ""}" type="button" data-tokt="${id}" ${harRad(x.pris) ? "" : "disabled"}>Send skipet · ${pris(x.pris)}</button></article>`;
-      }).join("")}</div>`;
-    }
+      }).join("")}</div>` : "";
+    const inn = lossing + mal;
     return `<div class="sy-rangboks" id="sy-havn"><p class="sy-etikett">Havnen</p>
-      <p class="dempet sy-butikkfot">Skipet henter krydder og purpur. Velg tokt etter når du kommer innom neste gang.</p>${inn}</div>`;
+      <p class="dempet sy-butikkfot">${skip.length > 1 ? "Du har to skip." : "Skipet"} henter krydder og purpur. Velg tokt etter når du kommer innom neste gang.</p>${inn}</div>`;
   }
 
   function minTagg() {
@@ -787,7 +812,7 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
     const m = T.meg;
     if (sp.tagg) return `<div class="sy-taggboks"><p class="sy-etikett">Spraybøksa</p><p>Huset er allerede tagget av <strong>${esc(visningsnavn(sp.tagg.fra))}</strong>: <span class="sy-taggsitat" style="color:${sp.tagg.farge}">${esc(sp.tagg.tekst)}</span>. ${esc(visningsnavn(sp.navn))} må vaske før noen kan tagge igjen.</p></div>`;
     const tom = m.taggIgjen <= 0 || sp.tagget;
-    return `<form class="sy-taggboks" data-taggskjema="${esc(sp.navn)}"><p class="sy-etikett">Spraybøksa · ${m.taggIgjen} av ${T.regler.taggPerDag} tagger igjen i dag</p>
+    return `<form class="sy-taggboks" data-taggskjema="${esc(sp.navn)}"><p class="sy-etikett">Spraybøksa · ${m.taggIgjen} av ${m.taggPerDag} tagger igjen i dag</p>
       <div class="sy-taggrad"><input type="text" name="tekst" maxlength="${T.regler.taggMaks}" placeholder="Skriv noe på veggen" autocomplete="off" ${tom ? "disabled" : ""} required>
       <div class="sy-farger" role="radiogroup" aria-label="Farge">${FARGER.map((f) => `<button type="button" class="sy-farge${f === taggFarge ? " valgt" : ""}" data-farge="${f}" style="background:${f}" aria-label="Farge" aria-checked="${f === taggFarge}" role="radio" ${tom ? "disabled" : ""}></button>`).join("")}</div>
       <button class="knapp" type="submit" ${tom ? "disabled" : ""}>${sp.tagget ? "Tagget i dag" : m.taggIgjen <= 0 ? "Tom for maling" : "Tagg huset"}</button></div>
@@ -817,14 +842,14 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
           <button class="knapp sy-host" type="button" data-gjor="host" data-host>Høst</button></div></div>
         ${minTagg()}
         <div class="sy-byggliste">${synlige.map(byggKort).join("")}</div>
-        ${KONTOR_PA ? hotellet() : ""}${havnen()}${folkene()}${rangOgButikk()}</section>`;
+        ${KONTOR_PA ? hotellet() : ""}${husene()}${havnen()}${folkene()}${rangOgButikk()}</section>`;
     }
     const sp = T.spillere.find((s) => s.navn === valgt);
     if (!sp) return `<section class="sy-panel"><p class="sy-etikett">Ledig tomt</p><p>${esc(valgt)} har ikke sjekket inn ennå.</p><button class="liten-knapp" type="button" data-hjem>Til godset mitt</button></section>`;
     const b = sp.bygg;
     return `<section class="sy-panel">
       <div class="sy-panelhode"><div><p class="sy-etikett">På besøk</p><h3>${esc(godsNavn(sp.navn))}</h3>
-        <p class="dempet">Bor ${plasser().get(sp.navn).nabolag} · villa nivå ${b.villa} · olivenlund ${b.lund}${b.vingard ? ` · vingård ${b.vingard}` : ""}${b.brudd ? ` · marmorbrudd ${b.brudd}` : ""}${b.bigard ? ` · bigård ${b.bigard}` : ""}${b.gruve ? ` · sølvgruve ${b.gruve}` : ""}${b.havn ? ` · havn ${b.havn}${sp.skip === "ute" ? " (skipet er ute)" : ""}` : ""}${sp.ansatte ? ` · ${sp.ansatte} ansatte` : ""} · ${tall(sp.aere)} ære${sp.hjemme ? "" : " · ikke hjemme på en stund"}</p></div>
+        <p class="dempet">Bor ${plasser().get(sp.navn).nabolag}${sp.hus ? ` i ${esc(T.regler.hus[sp.hus - 1].navn)}` : ""} · villa nivå ${b.villa} · olivenlund ${b.lund}${b.vingard ? ` · vingård ${b.vingard}` : ""}${b.brudd ? ` · marmorbrudd ${b.brudd}` : ""}${b.bigard ? ` · bigård ${b.bigard}` : ""}${b.gruve ? ` · sølvgruve ${b.gruve}` : ""}${b.havn ? ` · havn ${b.havn}${sp.skip === "ute" ? " (skipet er ute)" : ""}` : ""}${sp.ansatte ? ` · ${sp.ansatte} ansatte` : ""} · ${tall(sp.aere)} ære${sp.hjemme ? "" : " · ikke hjemme på en stund"}</p></div>
         <div class="sy-hodeknapper"><a class="liten-knapp" href="hotell.html?rom=${encodeURIComponent(`hjem:${sp.navn}`)}">Gå inn i huset</a>
         <button class="liten-knapp" type="button" data-hjem>Til godset mitt</button></div></div>
       <div class="sy-besok">
@@ -907,11 +932,12 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
     if (klar) klar.toggleAttribute("hidden", sum < 15);
     const f = rot.querySelector("[data-fullt]");
     if (f) f.textContent = fulltOm();
-    const tk = T.meg.tokt;
-    if (tk && !tk.hjemme) {
-      const igjen = Date.parse(tk.hjem) - (Date.parse(T.naa) + (Date.now() - hentet));
-      const tt = rot.querySelector("[data-tokttid]");
-      if (tt) tt.textContent = igjen > 0 ? `Hjemme om ${klokke(igjen)}` : "Legger til kai …";
+    for (const tt of rot.querySelectorAll("[data-tokttid]")) {
+      if (!tt.dataset.tokttid) continue;
+      const t = (T.meg.skip || []).find((x) => x && x.hjem === tt.dataset.tokttid);
+      if (!t || t.hjemme) continue;
+      const igjen = Date.parse(t.hjem) - (Date.parse(T.naa) + (Date.now() - hentet));
+      tt.textContent = igjen > 0 ? `Hjemme om ${klokke(igjen)}` : "Legger til kai …";
       if (igjen <= 0 && !opptatt && !toktSjekk) { toktSjekk = true; hent(true).finally(() => (toktSjekk = false)); }
     }
     const tp = document.getElementById("sy-tips");
@@ -966,6 +992,7 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
     else if (s.type === "vask") toast(`Rent igjen. ${s.fra} får prøve seg på nytt en annen dag.`);
     else if (s.type === "kjop") toast(s.vare === "statue" ? "Statuen din står nå på agoraen." : s.vare === "slave" ? "Vaskeslaven er ansatt. Han tar tagger etter en time." : `${s.navn} kjøpt.`);
     else if (s.type === "ansett") toast(s.niva === 1 ? `${s.navn} er ansatt.` : `${s.navn} er forfremmet til nivå ${s.niva}.`);
+    else if (s.type === "hus") toast(`${s.navn} står ferdig! Godset har fått nye fordeler.`);
     else if (s.type === "fest") toast(`${s.prakt ? "For en praktfest!" : "Skål for folkene!"} +${s.aere} ære, og godset jobber bedre i ${s.timer} timer.`);
     else if (s.type === "tokt") toast(`Skipet har lagt fra mot ${s.mal}. God vind!`);
     else if (s.type === "loss") { sprett(gave(s.fikk)); toast(`${s.hendelse === "storm" ? "Skipet kom gjennom en storm og mistet halve lasten." : s.hendelse === "medvind" ? "Medvind hele veien! Skipet kom hjem med ekstra last." : `Skipet er losset etter toktet til ${s.mal}.`}`); }
@@ -1044,6 +1071,7 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
     else if (k.dataset.info !== undefined) visInfo("Slik spiller du Symposion", info());
     else if (k.dataset.ansett) gjor("ansett", { hvem: k.dataset.ansett });
     else if (k.dataset.fest) gjor("fest", { prakt: k.dataset.fest === "prakt" });
+    else if (k.dataset.hus !== undefined) gjor("hus");
     else if (k.dataset.tokt) gjor("tokt", { mal: k.dataset.tokt });
     else if (k.dataset.havnkart !== undefined) (document.getElementById("sy-havn") || document.getElementById("sy-panel")).scrollIntoView({ behavior: "smooth", block: "center" });
     else if (k.dataset.gjor) gjor(k.dataset.gjor);

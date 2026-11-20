@@ -644,6 +644,11 @@ function premieTekst(svar) {
 // ENDRINGSLOGGEN («Hva er nytt»). Nyeste først. Legg til en ny oppføring øverst når noe er endret.
 // id må være unik og øke, så knappen kan vise at det er noe nytt siden sist.
 const ENDRINGER = [
+  { id: 10, dato: "20. november", tittel: "Husene etter Pretor", punkter: [
+    "Etter Pretor åpner hver ny tittel retten til å bygge et nytt hus: Domus (Arkont), Palass (Strateg), Kongsgård (Konsul), Symposiarkens hall (Symposiark) og Olympos (Heros).",
+    "Husene koster alle sju råvarene og gir nye fordeler: større lager, ansatte på nivå 6, ekstra nask og tagg, lengre fest, et andre skip, dobbelt offer og mer produksjon.",
+    "Pynten over Pretor (statue, fontene, ørn, fakler og stjerne) følger nå husene, ikke titlene.",
+  ] },
   { id: 9, dato: "20. november", tittel: "Lange fingre", punkter: [
     "Et kjøpt grep kan tas hos hvem du vil, også naboer du allerede har nasket fra i dag.",
   ] },

@@ -1487,3 +1487,13 @@ p.h-merket { margin: 10px 0; }
 .sy-avtaler { margin: 4px 0 0; padding-left: 18px; }
 .sy-avtaler li { margin: 2px 0; }
 @media (max-width: 760px) { .k-rutenett, .k-avtaler { grid-template-columns: minmax(0, 1fr); } }
+/* Symposion: husene etter Pretor */
+.sy-husboks h3 { margin: 2px 0 4px; font-family: var(--display); font-size: 22px; letter-spacing: .04em; color: var(--gull-lys); }
+.sy-husrad { display: flex; gap: 14px 22px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.sy-husrad > div { flex: 1 1 300px; }
+.sy-husrad .knapp { min-width: 240px; display: inline-flex; flex-direction: column; align-items: center; }
+.sy-husrad .knapp:disabled { opacity: .55; cursor: default; }
+.sy-husfordeler { margin: 6px 0 0; padding-left: 18px; }
+.sy-husfordeler li { margin: 2px 0; }
+.sy-skipliste { display: flex; flex-direction: column; gap: 10px; flex: 1 1 260px; }
+@media (max-width: 760px) { .sy-husrad .knapp { width: 100%; min-width: 0; } }
