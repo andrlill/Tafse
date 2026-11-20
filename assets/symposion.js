@@ -614,6 +614,8 @@
       <p>Trykk «Ofre til gudene» én gang om dagen. Det koster ingenting, og gaven blir større for hver dag på rad, opp til sju dager. Fra dag tre får du vin, fra dag fem marmor, og dag sju gir dobbelt. Hopper du over en dag, starter rekken på nytt. Dagen skifter ved midnatt.</p>
       <h3>Felles byggverk</h3>
       <p>Alle reiser sammen ${R.monumenter.map((m) => m.navn).join(", ").replace(/, ([^,]*)$/, " og $1")}, ett om gangen. Gi det byggverket trenger under «Felles byggverk». Fyrtårnet og Orakelet krever sølv, krydder og purpur. Hvert ferdige byggverk gir alle 10 % mer produksjon, og hver gave gir deg ære.</p>
+      <h3>Tafse Hotell</h3>
+      <p>Hotellet har sin egen mynt, denarer. Du tjener dem på leie fra rommet ditt og ved å selge råvarer til baren, og bruker dem i resepsjonen på avtaler som varer en uke: handelsavtalen gir godset 10 % mer av alt, lagerleien tre timer større lager, og losen 25 % raskere tokt. Åpne «Kontoret» i hotellet.</p>
       <h3>Naboene</h3>
       <ul>
         <li><strong>Skjenk:</strong> én gang om dagen per nabo. Du gir bort 10 % av det godset ditt produserer i timen, av hver råvare du har nok av, og minst ${R.skjenkMinst} av det godset lager mest av. Du får ${R.skjenkAere} ære. Har naboen allerede skjenket deg i dag (vinrød krukke på kartet), gir det ${R.skjenkAere + R.gjengjeldAere} ære å skjenke tilbake.</li>
@@ -705,6 +707,16 @@
       <div class="sy-lager sy-rangstrek"><span style="width:${andel}%"></span></div>
       <p class="sy-etikett" style="margin-top:18px">Torget</p>
       <div class="sy-butikk">${Object.keys(T.regler.butikk).map(vare).join("")}</div></div>`;
+  }
+
+  // Avtalene fra Tafse Hotell som gjelder godset. De kjøpes for denarer i hotellet.
+  function hotellet() {
+    const a = T.meg.avtaler || [], aktive = a.filter((x) => x.til);
+    const dag = (iso) => new Date(iso).toLocaleDateString("nb-NO", { weekday: "long", day: "numeric", month: "long" });
+    return `<div class="sy-rangboks sy-hotellet"><div class="sy-fest${aktive.length ? " paa" : ""}"><div><h4>Avtaler med Tafse Hotell</h4>
+      ${aktive.length ? `<ul class="sy-avtaler">${aktive.map((x) => `<li><strong>${esc(x.navn)}</strong> til ${dag(x.til)}. ${esc(x.tekst)}</li>`).join("")}</ul>`
+        : `<p class="dempet">Ingen avtaler nå. I hotellet tjener du denarer på leie fra rommet og salg til baren, og bruker dem på avtaler som gir godset 10 % mer av alt, større lager eller raskere tokt.</p>`}</div>
+      <a class="knapp sekundar" href="hotell.html">Gå til hotellet</a></div></div>`;
   }
 
   function folkene() {
@@ -799,7 +811,7 @@
           <button class="knapp sy-host" type="button" data-gjor="host" data-host>Høst</button></div></div>
         ${minTagg()}
         <div class="sy-byggliste">${synlige.map(byggKort).join("")}</div>
-        ${havnen()}${folkene()}${rangOgButikk()}</section>`;
+        ${hotellet()}${havnen()}${folkene()}${rangOgButikk()}</section>`;
     }
     const sp = T.spillere.find((s) => s.navn === valgt);
     if (!sp) return `<section class="sy-panel"><p class="sy-etikett">Ledig tomt</p><p>${esc(valgt)} har ikke sjekket inn ennå.</p><button class="liten-knapp" type="button" data-hjem>Til godset mitt</button></section>`;

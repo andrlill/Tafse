@@ -1466,3 +1466,24 @@ p.h-merket { margin: 10px 0; }
 .endringer ul { margin: 0; padding-left: 20px; }
 .endringer li { margin: 4px 0; }
 .sy-festgevinst { color: inherit; opacity: .85; }
+/* Hotellets kontor: leie, baren og avtaler */
+.k-rutenett { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+.k-del { border: 1px solid var(--linje); background: var(--bunn); padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.k-del.k-bred { grid-column: 1 / -1; }
+.k-del h4 { margin: 0; font-family: var(--display); font-size: 17px; letter-spacing: .04em; color: var(--gull-lys); }
+.k-del p { margin: 0; }
+.k-tall { color: var(--gull); font-size: 15px; }
+.k-knapper { margin-top: auto; padding-top: 6px; display: flex; gap: 8px; flex-wrap: wrap; }
+.k-varer { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.k-varer .k-onske { border-color: var(--gull); color: var(--gull-lys); }
+.k-avtaler { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 6px; }
+.k-avtale { border: 1px solid var(--linje); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.k-avtale.aktiv { border-color: var(--gull); background: #1f1a0e; }
+.k-avtale h5 { margin: 0; font-family: var(--display); font-size: 15px; letter-spacing: .04em; }
+.k-avtale .liten-knapp, .k-avtale .k-pris { margin-top: auto; }
+.k-pris { color: var(--gull); font-size: 14px; letter-spacing: .08em; }
+.k-melding { margin: 10px 0 0; padding: 8px 12px; border: 1px solid var(--gull); color: var(--gull-lys); }
+.sy-hotellet .sy-fest { margin-bottom: 0; }
+.sy-avtaler { margin: 4px 0 0; padding-left: 18px; }
+.sy-avtaler li { margin: 2px 0; }
+@media (max-width: 760px) { .k-rutenett, .k-avtaler { grid-template-columns: minmax(0, 1fr); } }

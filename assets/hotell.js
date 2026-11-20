@@ -135,6 +135,13 @@
       <tr><td>Snake</td><td>slangeskinn</td><td>1 per 5 poeng</td></tr>
       <tr><td>Idus Martiae</td><td>dolker</td><td>1 per 2 poeng</td></tr>
     </tbody></table>
+    <h3>Kontoret og denarene</h3>
+    <p>Hotellet har sin egen mynt, denarer. Du tjener dem i hotellet og bruker dem på avtaler som får godset ditt i Symposion til å gå bedre. Alt finner du under «Kontoret».</p>
+    <ul>
+      <li><strong>Leie:</strong> rommet ditt tjener denarer hele døgnet. Jo mer møblene som står ute er verdt, jo høyere leie, og hver stjerne fra en gjest gir 5 % mer. Hent leien på rommet ditt. Kassa rommer to døgn.</li>
+      <li><strong>Baren:</strong> kjøper råvarer fra godset ditt for inntil 200 denarer om dagen. Hver dag ønsker den seg én vare og betaler dobbelt for den. Du selger over disken i baren.</li>
+      <li><strong>Avtaler:</strong> skrives i resepsjonen i lobbyen og varer en uke. Handelsavtalen gir 10 % mer av alt på godset, lagerleien gir tre timer større lager, og losen gjør toktene 25 % raskere.</li>
+    </ul>
     <h3>Butikken</h3>
     <p>Butikken ligger under rommet og er delt i faner. Noen varer koster én premie, andre en blanding. Olympens trone koster litt av alt.</p>
     <ul>
@@ -1411,13 +1418,15 @@
     if (v.dataset.nokkel !== nokkel) {
       v.dataset.nokkel = nokkel;
       const knapp = (id, tekst) => `<button type="button" class="h-verktoyknapp${panel === id ? " aktiv" : ""}" data-panel="${id}" aria-expanded="${panel === id}">${tekst}</button>`;
-      v.innerHTML = knapp("lager", `Lager <span>${n}</span>`) + knapp("butikk", "Butikk") + knapp("garderobe", "Garderobe") +
+      v.innerHTML = knapp("lager", `Lager <span>${n}</span>`) + knapp("butikk", "Butikk") + knapp("garderobe", "Garderobe") + knapp("kontor", "Kontoret") +
         (hos ? `<button type="button" class="h-verktoyknapp h-stjerne${hos.minStjerne ? " aktiv" : ""}" data-stjerne>★ ${hos.stjerner} · ${hos.minStjerne ? "Du har gitt en stjerne" : "Gi rommet en stjerne"}</button>` : "") +
         (erMitt() && hjem ? `<span class="h-stjernetall">★ ${hjem.stjerner || 0} ${hjem.stjerner === 1 ? "stjerne" : "stjerner"} fra gjestene</span>` : "");
     }
     document.getElementById("h-lagerpanel").hidden = panel !== "lager";
     document.getElementById("h-butikk").hidden = panel !== "butikk";
     document.getElementById("h-garderobepanel").hidden = panel !== "garderobe";
+    document.getElementById("h-kontor").hidden = panel !== "kontor";
+    if (panel === "kontor") visKontor();
     if (panel === "lager") visLager();
     if (panel === "butikk") visButikk();
   }
@@ -1485,6 +1494,61 @@
         <p class="dempet h-hjelp">Legg til møbler fra lageret under. Trykk på et møbel i din skål for å ta det ut igjen. Byttet skjer når begge har godtatt. Endrer noen innholdet, må begge godta på nytt.</p>` : ""}
     </section>`;
     tegnIkoner(boks);
+  }
+
+  // ---------- Kontoret: hotellets økonomi (lib/hotellokonomi.js) ----------
+  // Leie fra rommet, salg til baren og avtaler som får godset i Symposion til å gå bedre.
+  let kontor = null, kontorMelding = "", kontorNokkel = "";
+  async function lastKontor() {
+    try { kontor = await api("hotell/okonomi"); visKontor(); } catch (_) {}
+  }
+  async function kontorGjor(hva, d) {
+    try {
+      const kropp = hva === "selg" ? { vare: d.vare, antall: Number(d.antall) } : hva === "avtale" ? { type: d.type } : {};
+      const s = await api(`hotell/${hva}`, post(kropp));
+      kontor = s.okonomi;
+      kontorMelding = s.fikk ? `Du hentet ${tallNo(s.fikk)} denarer i leie.`
+        : s.solgt ? `Baren kjøpte ${tallNo(s.solgt.antall)} ${s.solgt.navn} for ${tallNo(s.solgt.denarer)} denarer${s.solgt.dobbel ? ", dobbel pris i dag" : ""}.`
+        : s.avtale ? `${s.avtale.navn} ${s.avtale.forlenget ? "er forlenget" : "gjelder nå"} til ${datoNo(s.avtale.til)}.` : "";
+      plingLyd();
+      lastButikk();
+    } catch (e) { kontorMelding = e.message; }
+    visKontor();
+  }
+  const tallNo = (n) => Number(n).toLocaleString("nb-NO");
+  const datoNo = (iso) => new Date(iso).toLocaleDateString("nb-NO", { weekday: "long", day: "numeric", month: "long" });
+  function visKontor() {
+    const boks = document.getElementById("h-kontor");
+    if (!boks) return;
+    if (!kontor) { boks.innerHTML = `<section class="h-boks h-panel"><p class="h-etikett">Kontoret</p><p class="dempet">Henter regnskapet …</p></section>`; return; }
+    const nokkel = JSON.stringify([kontor, kontorMelding, rom]);
+    if (nokkel === kontorNokkel) return;
+    kontorNokkel = nokkel;
+    const K = kontor, L = K.leie;
+    // Hver ting gjøres et bestemt sted i hotellet. Står man ikke der, tar knappen en dit.
+    const sted = (her, til, navn) => (her ? "" : `<button type="button" class="liten-knapp" data-gatil="${til}">Gå til ${navn}</button>`);
+    const paRommet = rom === mittRom(), iBaren = rom === "baren", iLobbyen = rom === "lobbyen";
+    const leie = `<article class="k-del"><h4>Leie fra rommet</h4>
+      <p>Rommet ditt tjener <strong>${tallNo(L.perDag)} denarer om dagen</strong>. Møblene som står ute, er verdt ${tallNo(L.standard)}${L.stjerner ? `, og ${L.stjerner} ${L.stjerner === 1 ? "stjerne" : "stjerner"} fra gjestene gir ${L.stjerner * 5} % mer` : ""}.</p>
+      <p class="k-tall">${tallNo(L.kasse)} denarer i kassa${L.full ? " · kassa er full" : L.kasse ? ` · full om ${Math.ceil(L.timerTilFull)} t` : ""}</p>
+      <div class="k-knapper">${paRommet ? `<button type="button" class="knapp" data-kontor="leie" ${L.kasse < 1 ? "disabled" : ""}>Hent leien</button>` : sted(false, "rommet", "rommet ditt")}</div></article>`;
+    const varer = K.bar.varer.filter((v) => v.har > 0 || v.onske);
+    const bar = `<article class="k-del"><h4>Baren kjøper</h4>
+      <p>Baren kjøper råvarer fra godset ditt. I dag ønsker den seg <strong>${esc(K.bar.varer.find((v) => v.onske).navn)}</strong> og betaler dobbelt for det.</p>
+      <p class="k-tall">${K.bar.rest > 0 ? `Baren handler for ${tallNo(K.bar.rest)} denarer til av deg i dag` : "Baren har kjøpt nok av deg i dag"}</p>
+      ${!K.harGods ? `<p class="dempet">Du trenger et gods i Symposion for å ha noe å selge.</p>` : !iBaren ? `<div class="k-knapper">${sted(false, "baren", "baren")}</div>`
+        : K.bar.rest < 1 ? ""
+        : `<div class="k-varer">${varer.map((v) => `<button type="button" class="liten-knapp${v.onske ? " k-onske" : ""}" data-kontor="selg" data-vare="${v.id}" data-antall="${v.antall}" ${v.gir < 1 ? "disabled" : ""}>${v.gir < 1 ? `${esc(v.navn)}: ingenting å selge` : `Selg ${tallNo(v.antall)} ${esc(v.navn)} · +${tallNo(v.gir)}`}</button>`).join("")}</div>`}</article>`;
+    const avtaler = `<article class="k-del k-bred"><h4>Avtaler for godset i Symposion</h4>
+      <p>Avtalene skrives i resepsjonen og varer en uke. Kjøper du en du allerede har, forlenges den.</p>
+      <div class="k-avtaler">${K.avtaler.map((a) => `<div class="k-avtale${a.til ? " aktiv" : ""}"><h5>${esc(a.navn)}</h5><p>${esc(a.tekst)}</p>
+        <p class="k-tall">${a.til ? `Gjelder til ${datoNo(a.til)}` : a.apen ? "Ikke inngått" : a.krever ? "Krever havn i Symposion" : "Krever et gods i Symposion"}</p>
+        ${iLobbyen ? `<button type="button" class="liten-knapp" data-kontor="avtale" data-type="${a.id}" ${!a.apen || K.denarer < a.pris ? "disabled" : ""}>${a.til ? "Forleng" : "Inngå"} · ${tallNo(a.pris)} denarer</button>` : `<span class="k-pris">${tallNo(a.pris)} denarer</span>`}</div>`).join("")}</div>
+      ${iLobbyen ? "" : `<div class="k-knapper">${sted(false, "lobbyen", "resepsjonen")}</div>`}</article>`;
+    boks.innerHTML = `<section class="h-boks h-panel k-kontor"><p class="h-etikett">Kontoret · du har ${tallNo(K.denarer)} denarer</p>
+      <p class="dempet">Tjen denarer i hotellet, og bruk dem på avtaler som får godset ditt i Symposion til å gå bedre.</p>
+      ${kontorMelding ? `<p class="k-melding" role="status">${esc(kontorMelding)}</p>` : ""}
+      <div class="k-rutenett">${leie}${bar}${avtaler}</div></section>`;
   }
 
   // ---------- Butikken ----------
@@ -1719,7 +1783,9 @@
     else if (k.id === "h-hviskmerke") settHvisk(null);
     else if (k.dataset.slettbok) gjestebokSend({ slett: Number(k.dataset.slettbok) });
     else if (k.dataset.rom && k.dataset.rom !== rom) gaTil(k.dataset.rom, null);
-    else if (k.dataset.panel) { panel = panel === k.dataset.panel ? null : k.dataset.panel; visVerktoy(); }
+    else if (k.dataset.panel) { panel = panel === k.dataset.panel ? null : k.dataset.panel; if (panel === "kontor") lastKontor(); visVerktoy(); }
+    else if (k.dataset.kontor) kontorGjor(k.dataset.kontor, k.dataset);
+    else if (k.dataset.gatil) gaTil(k.dataset.gatil === "rommet" ? mittRom() : k.dataset.gatil, null);
     else if (k.dataset.lagerfane) { lagerFane = k.dataset.lagerfane; visLager(); }
     else if (k.dataset.stjerne !== undefined) giStjerne();
     else if (k.dataset.bytte) bytteGjor(k.dataset.bytte, k.dataset.id ? Number(k.dataset.id) : undefined);
@@ -1765,6 +1831,7 @@
       <div id="h-bytte"></div>
       <div id="h-lagerpanel" hidden></div>
       <div id="h-butikk" hidden></div>
+      <div id="h-kontor" hidden></div>
       <section class="h-boks h-panel" id="h-garderobepanel" hidden><p class="h-etikett">Garderoben</p><div id="h-garderobe"></div></section>
       <div id="h-innred"></div>
       <div id="h-gjestebok"></div>
