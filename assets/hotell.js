@@ -3,6 +3,16 @@
 // Hver bror har også sitt eget rom. Det vokser med villaen i Symposion og innredes fra butikken,
 // der man betaler med premiene fra alle spillene. Serveren (lib/hotell.js) holder orden på alt,
 // også katalogen og prisene. Her ligger tegningene: MOBEL, GULVSTIL, VEGGSTIL, figur() og dyr().
+// Hotellets økonomi (Kontoret) står på pause. Skru på med true, og PAUSE = false i lib/hotellokonomi.js.
+const KONTOR_PA = false;
+const KONTORHJELP = `    <h3>Kontoret og denarene</h3>
+    <p>Hotellet har sin egen mynt, denarer. Du tjener dem i hotellet og bruker dem på avtaler som får godset ditt i Symposion til å gå bedre. Alt finner du under «Kontoret».</p>
+    <ul>
+      <li><strong>Leie:</strong> rommet ditt tjener denarer hele døgnet. Jo mer møblene som står ute er verdt, jo høyere leie, og hver stjerne fra en gjest gir 5 % mer. Hent leien på rommet ditt. Kassa rommer to døgn.</li>
+      <li><strong>Baren:</strong> kjøper råvarer fra godset ditt for inntil 200 denarer om dagen. Hver dag ønsker den seg én vare og betaler dobbelt for den. Du selger over disken i baren.</li>
+      <li><strong>Avtaler:</strong> skrives i resepsjonen i lobbyen og varer en uke. Handelsavtalen gir 10 % mer av alt på godset, lagerleien gir tre timer større lager, og losen gjør toktene 25 % raskere.</li>
+    </ul>
+`;
 
 (() => {
   const rot = document.getElementById("h");
@@ -135,13 +145,7 @@
       <tr><td>Snake</td><td>slangeskinn</td><td>1 per 5 poeng</td></tr>
       <tr><td>Idus Martiae</td><td>dolker</td><td>1 per 2 poeng</td></tr>
     </tbody></table>
-    <h3>Kontoret og denarene</h3>
-    <p>Hotellet har sin egen mynt, denarer. Du tjener dem i hotellet og bruker dem på avtaler som får godset ditt i Symposion til å gå bedre. Alt finner du under «Kontoret».</p>
-    <ul>
-      <li><strong>Leie:</strong> rommet ditt tjener denarer hele døgnet. Jo mer møblene som står ute er verdt, jo høyere leie, og hver stjerne fra en gjest gir 5 % mer. Hent leien på rommet ditt. Kassa rommer to døgn.</li>
-      <li><strong>Baren:</strong> kjøper råvarer fra godset ditt for inntil 200 denarer om dagen. Hver dag ønsker den seg én vare og betaler dobbelt for den. Du selger over disken i baren.</li>
-      <li><strong>Avtaler:</strong> skrives i resepsjonen i lobbyen og varer en uke. Handelsavtalen gir 10 % mer av alt på godset, lagerleien gir tre timer større lager, og losen gjør toktene 25 % raskere.</li>
-    </ul>
+    ${KONTOR_PA ? KONTORHJELP : ""}
     <h3>Butikken</h3>
     <p>Butikken ligger under rommet og er delt i faner. Noen varer koster én premie, andre en blanding. Olympens trone koster litt av alt.</p>
     <ul>
@@ -1418,7 +1422,7 @@
     if (v.dataset.nokkel !== nokkel) {
       v.dataset.nokkel = nokkel;
       const knapp = (id, tekst) => `<button type="button" class="h-verktoyknapp${panel === id ? " aktiv" : ""}" data-panel="${id}" aria-expanded="${panel === id}">${tekst}</button>`;
-      v.innerHTML = knapp("lager", `Lager <span>${n}</span>`) + knapp("butikk", "Butikk") + knapp("garderobe", "Garderobe") + knapp("kontor", "Kontoret") +
+      v.innerHTML = knapp("lager", `Lager <span>${n}</span>`) + knapp("butikk", "Butikk") + knapp("garderobe", "Garderobe") + (KONTOR_PA ? knapp("kontor", "Kontoret") : "") +
         (hos ? `<button type="button" class="h-verktoyknapp h-stjerne${hos.minStjerne ? " aktiv" : ""}" data-stjerne>★ ${hos.stjerner} · ${hos.minStjerne ? "Du har gitt en stjerne" : "Gi rommet en stjerne"}</button>` : "") +
         (erMitt() && hjem ? `<span class="h-stjernetall">★ ${hjem.stjerner || 0} ${hjem.stjerner === 1 ? "stjerne" : "stjerner"} fra gjestene</span>` : "");
     }
@@ -1497,6 +1501,7 @@
   }
 
   // ---------- Kontoret: hotellets økonomi (lib/hotellokonomi.js) ----------
+  // Står på pause. Skru på med true her, og PAUSE = false i lib/hotellokonomi.js.
   // Leie fra rommet, salg til baren og avtaler som får godset i Symposion til å gå bedre.
   let kontor = null, kontorMelding = "", kontorNokkel = "";
   async function lastKontor() {

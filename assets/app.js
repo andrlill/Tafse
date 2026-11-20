@@ -644,12 +644,6 @@ function premieTekst(svar) {
 // ENDRINGSLOGGEN («Hva er nytt»). Nyeste først. Legg til en ny oppføring øverst når noe er endret.
 // id må være unik og øke, så knappen kan vise at det er noe nytt siden sist.
 const ENDRINGER = [
-  { id: 8, dato: "20. november", tittel: "Hotellet og Symposion henger sammen", punkter: [
-    "Hotellet har fått sin egen mynt, denarer. Åpne «Kontoret» under rommet i hotellet.",
-    "Rommet ditt tjener leie hele døgnet. Jo bedre innredet og jo flere stjerner fra gjestene, jo mer. Hent leien på rommet.",
-    "Baren kjøper råvarer fra godset ditt, også honning, sølv, krydder og purpur. Hver dag ønsker den seg én vare og betaler dobbelt.",
-    "I resepsjonen kjøper du avtaler som varer en uke: 10 % mer av alt på godset, større lager eller raskere tokt.",
-  ] },
   { id: 7, dato: "20. november", tittel: "Festen og lange fingre", punkter: [
     "Festen går i pluss: hele godset jobber 15 % bedre i 8 timer, og det koster bare en times produksjon. Knappen viser hva festen gir.",
     "Lange fingre gir et blindt grep: du tar mellom 0 og 50 % av en tilfeldig råvare fra naboens lager, og ser først etterpå hva det ble. Store grep er sjeldne.",
@@ -718,7 +712,7 @@ function visPlakat(vedLukk) {
       <p class="plakat-ingress">Alle spillene henger sammen. Det du vinner i ett spill, kan du bruke på hotellet.</p>
       <div class="plakat-to">
         <section><p class="overline">Tafse Hotell</p>
-          <p>Her møtes alle. Gå rundt, prat, skål og besøk rommene til de andre. Du har fått ditt eget rom, og under det ligger butikken med møbler, klær og kjæledyr. På «Kontoret» tjener du denarer på leie og salg til baren, og bruker dem på avtaler som får godset ditt til å gå bedre.</p></section>
+          <p>Her møtes alle. Gå rundt, prat, skål og besøk rommene til de andre. Du har fått ditt eget rom, og under det ligger butikken med møbler, klær og kjæledyr.</p></section>
         <section><p class="overline">Symposion</p>
           <p>Du har fått et hus i byen. Høst råvarer, bygg ut godset, ansett folk og send skip på tokt. Skjenk naboene og gi til byens byggverk, så får du ære og stiger i rang. Jo større villa, jo større blir rommet ditt på hotellet.</p></section>
       </div>

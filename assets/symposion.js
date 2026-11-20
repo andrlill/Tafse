@@ -1,6 +1,11 @@
 // SYMPOSION: den felles greske byen. Hvert gods gir oliven, vin, marmor, honning og sølv,
 // og skipene i havnen henter hjem purpur og krydder.
 // Reglene og all utregning ligger på serveren (lib/symposion.js). Denne fila tegner byen.
+// Avtalene med Tafse Hotell står på pause. Skru på med true, og PAUSE = false i lib/hotellokonomi.js.
+const KONTOR_PA = false;
+const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
+      <p>Hotellet har sin egen mynt, denarer. Du tjener dem på leie fra rommet ditt og ved å selge råvarer til baren, og bruker dem i resepsjonen på avtaler som varer en uke: handelsavtalen gir godset 10 % mer av alt, lagerleien tre timer større lager, og losen 25 % raskere tokt. Åpne «Kontoret» i hotellet.</p>
+`;
 
 (() => {
   const rot = document.getElementById("sy");
@@ -614,8 +619,7 @@
       <p>Trykk «Ofre til gudene» én gang om dagen. Det koster ingenting, og gaven blir større for hver dag på rad, opp til sju dager. Fra dag tre får du vin, fra dag fem marmor, og dag sju gir dobbelt. Hopper du over en dag, starter rekken på nytt. Dagen skifter ved midnatt.</p>
       <h3>Felles byggverk</h3>
       <p>Alle reiser sammen ${R.monumenter.map((m) => m.navn).join(", ").replace(/, ([^,]*)$/, " og $1")}, ett om gangen. Gi det byggverket trenger under «Felles byggverk». Fyrtårnet og Orakelet krever sølv, krydder og purpur. Hvert ferdige byggverk gir alle 10 % mer produksjon, og hver gave gir deg ære.</p>
-      <h3>Tafse Hotell</h3>
-      <p>Hotellet har sin egen mynt, denarer. Du tjener dem på leie fra rommet ditt og ved å selge råvarer til baren, og bruker dem i resepsjonen på avtaler som varer en uke: handelsavtalen gir godset 10 % mer av alt, lagerleien tre timer større lager, og losen 25 % raskere tokt. Åpne «Kontoret» i hotellet.</p>
+      ${KONTOR_PA ? HOTELLHJELP : ""}
       <h3>Naboene</h3>
       <ul>
         <li><strong>Skjenk:</strong> én gang om dagen per nabo. Du gir bort 10 % av det godset ditt produserer i timen, av hver råvare du har nok av, og minst ${R.skjenkMinst} av det godset lager mest av. Du får ${R.skjenkAere} ære. Har naboen allerede skjenket deg i dag (vinrød krukke på kartet), gir det ${R.skjenkAere + R.gjengjeldAere} ære å skjenke tilbake.</li>
@@ -811,7 +815,7 @@
           <button class="knapp sy-host" type="button" data-gjor="host" data-host>Høst</button></div></div>
         ${minTagg()}
         <div class="sy-byggliste">${synlige.map(byggKort).join("")}</div>
-        ${hotellet()}${havnen()}${folkene()}${rangOgButikk()}</section>`;
+        ${KONTOR_PA ? hotellet() : ""}${havnen()}${folkene()}${rangOgButikk()}</section>`;
     }
     const sp = T.spillere.find((s) => s.navn === valgt);
     if (!sp) return `<section class="sy-panel"><p class="sy-etikett">Ledig tomt</p><p>${esc(valgt)} har ikke sjekket inn ennå.</p><button class="liten-knapp" type="button" data-hjem>Til godset mitt</button></section>`;
