@@ -28,8 +28,10 @@ Nettsiden til Taffelakademiet for Samvær og Etegilder.
 | `lib/auditoriet.js` | Auditoriet i Tafse Hotell: Professor Sokrates Lund, som øver disputas med den som står på talerstolen. Hvem han er (en professor som er interessert i forskning, Kurt Nilsen og rørleggerfaget) står i `INSTRUKS`, og oppsettet ved OsloMet, UiO og Aix-Marseille i `LAERESTEDER`. Bruker Cloudflare Workers AI (se oppsett, punkt 7) |
 | `lib/innboks.js` | Innboksen på spillsiden: private meldinger mellom spillerne og hvem som er på hotellet nå. Vinduet ligger i `assets/app.js` |
 | `lib/hotellbytte.js` | Møbelbytte mellom to gjester på hotellet, og stjernene gjestene gir rommene |
-| `lib/premier.js` | Premiene fra spillene, som brukes i Tafse Hotell: hvilken premie hvert spill gir, hvor mange poeng som gir én premie, og lommeboka som samler oliven, vin og marmor (Symposion), drakmer (Tartaros) og resten |
+| `lib/premier.js` | Premiene fra spillene, som brukes i Tafse Hotell: hvilken premie hvert spill gir, hvor mange poeng som gir én premie, og lommeboka som samler oliven, vin og marmor (Symposion), drakmer (Tartaros), gnister (Kaos) og resten |
 | `tartaros.html`, `assets/tartaros.js`, `lib/tartaros.js` | Spillet Tartaros: overlev ti minutter i underverdenen. To baner: Tartaros og den vanskeligere Flegeton (ildelven), som åpnes etter fem minutter i Tartaros. Våpen, fiender, baner (`BANER`) og tall ligger øverst i `assets/tartaros.js`, drakmer, gunst og tavle i `lib/tartaros.js` |
+| `kaos.html`, `assets/kaos.js`, `assets/kaos-motor.js`, `lib/kaos.js` | Spillet Kaos: en sandkasse med stoffer som faller, renner, brenner og reagerer (i slekt med Powder Game). Stoffene, reaksjonene, oppdagelsene (`FUNN`) og dagens oppdrag (`MALER`) ligger i `assets/kaos-motor.js`, siden rundt i `assets/kaos.js`, og gnister, tavle og galleri i `lib/kaos.js` (tallene står i `REGLER`). Se eget avsnitt under |
+| `scripts/kaos-test.mjs` | Tester for Kaos-motoren: fysikken, oppdagelsene og at dagens oppdrag lar seg løse. Kjør `node scripts/kaos-test.mjs` |
 | `murbrekker.html`, `assets/murbrekker.js` | Spillet Murbrekker (Breakout), med toppliste for uka og for alle tider |
 | `2048.html`, `assets/2048.js` | Spillet 2048, med toppliste for uka og for alle tider |
 | `tetris.html`, `assets/tetris.js` | Spillet Tetris, med toppliste for uka og for alle tider |
@@ -89,10 +91,29 @@ Profil og innhold blir liggende.
 ## Gjester i spillhallen
 
 Hver bror har en egen gjestelenke på `gjest.html` (lenken «Inviter en gjest» nederst på spillsidene).
-Den som åpner lenken, velger navn og passord og kan spille Symposion, Idus Martiae, 2048, Murbrekker,
+Den som åpner lenken, velger navn og passord og kan spille Tartaros, Kaos, Symposion, Idus Martiae, 2048, Murbrekker,
 Tetris, Snake og Tafse Hotell. I Symposion har ingen fast tomt: man får plass på øya når man flytter inn. Gjester får også eget rom i Tafse Hotell, på lik linje med brødrene. Gjester står på tavlene som «Navn (gjest)». De har egen tabell (`gjester`) og egen
 innloggingskapsel, og serveren avviser dem overalt ellers. Hvilke spill de slipper inn i, styres av
 `GJESTESPILL` i `functions/api/` og `assets/app.js`. Administratorer ser og fjerner gjester under Invitasjoner. Innloggede gjester ser bare spillhallen i menyen, og sendes til `gjest.html` hvis de åpner andre sider.
+
+## Kaos
+
+Kaos er en sandkasse på 200 × 150 celler. Hver celle har ett stoff, og stoffene er pulver, væske, gass eller faste.
+
+- **Sandkassa:** man begynner med elleve stoffer og fire redskaper. Resten låses opp første gang stoffet oppstår på
+  ens eget brett (sand truffet av lynet blir glass, og så videre). Oppdagelsesboka viser et hint for hvert stoff
+  man mangler, og hvem som fant det først. Sluk, Kilde og Midasstøv låses opp ved 5, 10 og 18 oppdagelser (`LAASER`).
+  Brettet lagres i nettleseren, oppdagelsene på serveren.
+- **Dagens oppdrag:** alle får det samme brettet, laget av datoen. Fem maler går på rundgang: Brenn flåten, Akvedukten,
+  Zevs' vrede, Vesuv våkner og Trojas murer. Færrest brukte korn vinner. Grensene for to og tre stjerner (`par`) settes
+  i hver mal. Et nytt oppdrag lages som en funksjon i `assets/kaos-motor.js` og legges til i `MALER`.
+- **Galleriet:** et brett kan deles med tittel. Andre kan åpne det og gi én stjerne hver. Oppdagelser teller ikke mens
+  man ser på andres verk. Man kan slette sine egne verk, og administratorer kan slette alle.
+- **Gnister:** 10 per oppdagelse (15 ekstra til den første), 15, 25 eller 40 for dagens oppdrag etter stjernene,
+  3 ekstra per dag på rad (opptil 21), og 5 for hver stjerne man får i galleriet.
+
+Nye stoffer legges til med `stoff(...)` øverst i `assets/kaos-motor.js`, reaksjoner med `regel(a, b, a blir, b blir, sjanse)`.
+Skal stoffet kunne oppdages, må nøkkelen også inn i `FUNN` begge steder (`assets/kaos-motor.js` og `lib/kaos.js`).
 
 ## Saker til behandling
 

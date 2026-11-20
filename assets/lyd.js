@@ -107,6 +107,9 @@ window.LYD = (() => {
     },
     tikk: (siste = false) => tone({ f: siste ? 1047 : 784, type: "square", varighet: 0.05, volum: 0.04 }),
     dod: () => { tone({ f: 220, til: 55, type: "sawtooth", varighet: 1.1, volum: 0.13 }); sus({ varighet: 0.5, volum: 0.15, filter: "lowpass", f: 400 }); },
+    // Kaos
+    smell: () => { sus({ varighet: 0.35, volum: 0.3, filter: "lowpass", f: 900, til: 120 }); tone({ f: 110, til: 40, type: "sine", varighet: 0.3, volum: 0.3 }); },
+    hikk: () => { tone({ f: 420, til: 760, type: "sine", varighet: 0.07, volum: 0.08 }); tone({ f: 300, til: 240, type: "sine", start: 0.09, varighet: 0.08, volum: 0.06 }); },
     // Snake
     spis: (n = 1) => { const f = 440 * Math.pow(2, ((n - 1) % 12) / 12); tone({ f, type: "triangle", varighet: 0.08, volum: 0.16 }); tone({ f: f * 1.5, start: 0.04, varighet: 0.08, volum: 0.08 }); },
     bonus: () => [880, 1109, 1319, 1760].forEach((f, i) => tone({ f, start: i * 0.045, varighet: 0.12, volum: 0.08, type: "square" })),

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kaos · TAFSE</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main class="side k-side">
+  <h1 class="side-tittel">Kaos</h1>
+  <nav class="spillhall" aria-label="Spillene">
+    <a href="tartaros.html">Tartaros</a>
+    <a href="kaos.html" class="aktiv" aria-current="page">Kaos</a>
+    <a href="hotell.html">Tafse Hotell</a>
+    <a href="symposion.html">Symposion</a>
+    <a href="2048.html">2048</a>
+    <a href="murbrekker.html">Murbrekker</a>
+    <a href="tetris.html">Tetris</a>
+    <a href="snake.html">Snake</a>
+    <a href="spill.html">Idus Martiae</a>
+  </nav>
+
+  <div class="k-topp">
+    <div class="t-faner k-faner" role="tablist" aria-label="Kaos">
+      <button class="t-fane aktiv" type="button" role="tab" data-fane="sandkasse">Sandkassa</button>
+      <button class="t-fane" type="button" role="tab" data-fane="oppdrag">Dagens oppdrag <span class="k-merke" id="k-oppdrag-merke"></span></button>
+      <button class="t-fane" type="button" role="tab" data-fane="galleri">Galleriet</button>
+      <button class="t-fane" type="button" role="tab" data-fane="bok">Oppdagelser <span class="k-merke" id="k-funn-tall"></span></button>
+    </div>
+    <p class="k-saldo"><i aria-hidden="true"></i><strong id="k-gnister">0</strong> gnister <button class="lenkeknapp" type="button" id="k-hjelp">Slik spiller du</button></p>
+  </div>
+
+  <section class="k-oppsett" id="k-spill" aria-label="Brettet">
+    <div class="k-oppdrag" id="k-oppdrag" hidden></div>
+    <div class="k-venstre">
+      <div class="k-brett" id="k-brett">
+        <canvas id="k-lerret" tabindex="0" aria-label="Brettet. Velg et stoff og tegn med mus eller finger."></canvas>
+        <div class="k-toast" id="k-toast" aria-live="polite"></div>
+        <div class="t-melding" id="k-melding" hidden></div>
+      </div>
+      <div class="k-verktoy"><div class="k-knapper" id="k-verktoy"></div><button class="liten-knapp t-lyd" type="button" id="k-lyd">Lyd på</button></div>
+      <p class="t-hjelp" id="k-laant" hidden>Dette er et verk fra galleriet. Oppdagelser teller ikke før du har tømt brettet.</p>
+    </div>
+    <aside class="k-hoyre">
+      <div class="k-palett" id="k-palett" aria-label="Stoffer og redskaper"></div>
+      <div id="k-tavle"></div>
+    </aside>
+  </section>
+
+  <section id="k-galleri" hidden aria-label="Galleriet"></section>
+  <section id="k-bok" hidden aria-label="Oppdagelser"></section>
+</main>
+<script src="assets/app.js"></script>
+<script src="assets/lyd.js"></script>
+<script src="assets/kaos-motor.js"></script>
+<script src="assets/kaos.js"></script>
+</body>
+</html>

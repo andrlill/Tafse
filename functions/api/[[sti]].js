@@ -9,6 +9,7 @@ import { innboks, SKJEMA as INNBOKS_SKJEMA } from "../../lib/innboks.js";
 import { tartaros, SKJEMA as TARTAROS_SKJEMA, MIGRERING as TARTAROS_MIGRERING } from "../../lib/tartaros.js";
 import { hotell, SKJEMA as HOTELL_SKJEMA, MIGRERING as HOTELL_MIGRERING } from "../../lib/hotell.js";
 import { symposion, SKJEMA as SYMPOSION_SKJEMA, MIGRERING as SYMPOSION_MIGRERING } from "../../lib/symposion.js";
+import { kaos, SKJEMA as KAOS_SKJEMA } from "../../lib/kaos.js";
 
 const MAKS_BILDE = 1_900_000; // byte, D1 tåler rundt 2 MB per rad
 const BILDETYPER = ["image/jpeg", "image/png", "image/webp"];
@@ -19,7 +20,7 @@ const OKT_DAGER = 365;
 // Spillene gjester kan spille
 // Det gjester får bruke av API-et utenom spillene
 const GJESTE_API = ["innboks", "ukestavle"];
-export const GJESTESPILL = ["tartaros", "spill", "2048", "murbrekker", "tetris", "snake", "hotell", "symposion"];
+export const GJESTESPILL = ["tartaros", "kaos", "spill", "2048", "murbrekker", "tetris", "snake", "hotell", "symposion"];
 const MAKS_GJESTER = 500;
 
 let skjemaKlart = false;
@@ -141,6 +142,7 @@ async function sikreSkjema(db) {
     ...TARTAROS_SKJEMA.map((sql) => db.prepare(sql)),
     ...PREMIE_SKJEMA.map((sql) => db.prepare(sql)),
     ...INNBOKS_SKJEMA.map((sql) => db.prepare(sql)),
+    ...KAOS_SKJEMA.map((sql) => db.prepare(sql)),
     db.prepare(`CREATE TABLE IF NOT EXISTS tall2048 (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       navn TEXT NOT NULL,
@@ -323,6 +325,7 @@ const FJERN_GJEST = [
   ["symposion_gods", "navn"], ["symposion_logg", "navn"], ["symposion_bidrag", "navn"], ["symposion_handling", "fra"], ["symposion_handling", "til"],
   ["symposion_statue", "navn"], ["symposion_tagg", "fra"], ["symposion_tagg", "til"],
   ["premier", "navn"], ["tartaros", "navn"], ["tartaros_profil", "navn"], ["tall2048", "navn"], ["murbrekker", "navn"], ["tetris", "navn"], ["snake", "navn"],
+  ["kaos_funn", "navn"], ["kaos_oppdrag", "navn"], ["kaos_verk", "navn"], ["kaos_stjerne", "fra"], ["kaos_stjerne", "eier"],
   ["spillresultater", "navn"], ["honningfella", "navn"], ["varsler", "mottaker"], ["varsler", "avsender"],
 ];
 
@@ -958,6 +961,11 @@ export async function onRequest({ request, env, params }) {
     return svar;
   }
 
+  // --- Spillet: Kaos (sandkassa med stoffer). Logikken ligger i lib/kaos.js ---
+  if (ressurs === "kaos" && (metode === "GET" || metode === "POST")) {
+    return kaos({ db, meg, metode, handling: id, request, url, json, feil, lesJson, erAdmin: () => erAdmin(env, url, meg) });
+  }
+
   // --- Spillet: Symposion (den felles byen). Logikken ligger i lib/symposion.js ---
   if (ressurs === "symposion" && (metode === "GET" || metode === "POST")) {
     return symposion({ db, meg, metode, handling: id, request, json, feil, lesJson, varsle: varsleBrodre });
@@ -1053,6 +1061,7 @@ export async function onRequest({ request, env, params }) {
     const uke = (tabell, poeng = "poeng") => db.prepare(`SELECT navn, MAX(${poeng}) AS poeng FROM ${tabell} WHERE opprettet >= ? GROUP BY navn ORDER BY poeng DESC, MIN(opprettet) LIMIT 3`).bind(mandag);
     const spill = [
       ["tartaros", "Tartaros", "poeng", uke("tartaros")],
+      ["kaos", "Kaos", "stjerner i dagens oppdrag", db.prepare("SELECT navn, SUM(stjerner) AS poeng FROM kaos_oppdrag WHERE dag >= ? GROUP BY navn ORDER BY poeng DESC, MIN(opprettet) LIMIT 3").bind(mandagDag.toISOString().slice(0, 10))],
       ["symposion", "Symposion", "ære i alt", db.prepare("SELECT navn, aere AS poeng FROM symposion_gods WHERE aere > 0 ORDER BY aere DESC, opprettet LIMIT 3")],
       ["spill", "Idus Martiae", "poeng", uke("spillresultater", "CAST(sekunder AS INTEGER) + kolleger - sar")],
       ["2048", "2048", "poeng", uke("tall2048")],

@@ -128,6 +128,7 @@
     <table class="tavle"><thead><tr><th>Spill</th><th>Premie</th><th>Slik får du den</th></tr></thead><tbody>
       <tr><td>Symposion</td><td>oliven, vin og marmor</td><td>Høstes på godset</td></tr>
       <tr><td>Tartaros</td><td>drakmer</td><td>Mynter, bosser og tid i hvert tokt</td></tr>
+      <tr><td>Kaos</td><td>gnister</td><td>Oppdagelser, dagens oppdrag og stjerner i galleriet</td></tr>
       <tr><td>2048</td><td>mosaikkbiter</td><td>1 per 100 poeng</td></tr>
       <tr><td>Murbrekker</td><td>teglstein</td><td>1 per 50 poeng</td></tr>
       <tr><td>Tetris</td><td>steinblokker</td><td>1 per 300 poeng</td></tr>
@@ -391,6 +392,33 @@
       ell(a, b, 10, 4.5, "#8a6f33"); rk(a - 1.5, b - 48, 3, 48, "#c9a24a"); rk(a - 14, b - 40, 28, 2.5, "#c9a24a");
       for (const dx of [-13, 0, 13]) { const h = dx ? 46 : 54; rk(a + dx - 1.5, b - h, 3, dx ? 8 : 6, "#c9a24a"); rk(a + dx - 3.5, b - h - 2, 7, 2.5, "#e2c174"); rk(a + dx - 1.5, b - h - 8, 3, 6, "#ece4d2"); glod(a + dx, b - h - 13, 16, 0.3); flamme(a + dx, b - h - 13, t, x + dx, 0.55); }
     } },
+    lavalampe: { blokk: true, tegn(x, y, _, t) {
+      const [a, b] = P(x + 0.5, y + 0.5);
+      ell(a, b, 10, 4.5, "rgba(0,0,0,.25)"); ell(a, b - 3, 8, 3.5, "#8a6f33"); rk(a - 8, b - 9, 16, 6, "#b08d57");
+      glod(a, b - 28, 40, 0.3);
+      ctx.fillStyle = "#3a1d4a"; ctx.beginPath(); ctx.moveTo(a - 7, b - 9); ctx.lineTo(a + 7, b - 9); ctx.lineTo(a + 4, b - 46); ctx.lineTo(a - 4, b - 46); ctx.closePath(); ctx.fill();
+      for (let i = 0; i < 4; i++) { const f = (t * 0.12 + i * 0.27) % 1, r = 2.2 + Math.sin(t + i * 2) * 0.8; ell(a + Math.sin(t * 0.7 + i * 1.9) * 2, b - 13 - (i % 2 ? f : 1 - f) * 28, r, r * 1.2, i % 2 ? "#ff7a2a" : "#ffb03a"); }
+      rk(a - 4, b - 50, 8, 4, "#b08d57");
+    } },
+    diamantpute: { blokk: true, tegn(x, y, _, t) {
+      const [a, b] = P(x + 0.5, y + 0.5);
+      ell(a, b, 12, 5.5, "rgba(0,0,0,.25)"); kloss(x, y, 0.3, 0.3, 0.7, 0.7, 0, 16, "#d8cdb4");
+      const [c, d] = P(x + 0.5, y + 0.5, 16);
+      ell(c, d - 2, 9, 4, "#7a1f2a"); ell(c, d - 3, 7.5, 3, "#93352a");
+      ctx.fillStyle = "#bef0fa"; ctx.beginPath(); ctx.moveTo(c, d - 4); ctx.lineTo(c + 6, d - 10); ctx.lineTo(c + 3, d - 14); ctx.lineTo(c - 3, d - 14); ctx.lineTo(c - 6, d - 10); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "#e8fbff"; ctx.beginPath(); ctx.moveTo(c - 3, d - 14); ctx.lineTo(c + 3, d - 14); ctx.lineTo(c, d - 10); ctx.closePath(); ctx.fill();
+      if (Math.sin(t * 2.5 + x) > 0.6) { rk(c + 4, d - 18, 1.5, 6, "#fff"); rk(c + 1.8, d - 15.8, 6, 1.5, "#fff"); }
+    } },
+    alkymibord: { blokk: true, tegn(x, y, _, t) {
+      for (const [fx, fy] of [[0.14, 0.22], [0.8, 0.22], [0.14, 0.72], [0.8, 0.72]]) kloss(x, y, fx, fy, fx + 0.06, fy + 0.06, 0, 20, "#5a3d24");
+      kloss(x, y, 0.1, 0.18, 0.9, 0.82, 20, 24, "#7a5530");
+      const [a, b] = P(x + 0.5, y + 0.5, 24);
+      ell(a - 9, b - 5, 5, 5, "rgba(120,220,90,.9)"); rk(a - 10.5, b - 15, 3, 7, "rgba(200,230,235,.65)");
+      ell(a - 9 + Math.sin(t * 4) * 1.2, b - 17 - ((t * 8) % 8), 1.2, 1.2, "rgba(190,255,160,.8)");
+      rk(a + 4, b - 13, 6, 11, "rgba(110,168,255,.9)"); rk(a + 5.5, b - 17, 3, 4, "rgba(200,230,235,.65)");
+      ell(a - 1, b - 2, 3.5, 2, "#8a8478");
+      glod(a + 7, b - 8, 14, 0.25);
+    } },
     ildskal: { blokk: true, tegn(x, y, _, t) {
       const [a, b] = P(x + 0.5, y + 0.5);
       ctx.strokeStyle = "#8a6f33"; ctx.lineWidth = 3; ctx.beginPath(); for (const dx of [-11, 0, 11]) { ctx.moveTo(a + dx * 0.5, b - 24); ctx.lineTo(a + dx, b + (dx ? 0 : 4)); } ctx.stroke();
@@ -514,6 +542,13 @@
       rk(a - 5, b - 28, 2, 1.5, "#9a917b"); rk(a + 1, b - 28, 2, 1.5, "#9a917b"); rk(a - 2, b - 22, 4, 1, "#9a917b");
       for (const [dx, dy] of [[-9, -32], [-6, -36], [-1, -38], [4, -36], [7, -32]]) ell(a + dx, b + dy, 3, 2, "#6b8a45");
       rk(a + 10, b - 9, 7, 2, "#d8d8de"); rk(a + 16, b - 11, 2, 6, "#c9a24a"); rk(a + 18, b - 9, 4, 2, "#3a2a18");
+    } },
+    tkaos: { blokk: true, tegn(x, y, _, t) {
+      sokkel(x, y);
+      const [a, b] = P(x + 0.5, y + 0.5, 14);
+      rk(a - 1.5, b - 28, 3, 28, "#8a6038");
+      ctx.fillStyle = "#c9a24a"; ctx.beginPath(); ctx.moveTo(a - 7, b - 35); ctx.lineTo(a + 7, b - 35); ctx.lineTo(a + 3, b - 27); ctx.lineTo(a - 3, b - 27); ctx.closePath(); ctx.fill();
+      glod(a, b - 44, 44); flamme(a, b - 40, t, x + y, 1.3); flamme(a - 4, b - 38, t, x + 3, 0.8); flamme(a + 4, b - 38, t, y + 5, 0.8);
     } },
     ttartaros: { blokk: true, tegn(x, y, _, t) {
       sokkel(x, y, 8);
@@ -766,6 +801,12 @@
       px(-4, -4 - l, 2, 4 + l, "#3a2f28"); px(2, -4, 2, 4, "#3a2f28");
       px(-6, -11, 11, 7, "#e8dfc8"); px(-5, -12, 9, 1, "#e8dfc8"); px(-7, -9, 1, 3, "#e8dfc8");
       px(4, -12, 5, 5, "#3a2f28"); px(3, -13, 4, 4, "#c9a24a"); px(4, -12, 2, 2, "#8a6f33"); px(7, -10, 1, 1, "#ece4d2");
+    } else if (id === "dyr_salamander") {
+      for (let i = 0; i < 5; i++) px(-10 + i * 2, -3 - Math.sin(t * (gaar ? 10 : 3) + i) * 0.8, 2.2, 1.6, "#e2552a");
+      px(-2, -5, 9, 3.5, "#f07a2a"); px(0, -5.5, 2, 1, "#ffd23a"); px(3, -5.5, 2, 1, "#ffd23a");
+      px(6, -6.5, 4, 4, "#f07a2a"); px(8.5, -5.5, 0.9, 0.9, "#1c1612");
+      px(-1, -2 - l, 2, 2 + l, "#c9481f"); px(4, -2 - (gaar ? 1 - l : 0), 2, 2, "#c9481f");
+      if (Math.sin(t * 5) > 0.2) px(-11, -5 - (Math.sin(t * 9) + 1), 1.2, 1.2, "#ffd23a");
     } else if (id === "dyr_ravn") {
       const h = gaar ? Math.abs(Math.sin(t * 10)) * 2 : 0;
       px(-1, -3, 1, 3, "#4a4a55"); px(2, -3, 1, 3, "#4a4a55");
