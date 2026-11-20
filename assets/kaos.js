@@ -49,6 +49,21 @@
   const glod = lagLerret(B, H), gctx = glod.getContext("2d"), gbilde = gctx.createImageData(B, H), g32 = new Uint32Array(gbilde.data.buffer);
   const dis = lagLerret(B >> 2, H >> 2), dctx = dis.getContext("2d");
   let skala = 4;
+  // Utsnittet: zoom er forstørrelsen, (vx, vy) cellen øverst til venstre
+  let zoom = 1, vx = 0, vy = 0;
+  const ZOOM_MAKS = 4;
+  function settZoom(z, cx = vx + B / zoom / 2, cy = vy + H / zoom / 2) {
+    z = Math.max(1, Math.min(ZOOM_MAKS, z));
+    const fx = (cx - vx) / (B / zoom), fy = (cy - vy) / (H / zoom);
+    zoom = z;
+    flytt(cx - (fx * B) / z - vx, cy - (fy * H) / z - vy);
+    const k = document.getElementById("k-zoomtall");
+    if (k) k.textContent = `${Math.round(zoom * 100)} %`;
+  }
+  function flytt(dx, dy) {
+    vx = Math.max(0, Math.min(B - B / zoom, vx + dx));
+    vy = Math.max(0, Math.min(H - H / zoom, vy + dy));
+  }
   function tilpass() {
     const b = lerret.clientWidth || 800, dpr = Math.min(window.devicePixelRatio || 1, 2);
     skala = Math.max(2, Math.min(6, Math.round((b * dpr) / B)));
@@ -67,27 +82,27 @@
     ctx.fillRect(0, 0, W, Hh);
     const ox = v.rystelse ? (Math.random() - 0.5) * v.rystelse * skala * 0.5 : 0, oy = v.rystelse ? (Math.random() - 0.5) * v.rystelse * skala * 0.5 : 0;
     ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(liten, ox, oy, W, Hh);
+    ctx.drawImage(liten, vx, vy, B / zoom, H / zoom, ox, oy, W, Hh);
     // Glød: det som lyser tegnes en gang til, uskarpt, oppå bildet
     dctx.clearRect(0, 0, dis.width, dis.height);
     dctx.drawImage(glod, 0, 0, dis.width, dis.height);
     ctx.imageSmoothingEnabled = true;
     ctx.globalCompositeOperation = "lighter";
     ctx.globalAlpha = 0.75;
-    ctx.drawImage(dis, ox, oy, W, Hh);
+    ctx.drawImage(dis, vx / 4, vy / 4, B / zoom / 4, H / zoom / 4, ox, oy, W, Hh);
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = "source-over";
     if (v.blink) { ctx.fillStyle = `rgba(215, 228, 255, ${0.05 * v.blink})`; ctx.fillRect(0, 0, W, Hh); }
     if (fane === "oppdrag" && o && o.merk) {
-      const [x0, y0, x1, y1] = o.merk;
+      const [x0, y0, x1, y1] = o.merk, s = skala * zoom;
       ctx.strokeStyle = "rgba(226, 193, 116, .7)"; ctx.lineWidth = Math.max(1, skala / 2); ctx.setLineDash([skala * 2, skala * 2]);
-      ctx.strokeRect(x0 * skala, y0 * skala, (x1 - x0 + 1) * skala, (y1 - y0 + 1) * skala);
+      ctx.strokeRect((x0 - vx) * s, (y0 - vy) * s, (x1 - x0 + 1) * s, (y1 - y0 + 1) * s);
       ctx.setLineDash([]);
     }
     if (peker && !peker.beroring) {
       const r = valg.stoff === "lyn" || valg.stoff === "menneske" ? 0.5 : PENSLER[valg.pensel] + 0.5;
       ctx.strokeStyle = "rgba(236, 228, 210, .55)"; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.arc((peker.x + 0.5) * skala, (peker.y + 0.5) * skala, r * skala, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc((peker.x + 0.5 - vx) * skala * zoom, (peker.y + 0.5 - vy) * skala * zoom, r * skala * zoom, 0, Math.PI * 2); ctx.stroke();
     }
   }
 
@@ -172,6 +187,7 @@
   // ---------- Verktøylinja ----------
   const verktoy = $("k-verktoy");
   function tegnVerktoy() {
+    const zoomknapper = `<span class="k-pensler k-zoom" role="group" aria-label="Forstørrelse"><button class="k-pensel" type="button" data-gjor="ut" aria-label="Zoom ut">−</button><span id="k-zoomtall">${Math.round(zoom * 100)} %</span><button class="k-pensel" type="button" data-gjor="inn" aria-label="Zoom inn">+</button></span>`;
     const pensler = `<span class="k-pensler" role="group" aria-label="Penselstørrelse">${PENSLER.map((r, i) =>
       `<button class="k-pensel${valg.pensel === i ? " aktiv" : ""}" type="button" data-pensel="${i}" aria-label="Pensel ${i + 1}"><i style="width:${4 + i * 4}px;height:${4 + i * 4}px"></i></button>`).join("")}</span>`;
     if (fane === "oppdrag") {
@@ -180,7 +196,8 @@
         ${pensler}
         <button class="liten-knapp" type="button" data-gjor="fart">${fart === 1 ? "Fart 1×" : "Fart 3×"}</button>
         <button class="liten-knapp" type="button" data-gjor="angre"${angre.length && fase === "plan" ? "" : " disabled"}>Angre</button>
-        <button class="liten-knapp" type="button" data-gjor="omstart">Start på nytt</button>`;
+        <button class="liten-knapp" type="button" data-gjor="omstart">Start på nytt</button>
+        ${zoomknapper}`;
     } else {
       verktoy.innerHTML = `<button class="liten-knapp" type="button" data-gjor="pause">${gaar ? "Pause" : "Fortsett"}</button>
         <button class="liten-knapp" type="button" data-gjor="steg"${gaar ? " disabled" : ""}>Ett steg</button>
@@ -188,7 +205,8 @@
         ${pensler}
         <button class="liten-knapp" type="button" data-gjor="angre"${angre.length ? "" : " disabled"}>Angre</button>
         <button class="liten-knapp" type="button" data-gjor="tom">Tøm</button>
-        <button class="liten-knapp" type="button" data-gjor="del">Del i galleriet</button>`;
+        <button class="liten-knapp" type="button" data-gjor="del">Del i galleriet</button>
+        ${zoomknapper}`;
     }
   }
   LYD.knapp($("k-lyd"));
@@ -200,6 +218,7 @@
     if (!b) return;
     b.blur();
     const gjor = b.dataset.gjor;
+    if (gjor === "inn" || gjor === "ut") { settZoom(gjor === "inn" ? zoom * 2 : zoom / 2); return; }
     if (gjor === "pause") gaar = !gaar;
     else if (gjor === "steg") v.steg();
     else if (gjor === "fart") fart = fart === 1 ? 3 : 1;
@@ -227,7 +246,7 @@
   // ---------- Pensel ----------
   function celle(e) {
     const r = lerret.getBoundingClientRect();
-    return [Math.max(0, Math.min(B - 1, Math.floor(((e.clientX - r.left) / r.width) * B))), Math.max(0, Math.min(H - 1, Math.floor(((e.clientY - r.top) / r.height) * H)))];
+    return [Math.max(0, Math.min(B - 1, Math.floor(vx + (((e.clientX - r.left) / r.width) * B) / zoom))), Math.max(0, Math.min(H - 1, Math.floor(vy + (((e.clientY - r.top) / r.height) * H) / zoom)))];
   }
   const kanMale = () => fane === "sandkasse" || (fane === "oppdrag" && (fase === "plan" || fase === "gaar"));
   function punkt(x, y, holdt) {
@@ -254,7 +273,32 @@
     for (let k = 1; k <= n; k++) punkt(Math.round(x0 + ((x1 - x0) * k) / n), Math.round(y0 + ((y1 - y0) * k) / n), false);
   }
   let lynTeller = 0;
+  // To fingre flytter og zoomer utsnittet. Det samme gjør høyre museknapp (flytt) og musehjulet (zoom).
+  const fingre = new Map();
+  let grep = null;   // { x, y, avstand } for to fingre, { x, y } for høyre museknapp
+  const cellerPerPiksel = () => B / zoom / lerret.getBoundingClientRect().width;
+  function toFingre() {
+    const [a, b] = [...fingre.values()];
+    return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, avstand: Math.hypot(a.x - b.x, a.y - b.y) || 1 };
+  }
+  lerret.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    const [x, y] = celle(e);
+    settZoom(zoom * (e.deltaY < 0 ? 1.25 : 0.8), x + 0.5, y + 0.5);
+  }, { passive: false });
   lerret.addEventListener("pointerdown", (e) => {
+    if (e.pointerType === "touch") {
+      fingre.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (fingre.size === 2) {
+        // Den første fingeren rakk kanskje å sette en flekk: ta den bort igjen
+        if (peker && peker.nede && (fane === "sandkasse" || fase === "plan")) { angreSiste(); oppdaterAngre(); }
+        peker = null;
+        grep = toFingre();
+        return;
+      }
+      if (fingre.size > 2) return;
+    }
+    if (e.button === 2 || e.button === 1) { e.preventDefault(); try { lerret.setPointerCapture(e.pointerId); } catch (_) {} grep = { x: e.clientX, y: e.clientY, mus: true }; return; }
     if (e.button > 0) return;
     e.preventDefault();
     lerret.focus({ preventScroll: true });
@@ -270,6 +314,17 @@
     oppdaterAngre();
   });
   lerret.addEventListener("pointermove", (e) => {
+    if (e.pointerType === "touch" && fingre.has(e.pointerId)) {
+      fingre.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (fingre.size === 2 && grep) {
+        const na = toFingre(), r = lerret.getBoundingClientRect();
+        flytt(-(na.x - grep.x) * cellerPerPiksel(), -(na.y - grep.y) * cellerPerPiksel());
+        settZoom(zoom * (na.avstand / grep.avstand), vx + (((na.x - r.left) / r.width) * B) / zoom, vy + (((na.y - r.top) / r.height) * H) / zoom);
+        grep = na;
+        return;
+      }
+    }
+    if (grep && grep.mus) { flytt(-(e.clientX - grep.x) * cellerPerPiksel(), -(e.clientY - grep.y) * cellerPerPiksel()); grep.x = e.clientX; grep.y = e.clientY; return; }
     const [x, y] = celle(e);
     if (!peker) { peker = { x, y, fx: x, fy: y, nede: false, beroring: e.pointerType === "touch" }; return; }
     if (peker.nede) {
@@ -278,7 +333,11 @@
     }
     peker.x = x; peker.y = y;
   });
-  const slipp = () => { if (peker) { peker.nede = false; if (peker.beroring) peker = null; } };
+  const slipp = (e) => {
+    if (e.pointerType === "touch") { fingre.delete(e.pointerId); if (fingre.size < 2 && grep && !grep.mus) grep = null; }
+    else if (grep && grep.mus) grep = null;
+    if (peker) { peker.nede = false; if (peker.beroring) peker = null; }
+  };
   lerret.addEventListener("pointerup", slipp);
   lerret.addEventListener("pointercancel", slipp);
   lerret.addEventListener("pointerleave", () => { if (peker && !peker.nede) peker = null; });
@@ -509,8 +568,7 @@
   // Et lite landskap å begynne med, så det er noe å tenne på
   function velkomst() {
     sand.fyll(0, 140, B - 1, H - 1, E.STEIN);
-    for (let x = 0; x < B; x++) { const h = Math.round(4 + 3 * Math.sin(x / 17) + 2 * Math.sin(x / 7)); sand.fyll(x, 140 - h, x, 139, E.JORD); }
-    sand.fyll(116, 131, 162, 141, E.STEIN);
+    for (let x = 0; x < B; x++) { const h = Math.max(3, Math.round(5 + 3 * Math.sin(x / 17) + 2 * Math.sin(x / 7))); sand.fyll(x, 140 - h, x, 139, E.JORD); }
     sand.fyll(118, 131, 160, 139, E.TOM);
     sand.fyll(118, 134, 160, 139, E.VANN);
     for (const [x, h] of [[40, 22], [62, 17], [84, 25]]) {
@@ -525,7 +583,7 @@
     visInfo("Slik spiller du Kaos", `
       <p>I begynnelsen var Kaos. Velg et stoff i menyen og tegn i boksen. Stoffene faller, renner, brenner og reagerer med hverandre.</p>
       <h3>Sandkassa</h3>
-      <p>Her er alt lov. Du begynner med noen få stoffer. Resten må du oppdage: et stoff låses opp første gang det oppstår på brettet ditt. Tenn på et tre og se hva som stiger opp og hva som ligger igjen. Oppdagelsesboka har et hint for hvert stoff du mangler.</p>
+      <p>Her er alt lov, og brettet lever: fuktig jord får gress, frø spirer til blomster og trær, og en stokk som står i fuktig jord, slår rot og får krone. Du begynner med noen få stoffer. Resten må du oppdage: et stoff låses opp første gang det oppstår på brettet ditt. Tenn på et tre og se hva som stiger opp og hva som ligger igjen. Oppdagelsesboka har et hint for hvert stoff du mangler.</p>
       <h3>Dagens oppdrag</h3>
       <p>Hver dag får alle det samme brettet og de samme stoffene. Legg ut det du trenger, trykk «Slipp løs», og se om det holder. Færrest brukte korn vinner, og det gir opptil tre stjerner. Du kan prøve så mange ganger du vil.</p>
       <h3>Galleriet</h3>
@@ -540,7 +598,7 @@
       </tbody></table>
       <p>Gnistene bruker du i butikken på <a href="hotell.html">Tafse Hotell</a>.</p>
       <h3>Taster</h3>
-      <p>Mellomrom: pause. Z: angre. Tallene 1 til 5: penselstørrelse.</p>
+      <p>Mellomrom: pause. Z: angre. Tallene 1 til 5: penselstørrelse. Musehjulet zoomer, og høyre museknapp flytter utsnittet. På mobil zoomer og flytter du med to fingre.</p>
       <p><button class="knapp" type="button" data-lukk>Sett i gang</button></p>`);
   }
   $("k-hjelp").addEventListener("click", visHjelp);

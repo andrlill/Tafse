@@ -67,6 +67,11 @@
   const GLO = stoff("glo", "Glør", FAST, 0, [200, 70, 20], { spenn: 0 });
   const LYNSPOR = stoff("lynspor", "Lyn", GASS_F, 1, [255, 255, 255], { spenn: 0, treg: 1 });
   const TENT = stoff("tent", "Tent krutt", FAST, 0, [255, 255, 230], { spenn: 0 });
+  // Naturen. Nye stoffer legges alltid til sist, så numrene i lagrede brett og verk i galleriet står seg.
+  const GRESS = stoff("gress", "Gress", FAST, 0, [96, 168, 64], { spenn: 16, brenn: 0.35, syre: 0.3, gruppe: "fast" });
+  const MOSE = stoff("mose", "Mose", FAST, 0, [92, 122, 70], { spenn: 12, syre: 0.1, styrke: 0.35, gruppe: "fast" });
+  const OLIVEN = stoff("oliven", "Oliven", PULVER, 11, [84, 96, 44], { spenn: 10, brenn: 0.1, syre: 0.3, gruppe: "pulver" });
+  const FISK = stoff("fisk", "Fisk", PULVER, 10, [240, 140, 50], { spenn: 14, syre: 0.5, gruppe: "saer" });
   const NT = EL.length;
 
   // Redskaper som ikke er stoffer
@@ -106,11 +111,17 @@
     { nokkel: "diamant", navn: "Diamant", oppskrift: "Kull omgitt av lava", hint: "Det svarte under voldsomt press og varme" },
     { nokkel: "menneske", navn: "Menneske", oppskrift: "Lyn i gjørme", hint: "Prometevs formet oss av leire. Bare gnisten mangler" },
     { nokkel: "gull", navn: "Gull", oppskrift: "Alt Midas tar på", hint: "Kong Midas' ønske" },
+    { nokkel: "gress", navn: "Gress", oppskrift: "Fuktig jord med luft over", hint: "Jord som får vann, blir ikke liggende bar" },
+    { nokkel: "mose", navn: "Mose", oppskrift: "Stein som står i vann", hint: "Stein som står vått lenge nok, blir grønn" },
+    { nokkel: "oliven", navn: "Oliven", oppskrift: "Modnes i kronen på trær som står i fuktig jord", hint: "Athenes gave vokser på trær" },
+    { nokkel: "fisk", navn: "Fisk", oppskrift: "Lyn i saltvann", hint: "Livet begynte i havet, en stormfull natt" },
     { nokkel: "regn", navn: "Regn", fenomen: true, oppskrift: "Damp som blir til vann igjen", hint: "Det som går opp, kommer ned" },
     { nokkel: "frost", navn: "Frost", fenomen: true, oppskrift: "Vann som fryser inntil is", hint: "Is smitter" },
     { nokkel: "strom", navn: "Strøm", fenomen: true, oppskrift: "Lyn som slår ned i metall", hint: "Gi lynet en vei å gå" },
     { nokkel: "eksplosjon", navn: "Eksplosjon", fenomen: true, oppskrift: "Krutt som antennes", hint: "Tenn på det svarte pulveret" },
     { nokkel: "rus", navn: "Rus", fenomen: true, oppskrift: "Et menneske som finner vin", hint: "Hva gjør et menneske som finner vin?" },
+    { nokkel: "lovverk", navn: "Løvverk", fenomen: true, oppskrift: "Tre som står i fuktig jord, slår rot og får krone", hint: "Selv en død stokk slår rot i fuktig jord" },
+    { nokkel: "pressing", navn: "Olivenpresse", fenomen: true, oppskrift: "Et menneske som tråkker på oliven", hint: "Athenes gave må tråkkes før den kan brenne i lampa" },
     { nokkel: "gullstatue", navn: "Gullstatue", fenomen: true, oppskrift: "Et menneske som møter Midas", hint: "Slik gikk det med datteren til kong Midas" },
   ];
   // Disse låses opp etter et visst antall oppdagelser
@@ -125,6 +136,9 @@
   for (const e of EL) if (e.id && (e.fase === PULVER || e.fase === VASKE || e.fase === GASS_F) && e.id !== LYNSPOR && e.id !== MIDAS) KLONBAR[e.id] = 1;
   const FARLIG = new Uint8Array(NT); for (const t of [ILD, LAVA, GLO, SYRE, TENT, LYNSPOR]) FARLIG[t] = 1;
   const GLODSPREDNING = 0.03;   // hvor fort glør brer seg i tre og kull, per nabo per steg
+  const FUKT = 90;    // så mange celler trekker fukten inn i jorda fra vann
+  const SAFT = 130;   // så mange celler opp fra jorda holder et tre seg levende
+  const FERDIG = 0x400;   // merke i L på en tretopp som er ferdig utvokst
   const LADET = 12;   // et ladet metallstykke lyser, og kan ikke lades på nytt før det har falmet
 
   // ---------- Reaksjoner ved berøring ----------
@@ -141,7 +155,7 @@
   regel(ILD, VIN, TOM, SPRIT, 0.3);
   regel(ILD, GJORME, -1, TEGL, 0.15);
   regel(VANN, SALT, SALTVANN, TOM, 0.1);
-  regel(VANN, JORD, TOM, GJORME, 0.03);
+  regel(VANN, JORD, TOM, GJORME, 0.004);
   regel(VANN, IS, IS, -1, 0.003, "frost");
   regel(VANN, SNO, -1, VANN, 0.03);
   regel(VANN, SVOVEL, SYRE, TOM, 0.012);
@@ -165,7 +179,7 @@
   regel(GLO, IS, -1, VANN, 0.3);
   regel(KULL, SVOVEL, KRUTT, KRUTT, 0.05);
   regel(OLJE, SVOVEL, GRESK, TOM, 0.05);
-  for (const t of [STEIN, TRE, METALL, SAND, JORD, IS, GLASS, TEGL, OBSIDIAN, PLANTE, BLOMST, KULL, RUST, DRUE, SALT, ASKE, FRO, SNO, SVOVEL, GJORME, KRUTT]) regel(MIDAS, t, TOM, GULL, 0.5);
+  for (const t of [STEIN, TRE, METALL, SAND, JORD, IS, GLASS, TEGL, OBSIDIAN, PLANTE, BLOMST, KULL, RUST, DRUE, SALT, ASKE, FRO, SNO, SVOVEL, GJORME, KRUTT, GRESS, MOSE, OLIVEN, FISK]) regel(MIDAS, t, TOM, GULL, 0.5);
 
   // ---------- Hjelpere ----------
   function prng(fro) {
@@ -184,6 +198,8 @@
     const d = ((k / 15) - 0.5) * 2 * e.spenn;
     PAL[e.id * 16 + k] = abgr(klem(e.farge[0] + d), klem(e.farge[1] + d), klem(e.farge[2] + d));
   }
+  const VAATJORD = new Uint32Array(16);
+  for (let k = 0; k < 16; k++) { const d = ((k / 15) - 0.5) * 24; VAATJORD[k] = abgr(klem(84 + d), klem(58 + d), klem(38 + d)); }
   const BLOMSTER = [[236, 120, 170], [246, 214, 90], [244, 240, 232], [170, 120, 220], [236, 96, 80]].map(([r, g, b]) => abgr(r, g, b));
   // Flammer: fra hvitt via gult og oransje til rødt. Tre fargesett: vanlig, blå (sprit og svovel) og grønn (gresk ild).
   const FLAMME = [0, 1, 2].map((sett) => {
@@ -250,8 +266,8 @@
         case GASS: sett(j, ILD); L[j] = 8 + ((rnd() * 10) | 0); break;
         case GRESK: if (!X[j]) { X[j] = 1; L[j] = 250 + ((rnd() * 200) | 0); } break;
         case KRUTT: sett(j, TENT); break;
-        case PLANTE: case BLOMST: case FRO: case DRUE:
-          if (rnd() < 0.15) lag(j, ASKE); else { sett(j, ILD); L[j] = 30 + ((rnd() * 30) | 0); }
+        case PLANTE: case BLOMST: case FRO: case DRUE: case GRESS: case OLIVEN:
+          if (rnd() < (t === GRESS ? 0.05 : 0.15)) lag(j, ASKE); else { sett(j, ILD); L[j] = 30 + ((rnd() * 30) | 0); }
           break;
       }
     }
@@ -320,7 +336,15 @@
         case SAND: klatt(x, y, 2, SAND, GLASS); break;
         case STEIN: klatt(x, y, 2, STEIN, LAVA); break;
         case VANN: klatt(x, y, 2, VANN, DAMP); break;
-        case SALTVANN: klatt(x, y, 3, SALTVANN, DAMP); break;
+        case SALTVANN: {
+          klatt(x, y, 3, SALTVANN, DAMP);
+          // Ursuppa: en gnist i havet gir liv
+          for (let k = 0, n = 0; k < 40 && n < 3; k++) {
+            const xx = x + ((rnd() * 15) | 0) - 7, yy = y + ((rnd() * 9) | 0);
+            if (xx >= 0 && xx < B && yy >= 0 && yy < H && T[yy * B + xx] === SALTVANN) { lag(yy * B + xx, FISK); n++; }
+          }
+          break;
+        }
         case VIN: klatt(x, y, 2, VIN, SPRIT); break;
         case IS: klatt(x, y, 2, IS, VANN); break;
         case SNO: klatt(x, y, 2, SNO, VANN); break;
@@ -427,6 +451,28 @@
       if (x + s >= 0 && x + s < B && T[i + s] === TOM) bytt(i, i + s);
     }
 
+    // ---------- Trær som vokser ----------
+    // Spissen på et ungt tre har et budsjett (de laveste åtte bitene i L) og en retning (resten):
+    // 0 er stammen, 1 en gren mot venstre, 2 en gren mot høyre. Når budsjettet er brukt opp, får toppen løv.
+    function voksTre(i, x, y) {
+      const budsjett = L[i] & 255, ret = L[i] >> 8, r = rnd();
+      let dx = 0, dy = -1;
+      if (ret === 0) { if (r < 0.1) dx = -1; else if (r < 0.2) dx = 1; }
+      else { dx = ret === 1 ? -1 : 1; if (r < 0.4) dy = 0; else if (r < 0.55) dx = 0; }
+      const nx = x + dx, ny = y + dy;
+      if (nx < 0 || nx >= B || ny < 0) { L[i] = FERDIG; return; }
+      const j = ny * B + nx, t = T[j];
+      if (t !== TOM && t !== PLANTE && t !== GRESS && FASE[t] !== GASS_F) { if (rnd() < 0.05) L[i] = FERDIG; return; }
+      sett(j, TRE);
+      X[j] = Math.max(1, X[i] - 1);
+      L[j] = budsjett > 1 ? (ret << 8) | (budsjett - 1) : FERDIG;
+      L[i] = FERDIG;
+      // Den nedre delen av stammen blir to celler tykk
+      if (ret === 0 && dx === 0 && budsjett > 20 && x + 1 < B && (T[i + 1] === TOM || T[i + 1] === GRESS)) { sett(i + 1, TRE); X[i + 1] = X[i]; L[i + 1] = FERDIG; }
+      // Grener i den øvre delen
+      if (ret === 0 && budsjett >= 4 && budsjett <= 20 && rnd() < 0.3) L[i] = ((rnd() < 0.5 ? 1 : 2) << 8) | (3 + (budsjett >> 1));
+    }
+
     // ---------- Én celle ----------
     function oppdater(i, x, y, t) {
       // Reaksjon med en tilfeldig nabo
@@ -490,6 +536,80 @@
           }
           break;
         }
+        case JORD:
+          // Fukt trekker inn i jorda fra vann og gjørme, og tørker sakte ut igjen
+          if (b === VANN) X[i] = FUKT;
+          else if (b === GJORME) { if (X[i] < FUKT - 1) X[i] = FUKT - 1; }
+          else if (b === JORD && X[j] > X[i] + 1) X[i] = X[j] - 1;
+          else if (X[i] > 0 && rnd() < 0.003) X[i]--;
+          // Gress spirer på fuktig jord som ligger i ro med luft over
+          if (X[i] > 0 && y > 0 && T[i - B] === TOM && rnd() < 0.002 && (y === H - 1 || sperrer(T[i + B]))) { lag(i - B, GRESS); L[i - B] = (rnd() * 3) | 0; }
+          break;
+        case GJORME:
+          if (y > 0 && T[i - B] === TOM && rnd() < 0.001 && (y === H - 1 || sperrer(T[i + B]))) { lag(i - B, GRESS); L[i - B] = (rnd() * 3) | 0; }
+          // Gjørme som ikke lenger står i vann, tørker til fuktig jord
+          if (rnd() < 0.0006) {
+            let vaat = false;
+            for (let r = 0; r < 4 && !vaat; r++) { const k = nabo(i, x, y, r); vaat = k >= 0 && T[k] === VANN; }
+            if (!vaat) { lag(i, JORD); X[i] = FUKT; return; }
+          }
+          break;
+        case GRESS: {
+          const u = y < H - 1 ? T[i + B] : STEIN;
+          if (u !== JORD && u !== GJORME && u !== GRESS) { if (rnd() < 0.1) T[i] = TOM; return; }
+          if (b === VANN && rnd() < 0.03) {
+            // Gresset drikker vannet og holder jorda under fuktig
+            T[j] = TOM;
+            for (let k = 1; k <= 4 && y + k < H; k++) if (T[i + k * B] === JORD) { X[i + k * B] = FUKT; break; }
+          }
+          if (y > 0 && T[i - B] === TOM) {
+            if (L[i] > 0 && rnd() < 0.003) { sett(i - B, GRESS); L[i - B] = L[i] - 1; L[i] = 0; }
+            else if (rnd() < 0.000004) lag(i - B, BLOMST);   // markblomster
+          }
+          return;
+        }
+        case BLOMST:
+          // Blomster slipper av og til et frø
+          if (b === TOM && rnd() < 0.0002) sett(j, FRO);
+          return;
+        case STEIN:
+          if (b === VANN && rnd() < 0.0002) { lag(i, MOSE); L[i] = 4; }
+          return;
+        case MOSE:
+          // Mosen kryper et lite stykke videre langs stein som ligger åpent
+          if (b === STEIN && L[i] > 1 && rnd() < 0.002) {
+            const jx = j % B, jy = (j / B) | 0;
+            for (let r = 0; r < 4; r++) { const k = nabo(j, jx, jy, r); if (k >= 0 && (T[k] === TOM || T[k] === VANN)) { sett(j, MOSE); L[j] = L[i] - 1; break; } }
+          }
+          return;
+        case TRE: {
+          // Tre som står i fuktig jord, lever: saften stiger et stykke oppover i veden
+          if (b === GJORME || (b === JORD && X[j] > 0)) X[i] = SAFT;
+          else if (b === TRE && X[j] > X[i] + 1) X[i] = X[j] - 1;
+          else if (X[i] > 0 && rnd() < 0.004) X[i]--;
+          if (X[i] === 0) return;
+          if (L[i] & 255) { if (rnd() < 0.05) voksTre(i, x, y); return; }
+          // En bar topp skyter først nye skudd, og får så løv
+          if (X[i] <= SAFT - 6 && y > 0 && T[i - B] === TOM && rnd() < 0.01 && (x === 0 || T[i - B - 1] !== TRE) && (x === B - 1 || T[i - B + 1] !== TRE)) {
+            if (L[i] & FERDIG) { sett(i - B, PLANTE); L[i - B] = 6; }
+            else L[i] = 10 + ((rnd() * 9) | 0);
+            oppdag("lovverk");
+          }
+          return;
+        }
+        case FISK: {
+          // Svømmer rett fram til noe stenger, og snur da en annen vei. På land spreller den en stund.
+          // Fisk beiter på planter under vann, og da blir det av og til flere av dem
+          if (b === PLANTE && rnd() < 0.02) lag(j, rnd() < 0.25 ? FISK : VANN);
+          const n = nabo(i, x, y, X[i] & 3), nt = n >= 0 ? T[n] : STEIN;
+          if (nt === VANN || nt === SALTVANN) { L[i] = 0; if (rnd() < 0.45) bytt(i, n); else if (rnd() < 0.03) X[i] = rnd() < 0.75 ? (rnd() < 0.5 ? 1 : 3) : (rnd() < 0.5 ? 0 : 2); return; }
+          X[i] = rnd() < 0.75 ? (rnd() < 0.5 ? 1 : 3) : (rnd() < 0.5 ? 0 : 2);
+          let vann = false;
+          for (let r = 0; r < 4 && !vann; r++) { const k = nabo(i, x, y, r); vann = k >= 0 && (T[k] === VANN || T[k] === SALTVANN); }
+          if (vann) return;
+          if (++L[i] > 300) { T[i] = TOM; return; }
+          break;
+        }
         case VANN:
           // Planter drikker vannet og vokser inn i det. Av og til blir det en blomst eller en drue.
           if (b === PLANTE && rnd() < 0.05) {
@@ -509,13 +629,27 @@
             }
             X[i] = 0;
           }
+          // Løv brer seg ut fra toppen av et levende tre, og bærer av og til oliven
+          if (L[i] > 0) {
+            if (b === TOM) {
+              if (L[i] > 1 && rnd() < 0.03) { sett(j, PLANTE); L[j] = L[i] - 1; }
+              else if (j === i + B && rnd() < 0.00025) lag(j, OLIVEN);
+            }
+          }
           return;
         case FRO:
           if (y < H - 1) {
             const u = T[i + B];
-            let fuktig = u === GJORME;
+            let fuktig = u === GJORME || u === GRESS || (u === JORD && X[i + B] > 0);
             if (u === JORD) for (let r = 0; r < 4 && !fuktig; r++) { const k = nabo(i, x, y, r), k2 = nabo(i + B, x, y + 1, r); fuktig = (k >= 0 && T[k] === VANN) || (k2 >= 0 && (T[k2] === VANN || T[k2] === GJORME)); }
-            if (fuktig && rnd() < 0.05) { lag(i, PLANTE); X[i] = 6 + ((rnd() * 10) | 0); return; }
+            // Frø som flyter på vann, råtner. Og ingenting spirer tett inntil en annen plante.
+            if ((u === VANN || u === SALTVANN) && rnd() < 0.002) { T[i] = TOM; return; }
+            if (fuktig) for (let d = -2; d <= 2 && fuktig; d++) if (d && x + d >= 0 && x + d < B && (T[i + d] === PLANTE || T[i + d] === TRE)) fuktig = false;
+            if (fuktig && rnd() < 0.05) {
+              if (u !== GRESS && rnd() < 0.3) { sett(i, TRE); X[i] = SAFT; L[i] = 26 + ((rnd() * 25) | 0); }   // et frø kan også bli et tre
+              else { lag(i, PLANTE); X[i] = 6 + ((rnd() * 10) | 0); }
+              return;
+            }
           }
           break;
         case SYRE:
@@ -563,10 +697,11 @@
     // tåler ikke ild, lava eller syre, og blir fulle av vin. Høyst tretten om gangen.
     const MAKS_FOLK = 13, HOYDE = 5;
     function nyttMenneske(x, y) { return { x: x | 0, y: y | 0, dir: rnd() < 0.5 ? -1 : 1, full: 0, kvalt: 0, alder: 0, dod: false }; }
-    const baerer = (x, y) => y >= H || (x >= 0 && x < B && y >= 0 && sperrer(T[y * B + x]));
+    const tett = (t) => sperrer(t) && t !== GRESS && t !== BLOMST;   // gress og blomster går de rett gjennom
+    const baerer = (x, y) => y >= H || (x >= 0 && x < B && y >= 0 && tett(T[y * B + x]));
     function friKolonne(x, y) {   // kan kroppen stå med føttene i (x, y)?
       if (x < 0 || x >= B || y >= H) return false;
-      for (let k = 0; k < HOYDE; k++) { const yy = y - k; if (yy >= 0 && sperrer(T[yy * B + x])) return false; }
+      for (let k = 0; k < HOYDE; k++) { const yy = y - k; if (yy >= 0 && tett(T[yy * B + x])) return false; }
       return true;
     }
     function folkSteg() {
@@ -595,7 +730,7 @@
           folk.splice(n, 1);
           continue;
         }
-        if (m.y >= 4 && sperrer(T[(m.y - 4) * B + m.x]) && sperrer(T[(m.y - 2) * B + m.x])) { if (++m.kvalt > 90) borte = true; } else m.kvalt = 0;
+        if (m.y >= 4 && tett(T[(m.y - 4) * B + m.x]) && tett(T[(m.y - 2) * B + m.x])) { if (++m.kvalt > 90) borte = true; } else m.kvalt = 0;
         if (m.dod) {
           const i = m.y * B + m.x;
           if (m.y < H && T[i] === TOM) lag(i, ASKE);
@@ -604,6 +739,8 @@
           borte = true;
         }
         if (borte) { folk.splice(n, 1); continue; }
+        // Oliven under føttene tråkkes til olje
+        if (m.y + 1 < H && T[(m.y + 1) * B + m.x] === OLIVEN && rnd() < 0.15) { lag((m.y + 1) * B + m.x, OLJE); oppdag("pressing"); }
         // Tyngdekraft og flyting
         const fot = T[m.y * B + m.x], iVann = FASE[fot] === VASKE;
         if (!baerer(m.x, m.y + 1)) {
@@ -665,6 +802,9 @@
             break;
           case DIAMANT: case MIDAS: if (((D[i] + tikk * 2) & 63) === 0) c = 0xffffffff; break;
           case BLOMST: c = BLOMSTER[D[i] % BLOMSTER.length]; break;
+          case JORD: if (X[i] > 0) c = VAATJORD[D[i] >> 4]; break;
+          case PLANTE: if (L[i] > 0) c = PAL[t * 16 + (D[i] >> 5)]; break;   // løv er litt mørkere
+          case FISK: if (((D[i] + (tikk >> 2)) & 15) === 0) c = abgr(255, 214, 150); break;
           case TEGL: { const x = i % B, y = (i / B) | 0; if (y % 4 === 3 || (x + ((y >> 2) & 1) * 3) % 6 === 5) c = PAL[t * 16]; break; }
           case TRE: { const x = i % B; c = PAL[t * 16 + ((x * 5 + (D[i] >> 6)) & 15)]; break; }
           case SYRE: gl = abgr(40, 70, 10); break;
