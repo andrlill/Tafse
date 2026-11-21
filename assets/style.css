@@ -1506,3 +1506,5 @@ p.h-merket { margin: 10px 0; }
 .sy-huskort .sy-husfordeler { margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.45; color: var(--dempet); }
 .sy-huskort .sy-husfordeler li { margin: 1px 0; }
 .sy-huskort .dempet { font-size: 14px; }
+/* Mobil: råvarestripen ligger fast øverst. Det siden ruller til, skal havne under den, ikke bak den. */
+@media (max-width: 900px) { html:has(.sy-side) { scroll-padding-top: 64px; } }

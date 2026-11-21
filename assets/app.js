@@ -644,6 +644,12 @@ function premieTekst(svar) {
 // ENDRINGSLOGGEN («Hva er nytt»). Nyeste først. Legg til en ny oppføring øverst når noe er endret.
 // id må være unik og øke, så knappen kan vise at det er noe nytt siden sist.
 const ENDRINGER = [
+  { id: 12, dato: "21. november", tittel: "Trykk på mobil", punkter: [
+    "Trykk på kartet ble av og til borte hvis fingeren flyttet seg litt. Nå teller de.",
+    "Trykker du på noe mens en annen handling er på vei, venter den i kø i stedet for å forsvinne.",
+    "«Høst»-knappen kunne miste trykk fordi den ble tegnet om hvert sekund. Det er rettet.",
+    "Knapper havner ikke lenger bak råvarestripen øverst på skjermen.",
+  ] },
   { id: 11, dato: "20. november", tittel: "Nye tokt", punkter: [
     "Velg hva skipet skal seile etter (krydder, purpur eller sølv) og hvor lenge det skal være ute.",
     "Havet er lunefullt: skipet kan komme hjem med mye, lite, ingenting eller noe helt annet. Du ser det først når du losser.",

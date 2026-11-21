@@ -932,8 +932,12 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
     const sum = lagerSum();
     const deler = RESS.filter((r) => Math.floor(lager(r)) > 0).map((r) => `${tall(lager(r))} ${rn(r)}`);
     rot.querySelectorAll("[data-host]").forEach((host) => {
-      host.innerHTML = sum > 0 ? `Høst<small>${deler.join(", ")}</small>` : `Høst<small>Ingenting ennå</small>`;
-      host.disabled = sum <= 0 || opptatt;
+      // Bare teksten i <small> byttes. Skrives hele knappen om, kan telefonen miste et trykk midt i.
+      let liten = host.querySelector("small");
+      if (!liten) { host.innerHTML = "Høst<small></small>"; liten = host.querySelector("small"); }
+      const tekst = sum > 0 ? deler.join(", ") : "Ingenting ennå";
+      if (liten.textContent !== tekst) liten.textContent = tekst;
+      host.disabled = sum <= 0;
       host.classList.toggle("klar", sum >= 15);
     });
     const klar = rot.querySelector("[data-klar]");
@@ -1034,18 +1038,28 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
     tegn();
   }
 
-  async function gjor(handling, kropp) {
-    if (opptatt) return;
-    opptatt = true;
-    try {
-      taImot(await api(`symposion/${handling}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(kropp || {}) }));
-      etterHandling();
-    } catch (e) {
-      toast(utenGjest(e.message), true);
-    } finally {
-      opptatt = false;
-      tikk();
-    }
+  // Handlinger sendes én om gangen. Trykker man på noe mens en annen handling er på vei, legges den
+  // i kø i stedet for å bli borte. Et trykk på nøyaktig det samme som allerede venter, telles én gang.
+  let ko = Promise.resolve();
+  const venter = new Set();
+  function gjor(handling, kropp) {
+    const nokkel = handling + JSON.stringify(kropp || {});
+    if (venter.has(nokkel)) return ko;
+    venter.add(nokkel);
+    ko = ko.then(async () => {
+      opptatt = true;
+      try {
+        taImot(await api(`symposion/${handling}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(kropp || {}) }));
+        etterHandling();
+      } catch (e) {
+        toast(utenGjest(e.message), true);
+      } finally {
+        venter.delete(nokkel);
+        opptatt = venter.size > 0;
+        tikk();
+      }
+    });
+    return ko;
   }
 
   function velg(navn, utenKort) {
@@ -1115,7 +1129,7 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
   });
   // Dra for å flytte kartet, to fingre for å zoome. Et drag skal ikke telle som et trykk på et gods.
   const pekere = new Map();
-  let dra = null, dro = false;
+  let dra = null, dro = false, sisteTrykk = 0;
   const startDra = () => {
     const p = [...pekere.values()];
     if (p.length === 1) dra = { x: p[0].x, y: p[0].y, cx: vis.cx, cy: vis.cy };
@@ -1123,7 +1137,10 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
     else dra = null;
   };
   rot.addEventListener("pointerdown", (e) => {
+    sisteTrykk = Date.now();
     if (!vis || !e.target.closest(".sy-kart") || (e.pointerType === "mouse" && e.button !== 0)) return;
+    // Første finger starter en ny bevegelse. Gamle fingre som telefonen aldri meldte løftet, glemmes.
+    if (e.isPrimary) pekere.clear();
     pekere.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pekere.size === 1) dro = false;
     startDra();
@@ -1138,9 +1155,11 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
       return;
     }
     const dx = e.clientX - dra.x, dy = e.clientY - dra.y;
-    if (!dro && Math.hypot(dx, dy) < 7) return;
-    dro = true;
+    // Når kartet ikke er zoomet inn, er det ingenting å dra, så trykket skal telle som et trykk.
+    // En finger flytter seg ofte litt, så et trykk må bevege seg mer enn 12 punkter for å bli et drag.
     if (vis.z <= 1.01) return;
+    if (!dro && Math.hypot(dx, dy) < (e.pointerType === "mouse" ? 6 : 12)) return;
+    dro = true;
     const k = W / vis.z / ramme().width;
     glid++;
     vis.cx = dra.cx - dx * k; vis.cy = dra.cy - dy * k;
@@ -1183,6 +1202,7 @@ const HOTELLHJELP = `      <h3>Tafse Hotell</h3>
       const aktiv = document.activeElement && rot.contains(document.activeElement) && document.activeElement.matches("input, textarea");
       if (T && aktiv && !tving) return; // ikke tegn om mens noen skriver
       if (T && pekere.size) return;      // eller drar i kartet
+      if (T && Date.now() - sisteTrykk < 2000 && !tving) { setTimeout(hent, 2500); return; } // eller nettopp trykket på noe
       taImot(await api("symposion"));
     } catch (e) {
       if (!T) rot.innerHTML = `<p class="melding feil">${esc(e.message)}</p>`;
