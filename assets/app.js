@@ -644,6 +644,10 @@ function premieTekst(svar) {
 // ENDRINGSLOGGEN («Hva er nytt»). Nyeste først. Legg til en ny oppføring øverst når noe er endret.
 // id må være unik og øke, så knappen kan vise at det er noe nytt siden sist.
 const ENDRINGER = [
+  { id: 13, dato: "21. november", tittel: "Offeret på dag 7", punkter: [
+    "Offeret krasjet på dag 7 i rekken, så rekken startet på nytt dagen etter. Det er rettet.",
+    "«I morgen» under offeret viser nå morgendagens gave, ikke dagens.",
+  ] },
   { id: 12, dato: "21. november", tittel: "Trykk på mobil", punkter: [
     "Trykk på kartet ble av og til borte hvis fingeren flyttet seg litt. Nå teller de.",
     "Trykker du på noe mens en annen handling er på vei, venter den i kø i stedet for å forsvinne.",
